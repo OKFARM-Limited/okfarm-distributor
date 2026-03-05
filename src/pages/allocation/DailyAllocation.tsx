@@ -1,0 +1,127 @@
+import { useState } from 'react';
+import { vendors, products } from '@/data/mockData';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CheckCircle, ChevronRight } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+
+export default function DailyAllocation() {
+  const [step, setStep] = useState(0);
+  const [vendorId, setVendorId] = useState('');
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  const vendor = vendors.find(v => v.id === vendorId);
+  const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * p.unitPrice, 0);
+
+  const handleConfirm = () => {
+    const alloc = { vendorId, date: new Date().toISOString().split('T')[0], items: products.map(p => ({ productId: p.id, quantity: quantities[p.id] || 0 })), totalValue };
+    const drafts = JSON.parse(localStorage.getItem('okfarm_alloc_drafts') || '[]');
+    drafts.push(alloc);
+    localStorage.setItem('okfarm_alloc_drafts', JSON.stringify(drafts));
+    toast({ title: 'Allocation Confirmed', description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` });
+    setStep(0);
+    setVendorId('');
+    setQuantities({});
+  };
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <h1 className="text-2xl font-bold">Morning Stock Allocation</h1>
+
+      {/* Stepper */}
+      <div className="flex items-center gap-2 text-sm">
+        {['Select Vendor', 'Set Quantities', 'Confirm'].map((s, i) => (
+          <div key={s} className="flex items-center gap-1">
+            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+              {i < step ? <CheckCircle className="h-4 w-4" /> : i + 1}
+            </div>
+            <span className={`hidden sm:inline ${i <= step ? 'font-medium' : 'text-muted-foreground'}`}>{s}</span>
+            {i < 2 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+          </div>
+        ))}
+      </div>
+
+      {step === 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Select Vendor</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Select value={vendorId} onValueChange={setVendorId}>
+              <SelectTrigger><SelectValue placeholder="Choose a vendor..." /></SelectTrigger>
+              <SelectContent>
+                {vendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.territory})</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button onClick={() => setStep(1)} disabled={!vendorId}>Next <ChevronRight className="h-4 w-4" /></Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Allocate SKUs for {vendor?.name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Unit Price</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead className="text-right">Value</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.map(p => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell>₦{p.unitPrice}</TableCell>
+                    <TableCell>
+                      <Input type="number" min={0} className="w-20 h-8" value={quantities[p.id] || ''} onChange={e => setQuantities(q => ({ ...q, [p.id]: parseInt(e.target.value) || 0 }))} />
+                    </TableCell>
+                    <TableCell className="text-right">₦{((quantities[p.id] || 0) * p.unitPrice).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <p className="font-bold text-lg">Total: ₦{totalValue.toLocaleString()}</p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
+                <Button onClick={() => setStep(2)} disabled={totalValue === 0}>Review</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 2 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Confirm Allocation</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm"><strong>Vendor:</strong> {vendor?.name} ({vendor?.territory})</p>
+            <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
+            <div className="space-y-1">
+              {products.filter(p => quantities[p.id] > 0).map(p => (
+                <div key={p.id} className="flex justify-between text-sm">
+                  <span>{p.name} × {quantities[p.id]}</span>
+                  <span>₦{((quantities[p.id] || 0) * p.unitPrice).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t pt-3 flex justify-between font-bold">
+              <span>Total</span><span>₦{totalValue.toLocaleString()}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+              <Button onClick={handleConfirm}>Confirm Allocation</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
