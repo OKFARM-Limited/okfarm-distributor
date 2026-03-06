@@ -12,9 +12,7 @@ export interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  isPinVerified: boolean;
   login: (email: string, password: string) => boolean;
-  verifyPin: (pin: string) => boolean;
   logout: () => void;
 }
 
