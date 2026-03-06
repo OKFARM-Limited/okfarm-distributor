@@ -32,6 +32,21 @@ export const vendors: Vendor[] = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 // ===== ASSETS =====
+export interface MaintenanceRecord {
+  id: string;
+  date: string;
+  type: 'routine' | 'repair' | 'inspection';
+  description: string;
+  cost: number;
+  performedBy: string;
+}
+
+export interface ConditionHistory {
+  date: string;
+  condition: 'good' | 'fair' | 'poor';
+  note: string;
+}
+
 export interface Asset {
   id: string;
   type: 'push_cart' | 'bicycle' | 'tricycle';
@@ -39,9 +54,42 @@ export interface Asset {
   status: 'available' | 'assigned' | 'maintenance';
   assignedTo: string | null;
   condition: 'good' | 'fair' | 'poor';
+  nextMaintenanceDate: string;
+  maintenanceHistory: MaintenanceRecord[];
+  conditionHistory: ConditionHistory[];
 }
 
-export const assets: Asset[] = [
+const generateMaintenanceHistory = (assetId: string, condition: string): MaintenanceRecord[] => {
+  const types: MaintenanceRecord['type'][] = ['routine', 'repair', 'inspection'];
+  const count = condition === 'poor' ? 4 : condition === 'fair' ? 2 : 1;
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (i + 1) * 15);
+    return {
+      id: `MNT-${assetId}-${i + 1}`,
+      date: d.toISOString().split('T')[0],
+      type: types[i % 3],
+      description: i === 0 ? 'Wheel alignment and lubrication' : i === 1 ? 'Brake pad replacement' : i === 2 ? 'Frame welding repair' : 'General inspection',
+      cost: Math.floor(Math.random() * 5000) + 1000,
+      performedBy: 'Depot Technician',
+    };
+  });
+};
+
+const generateConditionHistory = (condition: string): ConditionHistory[] => {
+  const conditions: Array<'good' | 'fair' | 'poor'> = condition === 'poor' ? ['good', 'fair', 'poor'] : condition === 'fair' ? ['good', 'fair'] : ['good'];
+  return conditions.map((c, i) => {
+    const d = new Date(); d.setMonth(d.getMonth() - (conditions.length - 1 - i) * 2);
+    return { date: d.toISOString().split('T')[0], condition: c, note: c === 'good' ? 'Asset in excellent working condition' : c === 'fair' ? 'Minor wear observed, scheduled for maintenance' : 'Significant damage, requires immediate repair' };
+  });
+};
+
+const getNextMaintenanceDate = (condition: string): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + (condition === 'poor' ? 3 : condition === 'fair' ? 14 : 30));
+  return d.toISOString().split('T')[0];
+};
+
+const rawAssets: Omit<Asset, 'nextMaintenanceDate' | 'maintenanceHistory' | 'conditionHistory'>[] = [
   { id: 'AST-001', type: 'push_cart', name: 'Push Cart Alpha', status: 'assigned', assignedTo: 'VND-001', condition: 'good' },
   { id: 'AST-002', type: 'push_cart', name: 'Push Cart Beta', status: 'assigned', assignedTo: 'VND-002', condition: 'good' },
   { id: 'AST-003', type: 'push_cart', name: 'Push Cart Gamma', status: 'available', assignedTo: null, condition: 'fair' },
@@ -58,6 +106,37 @@ export const assets: Asset[] = [
   { id: 'AST-014', type: 'push_cart', name: 'Push Cart Xi', status: 'assigned', assignedTo: 'VND-009', condition: 'fair' },
   { id: 'AST-015', type: 'bicycle', name: 'Bike Omicron', status: 'available', assignedTo: null, condition: 'good' },
 ];
+
+export const assets: Asset[] = rawAssets.map(a => ({
+  ...a,
+  nextMaintenanceDate: getNextMaintenanceDate(a.condition),
+  maintenanceHistory: generateMaintenanceHistory(a.id, a.condition),
+  conditionHistory: generateConditionHistory(a.condition),
+}));
+
+// Vendor check-in attendance data
+export interface CheckInRecord {
+  vendorId: string;
+  date: string;
+  checkInTime: string;
+  checkOutTime: string | null;
+}
+
+export const checkInRecords: CheckInRecord[] = [];
+for (let d = 0; d < 30; d++) {
+  const date = new Date(); date.setDate(date.getDate() - d);
+  const dateStr = date.toISOString().split('T')[0];
+  vendors.forEach(v => {
+    if (v.status === 'active' && Math.random() > 0.2) {
+      checkInRecords.push({
+        vendorId: v.id,
+        date: dateStr,
+        checkInTime: `0${6 + Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+        checkOutTime: d === 0 && Math.random() > 0.5 ? null : `1${6 + Math.floor(Math.random() * 3)}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+      });
+    }
+  });
+}
 
 // Link assets to vendors
 vendors.forEach(v => {
@@ -183,17 +262,29 @@ export interface Commission {
   month: string;
   totalSales: number;
   daysWorked: number;
+  daysActive: number;
+  avgDailySales: number;
+  consistencyRate: number;
+  consistencyMultiplier: number;
   volumeBonus: number;
   consistencyBonus: number;
+  attendanceBonus: number;
   totalCommission: number;
   status: 'pending' | 'disbursed';
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
 }
 
 export const commissions: Commission[] = vendors.slice(0, 20).map((v, i) => {
   const totalSales = Math.floor(Math.random() * 400000) + 80000;
   const daysWorked = Math.floor(Math.random() * 22) + 8;
+  const daysActive = Math.floor(daysWorked * (0.7 + Math.random() * 0.3));
+  const avgDailySales = Math.round(totalSales / Math.max(daysWorked, 1));
+  const consistencyRate = Math.round((daysActive / 26) * 100);
+  const consistencyMultiplier = consistencyRate >= 85 ? 1.5 : consistencyRate >= 70 ? 1.25 : consistencyRate >= 50 ? 1.0 : 0.75;
   const volumeBonus = Math.floor(totalSales * 0.03);
   const consistencyBonus = daysWorked >= 20 ? 5000 : daysWorked >= 15 ? 3000 : 0;
+  const attendanceBonus = daysActive >= 22 ? 3000 : daysActive >= 18 ? 1500 : 0;
+  const tier: Commission['tier'] = totalSales >= 350000 ? 'platinum' : totalSales >= 250000 ? 'gold' : totalSales >= 150000 ? 'silver' : 'bronze';
   return {
     id: `COM-${String(i + 1).padStart(3, '0')}`,
     vendorId: v.id,
@@ -201,10 +292,16 @@ export const commissions: Commission[] = vendors.slice(0, 20).map((v, i) => {
     month: '2026-02',
     totalSales,
     daysWorked,
+    daysActive,
+    avgDailySales,
+    consistencyRate,
+    consistencyMultiplier,
     volumeBonus,
     consistencyBonus,
-    totalCommission: volumeBonus + consistencyBonus,
-    status: i < 12 ? 'disbursed' : 'pending',
+    attendanceBonus,
+    totalCommission: Math.round((volumeBonus + consistencyBonus + attendanceBonus) * consistencyMultiplier),
+    status: i < 12 ? 'disbursed' as const : 'pending' as const,
+    tier,
   };
 });
 
