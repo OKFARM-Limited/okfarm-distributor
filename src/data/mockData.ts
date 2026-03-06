@@ -32,6 +32,21 @@ export const vendors: Vendor[] = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 // ===== ASSETS =====
+export interface MaintenanceRecord {
+  id: string;
+  date: string;
+  type: 'routine' | 'repair' | 'inspection';
+  description: string;
+  cost: number;
+  performedBy: string;
+}
+
+export interface ConditionHistory {
+  date: string;
+  condition: 'good' | 'fair' | 'poor';
+  note: string;
+}
+
 export interface Asset {
   id: string;
   type: 'push_cart' | 'bicycle' | 'tricycle';
@@ -39,6 +54,9 @@ export interface Asset {
   status: 'available' | 'assigned' | 'maintenance';
   assignedTo: string | null;
   condition: 'good' | 'fair' | 'poor';
+  nextMaintenanceDate: string;
+  maintenanceHistory: MaintenanceRecord[];
+  conditionHistory: ConditionHistory[];
 }
 
 export const assets: Asset[] = [
@@ -183,10 +201,16 @@ export interface Commission {
   month: string;
   totalSales: number;
   daysWorked: number;
+  daysActive: number;
+  avgDailySales: number;
+  consistencyRate: number;
+  consistencyMultiplier: number;
   volumeBonus: number;
   consistencyBonus: number;
+  attendanceBonus: number;
   totalCommission: number;
   status: 'pending' | 'disbursed';
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
 }
 
 export const commissions: Commission[] = vendors.slice(0, 20).map((v, i) => {
