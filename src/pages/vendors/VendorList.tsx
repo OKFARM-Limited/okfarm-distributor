@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Plus, Phone, MapPin, Fingerprint, Edit } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +21,6 @@ export default function VendorList() {
   const [territory, setTerritory] = useState('All');
   const [statusFilter, setStatusFilter] = useState('all');
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
   const navigate = useNavigate();
 
   const filtered = vendors.filter(v => {
@@ -31,15 +30,10 @@ export default function VendorList() {
     return matchSearch && matchTerritory && matchStatus;
   });
 
-  const handleSave = (vendor: Vendor) => {
-    setVendors(prev => {
-      const idx = prev.findIndex(v => v.id === vendor.id);
-      if (idx >= 0) { const n = [...prev]; n[idx] = vendor; return n; }
-      return [...prev, vendor];
-    });
+  const handleSave = (updates: Partial<Vendor> & { id: string }) => {
+    setVendors(prev => prev.map(v => v.id === updates.id ? { ...v, ...updates } : v));
     setEditVendor(null);
-    setShowAdd(false);
-    toast({ title: 'Vendor saved', description: `${vendor.name} has been updated.` });
+    toast({ title: 'Vendor saved', description: `Vendor has been updated.` });
   };
 
   return (
@@ -49,15 +43,7 @@ export default function VendorList() {
           <h1 className="text-2xl font-bold">Vendors</h1>
           <p className="text-muted-foreground text-sm">{filtered.length} vendors found</p>
         </div>
-        <Dialog open={showAdd} onOpenChange={setShowAdd}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" /> Add Vendor</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Add New Vendor</DialogTitle></DialogHeader>
-            <VendorForm onSave={handleSave} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => navigate('/vendors/onboard')}><Plus className="h-4 w-4 mr-1" /> Onboard Vendor</Button>
       </div>
 
       {/* Filters */}
@@ -117,35 +103,26 @@ export default function VendorList() {
         ))}
       </div>
 
-      {/* Edit Dialog */}
+      {/* Quick Edit Dialog */}
       <Dialog open={!!editVendor} onOpenChange={open => !open && setEditVendor(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit Vendor</DialogTitle></DialogHeader>
-          {editVendor && <VendorForm vendor={editVendor} onSave={handleSave} />}
+          <DialogHeader><DialogTitle>Quick Edit Vendor</DialogTitle></DialogHeader>
+          {editVendor && <QuickEditForm vendor={editVendor} onSave={handleSave} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-function VendorForm({ vendor, onSave }: { vendor?: Vendor; onSave: (v: Vendor) => void }) {
-  const [name, setName] = useState(vendor?.name || '');
-  const [phone, setPhone] = useState(vendor?.phone || '');
-  const [terr, setTerr] = useState(vendor?.territory || 'Ikeja');
-  const [bio, setBio] = useState(vendor?.biometricsEnabled ?? false);
+function QuickEditForm({ vendor, onSave }: { vendor: Vendor; onSave: (v: Partial<Vendor> & { id: string }) => void }) {
+  const [name, setName] = useState(vendor.name);
+  const [phone, setPhone] = useState(vendor.phone);
+  const [terr, setTerr] = useState(vendor.territory);
+  const [bio, setBio] = useState(vendor.biometricsEnabled);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      id: vendor?.id || `VND-${String(Math.floor(Math.random() * 900) + 100)}`,
-      name, phone, territory: terr, biometricsEnabled: bio,
-      photo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.replace(/\s/g, '')}`,
-      status: vendor?.status || 'active',
-      joinDate: vendor?.joinDate || new Date().toISOString().split('T')[0],
-      totalSales: vendor?.totalSales || 0,
-      daysWorked: vendor?.daysWorked || 0,
-      assignedAssets: vendor?.assignedAssets || [],
-    });
+    onSave({ id: vendor.id, name, phone, territory: terr, biometricsEnabled: bio });
   };
 
   return (

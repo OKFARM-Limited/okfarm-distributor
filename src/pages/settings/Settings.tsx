@@ -1,21 +1,24 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">{t('settings')}</h1>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Profile</CardTitle></CardHeader>
@@ -40,6 +43,20 @@ export default function SettingsPage() {
             <Label>Dark Mode</Label>
             <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">{t('language')}</CardTitle></CardHeader>
+        <CardContent>
+          <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+            <SelectTrigger className="w-full sm:w-60"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">🇬🇧 {t('english')}</SelectItem>
+              <SelectItem value="yo">🇳🇬 {t('yoruba')}</SelectItem>
+              <SelectItem value="pcm">🗣️ {t('pidgin')}</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 

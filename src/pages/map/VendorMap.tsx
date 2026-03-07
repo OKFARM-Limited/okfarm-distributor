@@ -1,12 +1,18 @@
-import { useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useRef, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { vendorLocations } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import 'leaflet/dist/leaflet.css';
 
 export default function VendorMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
+  const routeLayers = useRef<any[]>([]);
+  const [showRoutes, setShowRoutes] = useState(false);
+  const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
@@ -24,7 +30,8 @@ export default function VendorMap() {
       });
 
       vendorLocations.forEach(loc => {
-        L.marker([loc.lat, loc.lng], { icon }).addTo(map).bindPopup(`<b>${loc.vendorName}</b><br/>${loc.territory}`);
+        L.marker([loc.lat, loc.lng], { icon }).addTo(map)
+          .bindPopup(`<b>${loc.vendorName}</b><br/>${loc.territory}`);
       });
 
       mapInstance.current = map;
@@ -38,9 +45,59 @@ export default function VendorMap() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!mapInstance.current) return;
+    import('leaflet').then(L => {
+      // Clear existing routes
+      routeLayers.current.forEach(l => mapInstance.current.removeLayer(l));
+      routeLayers.current = [];
+
+      if (showRoutes) {
+        const colors = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#be185d'];
+        vendorLocations.forEach((loc, i) => {
+          if (loc.route && loc.route.length > 1) {
+            const polyline = L.polyline(
+              loc.route.map(p => [p.lat, p.lng] as [number, number]),
+              { color: colors[i % colors.length], weight: 3, opacity: 0.7, dashArray: animating ? '10, 10' : undefined }
+            ).addTo(mapInstance.current);
+            routeLayers.current.push(polyline);
+          }
+        });
+      }
+    });
+  }, [showRoutes, animating]);
+
+  // Animate dash offset
+  useEffect(() => {
+    if (!animating || !showRoutes) return;
+    let offset = 0;
+    const interval = setInterval(() => {
+      offset += 1;
+      routeLayers.current.forEach(layer => {
+        const el = layer.getElement?.();
+        if (el) el.style.strokeDashoffset = String(-offset);
+      });
+    }, 50);
+    return () => clearInterval(interval);
+  }, [animating, showRoutes]);
+
   return (
     <div className="space-y-4 animate-fade-in">
-      <h1 className="text-2xl font-bold">Vendor Map</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Vendor Map</h1>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch checked={showRoutes} onCheckedChange={setShowRoutes} />
+            <Label className="text-sm">Show Routes</Label>
+          </div>
+          {showRoutes && (
+            <div className="flex items-center gap-2">
+              <Switch checked={animating} onCheckedChange={setAnimating} />
+              <Label className="text-sm">Animate</Label>
+            </div>
+          )}
+        </div>
+      </div>
       <Card>
         <CardContent className="p-0">
           <div ref={mapRef} className="h-[500px] w-full rounded-lg" />

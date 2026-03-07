@@ -1,6 +1,7 @@
 import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
-  Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History
+  Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
+  Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -17,12 +18,14 @@ const navGroups = [
     label: 'Overview',
     items: [
       { title: 'Dashboard', url: '/', icon: Home },
+      { title: 'Notifications', url: '/notifications', icon: Bell },
     ],
   },
   {
     label: 'Operations',
     items: [
       { title: 'Vendors', url: '/vendors', icon: Users },
+      { title: 'Check-In', url: '/checkin', icon: Clock },
       { title: 'Assets', url: '/assets', icon: Package },
       { title: 'Allocation', url: '/allocation', icon: ClipboardList },
       { title: 'Reconciliation', url: '/reconciliation', icon: History },
@@ -30,10 +33,19 @@ const navGroups = [
     ],
   },
   {
+    label: 'Inventory',
+    items: [
+      { title: 'Inbound Stock', url: '/inventory', icon: Warehouse },
+      { title: 'Scanner', url: '/scanner', icon: ScanLine },
+    ],
+  },
+  {
     label: 'Finance',
     items: [
       { title: 'Sales Entry', url: '/sales', icon: DollarSign },
       { title: 'Payments', url: '/payments', icon: CreditCard },
+      { title: 'Mobile Money', url: '/mobile-money', icon: Smartphone },
+      { title: 'Dues Statement', url: '/dues', icon: FileText },
     ],
   },
   {
@@ -50,6 +62,7 @@ const navGroups = [
       { title: 'Commissions', url: '/commissions', icon: Award },
       { title: 'Payouts', url: '/payouts', icon: Truck },
       { title: 'Orders', url: '/orders', icon: ShoppingCart },
+      { title: 'Forecast', url: '/forecast', icon: TrendingUp },
       { title: 'Audit Trail', url: '/audit', icon: Shield },
     ],
   },
