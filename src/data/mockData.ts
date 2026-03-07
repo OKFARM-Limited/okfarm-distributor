@@ -11,11 +11,32 @@ export interface Vendor {
   totalSales: number;
   daysWorked: number;
   assignedAssets: string[];
+  // Extended onboarding fields
+  email: string;
+  dateOfBirth: string;
+  gender: 'male' | 'female' | 'other';
+  nationalId: string;
+  address: string;
+  nextOfKin: string;
+  nextOfKinPhone: string;
+  bankName: string;
+  bankAccount: string;
+  guarantorName: string;
+  guarantorPhone: string;
+  mobileMoneyNumber: string;
+  educationLevel: string;
+  maritalStatus: string;
+  languages: string[];
+  uniformSize: string;
+  healthStatus: string;
+  notes: string;
 }
 
 const territories = ['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
 const firstNames = ['Adebayo', 'Chidinma', 'Emeka', 'Funke', 'Gbenga', 'Halima', 'Ibrahim', 'Jumoke', 'Kelechi', 'Lateef', 'Maryam', 'Ngozi', 'Oluwaseun', 'Precious', 'Rasheed', 'Sade', 'Tunde', 'Uchenna', 'Victor', 'Wale', 'Yetunde', 'Zainab', 'Aisha', 'Bola', 'Chidi', 'Damilola', 'Eze', 'Fatima', 'Grace', 'Hassan'];
 const lastNames = ['Okafor', 'Adeyemi', 'Balogun', 'Chukwu', 'Danjuma', 'Eze', 'Fashola', 'Gbenga', 'Hussaini', 'Igwe', 'Johnson', 'Kalu', 'Lawal', 'Mohammed', 'Nwosu', 'Obi', 'Peters', 'Quadri', 'Raji', 'Salami', 'Thomas', 'Uche', 'Vincent', 'Williams', 'Yakubu', 'Zubair', 'Abubakar', 'Bakare', 'Collins', 'Dele'];
+const banks = ['GTBank', 'First Bank', 'UBA', 'Access Bank', 'Zenith Bank'];
+const eduLevels = ['Primary', 'Secondary', 'OND', 'HND', 'BSc', 'None'];
 
 export const vendors: Vendor[] = Array.from({ length: 30 }, (_, i) => ({
   id: `VND-${String(i + 1).padStart(3, '0')}`,
@@ -29,6 +50,24 @@ export const vendors: Vendor[] = Array.from({ length: 30 }, (_, i) => ({
   totalSales: Math.floor(Math.random() * 500000) + 50000,
   daysWorked: Math.floor(Math.random() * 25) + 5,
   assignedAssets: [],
+  email: `${firstNames[i].toLowerCase()}.${lastNames[i].toLowerCase()}@email.com`,
+  dateOfBirth: `19${85 + Math.floor(Math.random() * 15)}-${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}`,
+  gender: i % 3 === 0 ? 'female' : 'male',
+  nationalId: `NIN-${String(Math.floor(Math.random() * 90000000000) + 10000000000)}`,
+  address: `${Math.floor(Math.random() * 200) + 1} ${['Broad St', 'Allen Ave', 'Awolowo Rd', 'Adeola Odeku St', 'Herbert Macaulay Way'][i % 5]}, Lagos`,
+  nextOfKin: `${lastNames[(i + 5) % 30]} ${firstNames[(i + 3) % 30]}`,
+  nextOfKinPhone: `+234${String(8010000000 + Math.floor(Math.random() * 89999999))}`,
+  bankName: banks[i % banks.length],
+  bankAccount: String(Math.floor(Math.random() * 9000000000) + 1000000000),
+  guarantorName: `${firstNames[(i + 7) % 30]} ${lastNames[(i + 2) % 30]}`,
+  guarantorPhone: `+234${String(8010000000 + Math.floor(Math.random() * 89999999))}`,
+  mobileMoneyNumber: `+234${String(8010000000 + Math.floor(Math.random() * 89999999))}`,
+  educationLevel: eduLevels[i % eduLevels.length],
+  maritalStatus: i % 3 === 0 ? 'Married' : i % 3 === 1 ? 'Single' : 'Divorced',
+  languages: i % 2 === 0 ? ['English', 'Yoruba'] : ['English', 'Igbo'],
+  uniformSize: ['S', 'M', 'L', 'XL'][i % 4],
+  healthStatus: i % 10 === 0 ? 'Requires glasses' : 'Fit',
+  notes: '',
 }));
 
 // ===== ASSETS =====
@@ -150,19 +189,98 @@ export interface Product {
   category: string;
   unitPrice: number;
   unit: string;
+  barcode: string;
 }
 
 export const products: Product[] = [
-  { id: 'SKU-001', name: 'FanYogo Strawberry', category: 'Yoghurt', unitPrice: 150, unit: 'pack' },
-  { id: 'SKU-002', name: 'FanYogo Vanilla', category: 'Yoghurt', unitPrice: 150, unit: 'pack' },
-  { id: 'SKU-003', name: 'FanIce Chocolate', category: 'Ice Cream', unitPrice: 200, unit: 'pack' },
-  { id: 'SKU-004', name: 'FanIce Vanilla', category: 'Ice Cream', unitPrice: 200, unit: 'pack' },
-  { id: 'SKU-005', name: 'FanDango Cone', category: 'Cone', unitPrice: 300, unit: 'piece' },
-  { id: 'SKU-006', name: 'Super Yogo 500ml', category: 'Yoghurt', unitPrice: 350, unit: 'bottle' },
-  { id: 'SKU-007', name: 'GoSlo Popsicle', category: 'Popsicle', unitPrice: 100, unit: 'piece' },
-  { id: 'SKU-008', name: 'FanChoc Bar', category: 'Bar', unitPrice: 250, unit: 'piece' },
-  { id: 'SKU-009', name: 'FanMilk Sachet', category: 'Milk', unitPrice: 100, unit: 'sachet' },
-  { id: 'SKU-010', name: 'FanVita Juice', category: 'Juice', unitPrice: 200, unit: 'pack' },
+  { id: 'SKU-001', name: 'FanYogo Strawberry', category: 'Yoghurt', unitPrice: 150, unit: 'pack', barcode: '5901234123457' },
+  { id: 'SKU-002', name: 'FanYogo Vanilla', category: 'Yoghurt', unitPrice: 150, unit: 'pack', barcode: '5901234123464' },
+  { id: 'SKU-003', name: 'FanIce Chocolate', category: 'Ice Cream', unitPrice: 200, unit: 'pack', barcode: '5901234123471' },
+  { id: 'SKU-004', name: 'FanIce Vanilla', category: 'Ice Cream', unitPrice: 200, unit: 'pack', barcode: '5901234123488' },
+  { id: 'SKU-005', name: 'FanDango Cone', category: 'Cone', unitPrice: 300, unit: 'piece', barcode: '5901234123495' },
+  { id: 'SKU-006', name: 'Super Yogo 500ml', category: 'Yoghurt', unitPrice: 350, unit: 'bottle', barcode: '5901234123501' },
+  { id: 'SKU-007', name: 'GoSlo Popsicle', category: 'Popsicle', unitPrice: 100, unit: 'piece', barcode: '5901234123518' },
+  { id: 'SKU-008', name: 'FanChoc Bar', category: 'Bar', unitPrice: 250, unit: 'piece', barcode: '5901234123525' },
+  { id: 'SKU-009', name: 'FanMilk Sachet', category: 'Milk', unitPrice: 100, unit: 'sachet', barcode: '5901234123532' },
+  { id: 'SKU-010', name: 'FanVita Juice', category: 'Juice', unitPrice: 200, unit: 'pack', barcode: '5901234123549' },
+];
+
+// ===== INVENTORY INBOUND =====
+export interface InboundDelivery {
+  id: string;
+  date: string;
+  invoiceNumber: string;
+  items: { productId: string; productName: string; quantity: number; unitPrice: number }[];
+  totalValue: number;
+  status: 'pending' | 'received' | 'verified';
+  creditTermDays: number;
+  dueDate: string;
+  receivedBy: string;
+}
+
+export const inboundDeliveries: InboundDelivery[] = Array.from({ length: 15 }, (_, i) => {
+  const d = new Date(); d.setDate(d.getDate() - i * 2);
+  const items = products.slice(0, Math.floor(Math.random() * 6) + 4).map(p => ({
+    productId: p.id,
+    productName: p.name,
+    quantity: Math.floor(Math.random() * 200) + 50,
+    unitPrice: p.unitPrice,
+  }));
+  const total = items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
+  const due = new Date(d); due.setDate(due.getDate() + 30);
+  return {
+    id: `INB-${String(i + 1).padStart(3, '0')}`,
+    date: d.toISOString().split('T')[0],
+    invoiceNumber: `FM-INV-${String(2024000 + i)}`,
+    items,
+    totalValue: total,
+    status: i < 2 ? 'pending' : i < 5 ? 'received' : 'verified',
+    creditTermDays: 30,
+    dueDate: due.toISOString().split('T')[0],
+    receivedBy: i < 2 ? '' : 'Depot Manager',
+  };
+});
+
+// Depot stock levels
+export interface StockLevel {
+  productId: string;
+  productName: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  lastRestocked: string;
+}
+
+export const stockLevels: StockLevel[] = products.map(p => ({
+  productId: p.id,
+  productName: p.name,
+  currentStock: Math.floor(Math.random() * 300) + 20,
+  minStock: 50,
+  maxStock: 500,
+  lastRestocked: new Date(Date.now() - Math.floor(Math.random() * 5) * 86400000).toISOString().split('T')[0],
+}));
+
+// ===== NOTIFICATIONS =====
+export interface AppNotification {
+  id: string;
+  type: 'low_stock' | 'expiry' | 'pending_return' | 'attendance' | 'payment' | 'maintenance';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  priority: 'high' | 'medium' | 'low';
+  actionUrl?: string;
+}
+
+export const notifications: AppNotification[] = [
+  { id: 'NTF-001', type: 'low_stock', title: 'Low Stock Alert', message: 'FanYogo Strawberry is below minimum stock (15 packs remaining)', timestamp: new Date().toISOString(), read: false, priority: 'high', actionUrl: '/inventory' },
+  { id: 'NTF-002', type: 'expiry', title: 'Product Expiry Warning', message: 'GoSlo Popsicle batch #B045 expires in 2 days', timestamp: new Date(Date.now() - 3600000).toISOString(), read: false, priority: 'high' },
+  { id: 'NTF-003', type: 'pending_return', title: 'Pending Returns', message: '5 vendors have not returned stock from yesterday', timestamp: new Date(Date.now() - 7200000).toISOString(), read: false, priority: 'medium', actionUrl: '/reconciliation' },
+  { id: 'NTF-004', type: 'attendance', title: 'Absent Vendors', message: '3 active vendors have not checked in today', timestamp: new Date(Date.now() - 10800000).toISOString(), read: false, priority: 'medium', actionUrl: '/checkin' },
+  { id: 'NTF-005', type: 'payment', title: 'Outstanding Payment', message: 'VND-003 has ₦45,000 outstanding for 5+ days', timestamp: new Date(Date.now() - 14400000).toISOString(), read: true, priority: 'high', actionUrl: '/payments' },
+  { id: 'NTF-006', type: 'maintenance', title: 'Maintenance Due', message: 'Push Cart Zeta is overdue for maintenance', timestamp: new Date(Date.now() - 18000000).toISOString(), read: true, priority: 'medium', actionUrl: '/assets' },
+  { id: 'NTF-007', type: 'low_stock', title: 'Low Stock Alert', message: 'FanMilk Sachet below minimum stock (30 sachets remaining)', timestamp: new Date(Date.now() - 21600000).toISOString(), read: true, priority: 'medium' },
+  { id: 'NTF-008', type: 'attendance', title: 'Late Check-In', message: 'VND-012 checked in 2 hours late today', timestamp: new Date(Date.now() - 25200000).toISOString(), read: true, priority: 'low' },
 ];
 
 // ===== ALLOCATIONS =====
@@ -328,13 +446,32 @@ export const auditLog: AuditEntry[] = [
 ];
 
 // ===== VENDOR MAP COORDINATES (Lagos area) =====
-export const vendorLocations = vendors.slice(0, 20).map((v, i) => ({
-  vendorId: v.id,
-  vendorName: v.name,
-  lat: 6.45 + (Math.random() * 0.15),
-  lng: 3.35 + (Math.random() * 0.2),
-  territory: v.territory,
-}));
+export interface VendorLocation {
+  vendorId: string;
+  vendorName: string;
+  lat: number;
+  lng: number;
+  territory: string;
+  route?: { lat: number; lng: number }[];
+}
+
+export const vendorLocations: VendorLocation[] = vendors.slice(0, 20).map((v, i) => {
+  const baseLat = 6.45 + (Math.random() * 0.15);
+  const baseLng = 3.35 + (Math.random() * 0.2);
+  // Generate route waypoints for each vendor
+  const routePoints = Array.from({ length: 6 }, (_, j) => ({
+    lat: baseLat + (Math.random() - 0.5) * 0.02 * (j + 1),
+    lng: baseLng + (Math.random() - 0.5) * 0.02 * (j + 1),
+  }));
+  return {
+    vendorId: v.id,
+    vendorName: v.name,
+    lat: baseLat,
+    lng: baseLng,
+    territory: v.territory,
+    route: [{ lat: baseLat, lng: baseLng }, ...routePoints],
+  };
+});
 
 // ===== DAILY METRICS =====
 export const dailyMetrics = Array.from({ length: 30 }, (_, i) => {
@@ -348,3 +485,19 @@ export const dailyMetrics = Array.from({ length: 30 }, (_, i) => {
     mobileMoneyCollected: Math.floor(Math.random() * 80000) + 20000,
   };
 });
+
+// ===== MOBILE MONEY PROVIDERS =====
+export interface MobileMoneyProvider {
+  id: string;
+  name: string;
+  code: string;
+  logo: string;
+}
+
+export const mobileMoneyProviders: MobileMoneyProvider[] = [
+  { id: 'momo-1', name: 'OPay', code: 'OPAY', logo: '💳' },
+  { id: 'momo-2', name: 'PalmPay', code: 'PALMPAY', logo: '📱' },
+  { id: 'momo-3', name: 'Paga', code: 'PAGA', logo: '💰' },
+  { id: 'momo-4', name: 'Kuda', code: 'KUDA', logo: '🏦' },
+  { id: 'momo-5', name: 'Moniepoint', code: 'MONIEPOINT', logo: '🔵' },
+];
