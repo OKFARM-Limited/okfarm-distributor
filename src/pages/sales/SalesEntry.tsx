@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Download, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function SalesEntry() {
   const [vendorId, setVendorId] = useState('');
