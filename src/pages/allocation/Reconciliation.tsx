@@ -75,6 +75,7 @@ export default function Reconciliation() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold">Evening Reconciliation</h1>
         {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
