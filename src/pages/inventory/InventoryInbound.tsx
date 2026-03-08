@@ -93,7 +93,7 @@ export default function InventoryInbound() {
                       <TableCell><Badge variant={d.status === 'received' ? 'default' : d.status === 'verified' ? 'secondary' : 'outline'}>{d.status}</Badge></TableCell>
                       <TableCell className="text-right space-x-1">
                         <Button size="sm" variant="ghost" onClick={() => setViewDelivery(d)}><Eye className="h-3 w-3" /></Button>
-                        {d.status === 'pending' && <Button size="sm" onClick={() => markReceived(d.id)}>Receive</Button>}
+                        {d.status === 'pending' && <Button size="sm" onClick={() => markReceived(d.id)} {...viewerProps}>Receive</Button>}
                       </TableCell>
                     </TableRow>
                   ))}

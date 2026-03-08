@@ -118,7 +118,7 @@ export default function Reconciliation() {
               </TableBody>
             </Table>
             <div className="flex justify-end mt-4">
-              <Button onClick={handleReconcile} disabled={createReconciliation.isPending}>
+              <Button onClick={handleReconcile} disabled={createReconciliation.isPending} {...viewerProps}>
                 {createReconciliation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Save Reconciliation
               </Button>
