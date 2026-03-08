@@ -101,6 +101,7 @@ function AppRoutes() {
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
         <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
         <Route path="roles" element={<AdminOnlyRoute><RoleManagement /></AdminOnlyRoute>} />
+        <Route path="permissions" element={<AdminOnlyRoute><PermissionsMatrix /></AdminOnlyRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
