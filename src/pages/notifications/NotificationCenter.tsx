@@ -25,6 +25,7 @@ export default function NotificationCenter() {
   const { data: notifs = [], isLoading } = useNotifications(isAllOutlets ? 'all' : selectedOutletId);
   const updateNotif = useUpdateNotification();
   const deleteNotif = useDeleteNotification();
+  const { viewerProps } = useViewerGuard();
 
   const allNotifs = notifs as any[];
   const unread = allNotifs.filter(n => !n.read);
