@@ -55,6 +55,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  if (user?.role !== 'admin' && user?.role !== 'manager') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
