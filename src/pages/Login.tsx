@@ -18,7 +18,7 @@ export default function Login() {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
-  const [signupRole, setSignupRole] = useState<'admin' | 'manager' | 'assistant'>('assistant');
+  const [signupRole, setSignupRole] = useState<'admin' | 'manager' | 'assistant' | 'viewer'>('assistant');
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
@@ -112,12 +112,13 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <Label>Role</Label>
-                   <Select value={signupRole} onValueChange={v => setSignupRole(v as 'admin' | 'manager' | 'assistant')}>
+                   <Select value={signupRole} onValueChange={v => setSignupRole(v as 'admin' | 'manager' | 'assistant' | 'viewer')}>
                      <SelectTrigger><SelectValue /></SelectTrigger>
                      <SelectContent>
                        <SelectItem value="admin">Admin</SelectItem>
                        <SelectItem value="manager">Manager</SelectItem>
                        <SelectItem value="assistant">Assistant</SelectItem>
+                       <SelectItem value="viewer">Viewer</SelectItem>
                      </SelectContent>
                    </Select>
                 </div>

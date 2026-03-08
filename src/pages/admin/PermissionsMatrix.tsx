@@ -11,47 +11,49 @@ interface FeaturePermission {
   admin: Permission;
   manager: Permission;
   assistant: Permission;
+  viewer: Permission;
 }
 
 const permissions: FeaturePermission[] = [
   // Overview
-  { feature: 'Dashboard', category: 'Overview', admin: 'full', manager: 'full', assistant: 'read' },
-  { feature: 'Notifications', category: 'Overview', admin: 'full', manager: 'read', assistant: 'read' },
+  { feature: 'Dashboard', category: 'Overview', admin: 'full', manager: 'full', assistant: 'read', viewer: 'read' },
+  { feature: 'Notifications', category: 'Overview', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
   // Operations
-  { feature: 'Vendors (view)', category: 'Operations', admin: 'full', manager: 'read', assistant: 'read' },
-  { feature: 'Vendors (create/edit)', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write' },
-  { feature: 'Check-In', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write' },
-  { feature: 'Assets', category: 'Operations', admin: 'full', manager: 'read', assistant: 'read' },
-  { feature: 'Allocation', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write' },
-  { feature: 'Reconciliation', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write' },
+  { feature: 'Vendors (view)', category: 'Operations', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
+  { feature: 'Vendors (create/edit)', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write', viewer: 'none' },
+  { feature: 'Check-In', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write', viewer: 'read' },
+  { feature: 'Assets', category: 'Operations', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
+  { feature: 'Allocation', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write', viewer: 'read' },
+  { feature: 'Reconciliation', category: 'Operations', admin: 'full', manager: 'write', assistant: 'write', viewer: 'read' },
   // Inventory
-  { feature: 'Inbound Stock', category: 'Inventory', admin: 'full', manager: 'write', assistant: 'read' },
-  { feature: 'Stock Levels', category: 'Inventory', admin: 'full', manager: 'write', assistant: 'read' },
-  { feature: 'Barcode Scanner', category: 'Inventory', admin: 'full', manager: 'full', assistant: 'full' },
+  { feature: 'Inbound Stock', category: 'Inventory', admin: 'full', manager: 'write', assistant: 'read', viewer: 'read' },
+  { feature: 'Stock Levels', category: 'Inventory', admin: 'full', manager: 'write', assistant: 'read', viewer: 'read' },
+  { feature: 'Barcode Scanner', category: 'Inventory', admin: 'full', manager: 'full', assistant: 'full', viewer: 'read' },
   // Finance
-  { feature: 'Sales Entry', category: 'Finance', admin: 'full', manager: 'write', assistant: 'write' },
-  { feature: 'Payments', category: 'Finance', admin: 'full', manager: 'write', assistant: 'write' },
-  { feature: 'Mobile Money', category: 'Finance', admin: 'full', manager: 'write', assistant: 'read' },
-  { feature: 'Dues Statement', category: 'Finance', admin: 'full', manager: 'read', assistant: 'read' },
+  { feature: 'Sales Entry', category: 'Finance', admin: 'full', manager: 'write', assistant: 'write', viewer: 'read' },
+  { feature: 'Payments', category: 'Finance', admin: 'full', manager: 'write', assistant: 'write', viewer: 'read' },
+  { feature: 'Mobile Money', category: 'Finance', admin: 'full', manager: 'write', assistant: 'read', viewer: 'read' },
+  { feature: 'Dues Statement', category: 'Finance', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
   // Analytics
-  { feature: 'Performance Dashboard', category: 'Analytics', admin: 'full', manager: 'read', assistant: 'read' },
-  { feature: 'Vendor Map', category: 'Analytics', admin: 'full', manager: 'read', assistant: 'read' },
+  { feature: 'Performance Dashboard', category: 'Analytics', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
+  { feature: 'Vendor Map', category: 'Analytics', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
   // Programs
-  { feature: 'Incentives', category: 'Programs', admin: 'full', manager: 'read', assistant: 'read' },
-  { feature: 'Fan Academy', category: 'Programs', admin: 'full', manager: 'read', assistant: 'read' },
+  { feature: 'Incentives', category: 'Programs', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
+  { feature: 'Fan Academy', category: 'Programs', admin: 'full', manager: 'read', assistant: 'read', viewer: 'read' },
   // Admin
-  { feature: 'Outlets Management', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Products Management', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Commissions', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Payouts', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Orders', category: 'Admin', admin: 'full', manager: 'write', assistant: 'none' },
-  { feature: 'Forecast & Reorder', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Settlement', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Depots', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none' },
-  { feature: 'Audit Trail', category: 'Admin', admin: 'full', manager: 'none', assistant: 'none' },
-  { feature: 'User Roles', category: 'Admin', admin: 'full', manager: 'none', assistant: 'none' },
+  { feature: 'Outlets Management', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Products Management', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Commissions', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Payouts', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Orders', category: 'Admin', admin: 'full', manager: 'write', assistant: 'none', viewer: 'read' },
+  { feature: 'Forecast & Reorder', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Settlement', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Depots', category: 'Admin', admin: 'full', manager: 'read', assistant: 'none', viewer: 'read' },
+  { feature: 'Audit Trail', category: 'Admin', admin: 'full', manager: 'none', assistant: 'none', viewer: 'none' },
+  { feature: 'User Roles', category: 'Admin', admin: 'full', manager: 'none', assistant: 'none', viewer: 'none' },
+  { feature: 'Permissions', category: 'Admin', admin: 'full', manager: 'none', assistant: 'none', viewer: 'none' },
   // System
-  { feature: 'Settings', category: 'System', admin: 'full', manager: 'full', assistant: 'full' },
+  { feature: 'Settings', category: 'System', admin: 'full', manager: 'full', assistant: 'full', viewer: 'read' },
 ];
 
 function PermissionCell({ level }: { level: Permission }) {
@@ -97,6 +99,7 @@ export default function PermissionsMatrix() {
         <Badge variant="destructive" className="text-sm px-3 py-1">Admin — Full system access</Badge>
         <Badge variant="default" className="text-sm px-3 py-1">Manager — Operations & analytics</Badge>
         <Badge variant="secondary" className="text-sm px-3 py-1">Assistant — Data entry & viewing</Badge>
+        <Badge variant="outline" className="text-sm px-3 py-1">Viewer — Read-only access</Badge>
       </div>
 
       {categories.map(category => (
@@ -109,10 +112,11 @@ export default function PermissionsMatrix() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">Feature</TableHead>
+                  <TableHead className="w-[30%]">Feature</TableHead>
                   <TableHead>Admin</TableHead>
                   <TableHead>Manager</TableHead>
                   <TableHead>Assistant</TableHead>
+                  <TableHead>Viewer</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -124,6 +128,7 @@ export default function PermissionsMatrix() {
                       <TableCell><PermissionCell level={p.admin} /></TableCell>
                       <TableCell><PermissionCell level={p.manager} /></TableCell>
                       <TableCell><PermissionCell level={p.assistant} /></TableCell>
+                      <TableCell><PermissionCell level={p.viewer} /></TableCell>
                     </TableRow>
                   ))}
               </TableBody>
