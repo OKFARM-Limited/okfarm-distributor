@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ArrowLeft, Phone, MapPin, Fingerprint, Package, Loader2, UserX, UserCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function VendorDetail() {
   const { id } = useParams();

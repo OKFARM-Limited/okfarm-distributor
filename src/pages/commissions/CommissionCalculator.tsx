@@ -11,6 +11,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Info, Trophy, TrendingUp, Calendar, Zap, MapPin, Loader2, Calculator } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const tierColors: Record<string, string> = {
   platinum: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',

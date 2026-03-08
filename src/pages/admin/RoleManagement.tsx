@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Search, ShieldCheck, UserCog } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/contexts/AuthContext';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 interface UserWithRole {
   user_id: string;

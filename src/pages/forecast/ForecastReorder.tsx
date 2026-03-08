@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { TrendingUp, ShoppingCart, AlertTriangle, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function ForecastReorder() {
   const { selectedOutletId, isAllOutlets } = useOutletContext();
