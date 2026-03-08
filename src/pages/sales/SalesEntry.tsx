@@ -21,6 +21,7 @@ export default function SalesEntry() {
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [], isLoading: pLoading } = useProducts();
   const createSale = useCreateSale();
+  const { viewerProps } = useViewerGuard();
 
   const vendor = vendors.find((v: any) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
