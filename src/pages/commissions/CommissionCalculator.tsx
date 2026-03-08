@@ -25,6 +25,7 @@ export default function CommissionCalculator() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: commissions = [], isLoading } = useCommissions(isAllOutlets ? 'all' : selectedOutletId);
   const calculateCommissions = useCalculateCommissions();
+  const { viewerProps } = useViewerGuard();
   const [calcDialog, setCalcDialog] = useState(false);
   const [calcMonth, setCalcMonth] = useState(() => {
     const d = new Date();
