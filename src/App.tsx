@@ -34,6 +34,10 @@ import DuesStatement from "./pages/dues/DuesStatement";
 import MobileMoneyPayment from "./pages/payments/MobileMoneyPayment";
 import NotificationCenter from "./pages/notifications/NotificationCenter";
 import ForecastReorder from "./pages/forecast/ForecastReorder";
+import MonthlySettlement from "./pages/settlement/MonthlySettlement";
+import IncentivePrograms from "./pages/incentives/IncentivePrograms";
+import FanAcademy from "./pages/training/FanAcademy";
+import DepotManagement from "./pages/depots/DepotManagement";
 
 const queryClient = new QueryClient();
 
