@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CheckCircle, ChevronRight, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function DailyAllocation() {
   const [step, setStep] = useState(0);
