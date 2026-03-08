@@ -112,10 +112,11 @@ export default function PermissionsMatrix() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40%]">Feature</TableHead>
+                  <TableHead className="w-[30%]">Feature</TableHead>
                   <TableHead>Admin</TableHead>
                   <TableHead>Manager</TableHead>
                   <TableHead>Assistant</TableHead>
+                  <TableHead>Viewer</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -127,6 +128,7 @@ export default function PermissionsMatrix() {
                       <TableCell><PermissionCell level={p.admin} /></TableCell>
                       <TableCell><PermissionCell level={p.manager} /></TableCell>
                       <TableCell><PermissionCell level={p.assistant} /></TableCell>
+                      <TableCell><PermissionCell level={p.viewer} /></TableCell>
                     </TableRow>
                   ))}
               </TableBody>
