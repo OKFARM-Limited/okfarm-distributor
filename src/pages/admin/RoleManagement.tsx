@@ -153,8 +153,8 @@ export default function RoleManagement() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{user.email || '—'}</TableCell>
                     <TableCell>
-                      <Badge variant={user.role === 'admin' ? 'destructive' : 'secondary'} className="gap-1">
-                        {user.role === 'admin' && <ShieldCheck className="h-3 w-3" />}
+                      <Badge variant={user.role === 'admin' ? 'destructive' : user.role === 'manager' ? 'default' : 'secondary'} className="gap-1">
+                        {(user.role === 'admin' || user.role === 'manager') && <ShieldCheck className="h-3 w-3" />}
                         {user.role}
                       </Badge>
                     </TableCell>
