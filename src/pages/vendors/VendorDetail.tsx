@@ -46,6 +46,7 @@ export default function VendorDetail() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
           <ArrowLeft className="h-4 w-4" /> Back to Vendors
