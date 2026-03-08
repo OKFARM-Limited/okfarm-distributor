@@ -18,6 +18,7 @@ export default function VendorCheckIn() {
   const { data: todayCheckIns = [], isLoading: cLoading } = useCheckIns(today);
   const createCheckIn = useCreateCheckIn();
   const updateCheckIn = useUpdateCheckIn();
+  const { viewerProps } = useViewerGuard();
 
   const activeVendors = allVendors.filter((v: any) => v.status === 'active');
   const checkedInIds = todayCheckIns.map((r: any) => r.vendor_id);
