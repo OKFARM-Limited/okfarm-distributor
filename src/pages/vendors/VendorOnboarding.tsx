@@ -245,7 +245,7 @@ export default function VendorOnboarding() {
 
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="outline" type="button" onClick={() => navigate('/vendors')}>Cancel</Button>
-          <Button type="submit" disabled={upsertVendor.isPending}>
+          <Button type="submit" disabled={upsertVendor.isPending} {...viewerProps}>
             {upsertVendor.isPending ? 'Registering...' : 'Register Vendor'}
           </Button>
         </div>

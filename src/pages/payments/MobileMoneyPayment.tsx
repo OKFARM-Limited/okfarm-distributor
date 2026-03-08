@@ -163,7 +163,7 @@ export default function MobileMoneyPayment() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep('details')}>Back</Button>
-              <Button className="flex-1" onClick={handleConfirm}>Confirm & Pay</Button>
+              <Button className="flex-1" onClick={handleConfirm} {...viewerProps}>Confirm & Pay</Button>
             </div>
           </CardContent>
         </Card>

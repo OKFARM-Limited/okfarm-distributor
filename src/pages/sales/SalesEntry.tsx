@@ -131,7 +131,7 @@ export default function SalesEntry() {
                 <div><Label>Outstanding</Label><p className="text-xl font-bold text-destructive">₦{Math.max(0, totalValue - amountPaid).toLocaleString()}</p></div>
               </div>
 
-              <Button onClick={handleSubmit} disabled={totalValue === 0 || createSale.isPending} className="w-full sm:w-auto">
+              <Button onClick={handleSubmit} disabled={totalValue === 0 || createSale.isPending} className="w-full sm:w-auto" {...viewerProps}>
                 {createSale.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Record Sales
               </Button>

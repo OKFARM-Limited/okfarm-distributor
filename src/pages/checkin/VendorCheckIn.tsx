@@ -108,9 +108,9 @@ export default function VendorCheckIn() {
                     </TableCell>
                     <TableCell className="text-right">
                       {!isIn ? (
-                        <Button size="sm" onClick={() => handleCheckIn(v.id)} className="gap-1"><LogIn className="h-3 w-3" /> In</Button>
+                        <Button size="sm" onClick={() => handleCheckIn(v.id)} className="gap-1" {...viewerProps}><LogIn className="h-3 w-3" /> In</Button>
                       ) : !isOut ? (
-                        <Button size="sm" variant="outline" onClick={() => handleCheckOut(v.id)} className="gap-1"><LogOut className="h-3 w-3" /> Out</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleCheckOut(v.id)} className="gap-1" {...viewerProps}><LogOut className="h-3 w-3" /> Out</Button>
                       ) : (
                         <span className="text-xs text-muted-foreground">Done</span>
                       )}
