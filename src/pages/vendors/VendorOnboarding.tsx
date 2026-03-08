@@ -96,6 +96,7 @@ export default function VendorOnboarding() {
       <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
         <ArrowLeft className="h-4 w-4" /> Back to Vendors
       </Button>
+      <ViewerBanner />
       <div className="flex items-center gap-2">
         <UserPlus className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">Vendor Onboarding</h1>

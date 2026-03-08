@@ -80,6 +80,7 @@ export default function MobileMoneyPayment() {
 
   return (
     <div className="space-y-4 animate-fade-in max-w-lg mx-auto">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="h-6 w-6" /> Mobile Money Collection</h1>
 
       <div className="flex items-center gap-2 text-xs">
