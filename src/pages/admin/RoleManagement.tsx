@@ -24,6 +24,7 @@ interface UserWithRole {
 export default function RoleManagement() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const { viewerProps } = useViewerGuard();
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-user-roles'],
