@@ -104,9 +104,7 @@ export function useAssets(outletId?: string | null) {
     queryKey: ['assets', outletId],
     queryFn: async () => {
       let query = supabase.from('assets').select('*, vendors(name, vendor_code), outlets(name, short_code)').order('asset_code');
-      if (outletId && outletId !== 'all') {
-        query = query.eq('outlet_id', outletId);
-      }
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -134,9 +132,7 @@ export function useDepots(outletId?: string | null) {
     queryKey: ['depots', outletId],
     queryFn: async () => {
       let query = supabase.from('depots').select('*, outlets(name, short_code)').order('name');
-      if (outletId && outletId !== 'all') {
-        query = query.eq('outlet_id', outletId);
-      }
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -168,9 +164,7 @@ export function useAllocations(outletId?: string | null) {
     queryKey: ['allocations', outletId],
     queryFn: async () => {
       let query = supabase.from('allocations').select('*, vendors(name, vendor_code, territory), outlets(name, short_code), allocation_items(*, products(name, sku))').order('date', { ascending: false });
-      if (outletId && outletId !== 'all') {
-        query = query.eq('outlet_id', outletId);
-      }
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -202,9 +196,7 @@ export function useSales(outletId?: string | null) {
     queryKey: ['sales', outletId],
     queryFn: async () => {
       let query = supabase.from('sales').select('*, vendors(name, vendor_code), outlets(name, short_code), sale_items(*, products(name, sku))').order('date', { ascending: false });
-      if (outletId && outletId !== 'all') {
-        query = query.eq('outlet_id', outletId);
-      }
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -294,7 +286,6 @@ export function useCreateReconciliation() {
         );
         if (itemErr) throw itemErr;
       }
-      // Update allocation status to reconciled
       await supabase.from('allocations').update({ status: 'reconciled' }).eq('id', recon.allocation_id);
       return data;
     },
@@ -363,7 +354,6 @@ export function useCreatePayout() {
     mutationFn: async (payout: TablesInsert<'payouts'>) => {
       const { data, error } = await supabase.from('payouts').insert(payout).select().single();
       if (error) throw error;
-      // Update commission status
       await supabase.from('commissions').update({ status: 'disbursed' }).eq('id', payout.commission_id);
       return data;
     },
@@ -382,6 +372,188 @@ export function useSettlements(outletId?: string | null) {
       let query = supabase.from('settlements').select('*, outlets(name), settlement_lines(*)').order('month', { ascending: false });
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ===== ORDERS =====
+export function useOrders(outletId?: string | null) {
+  return useQuery({
+    queryKey: ['orders', outletId],
+    queryFn: async () => {
+      let query = supabase.from('orders').select('*, outlets(name), order_items(*, products(name, sku, category))').order('order_date', { ascending: false });
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useCreateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ items, ...order }: TablesInsert<'orders'> & { items: { product_id: string; quantity: number; unit_price: number }[] }) => {
+      const { data, error } = await supabase.from('orders').insert(order).select().single();
+      if (error) throw error;
+      if (items.length > 0) {
+        const { error: itemErr } = await supabase.from('order_items').insert(
+          items.map(i => ({ order_id: data.id, product_id: i.product_id, quantity: i.quantity, unit_price: i.unit_price }))
+        );
+        if (itemErr) throw itemErr;
+      }
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+}
+
+// ===== INBOUND DELIVERIES =====
+export function useInboundDeliveries(outletId?: string | null) {
+  return useQuery({
+    queryKey: ['inbound_deliveries', outletId],
+    queryFn: async () => {
+      let query = supabase.from('inbound_deliveries').select('*, outlets(name), delivery_items(*, products(name, sku))').order('date', { ascending: false });
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdateDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
+      const { data, error } = await supabase.from('inbound_deliveries').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inbound_deliveries'] }),
+  });
+}
+
+// ===== STOCK LEVELS =====
+export function useStockLevels(outletId?: string | null) {
+  return useQuery({
+    queryKey: ['stock_levels', outletId],
+    queryFn: async () => {
+      let query = supabase.from('stock_levels').select('*, products(name, sku, unit), outlets(name)');
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ===== NOTIFICATIONS =====
+export function useNotifications(outletId?: string | null) {
+  return useQuery({
+    queryKey: ['notifications', outletId],
+    queryFn: async () => {
+      let query = supabase.from('notifications').select('*, outlets(name)').order('created_at', { ascending: false });
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpdateNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
+      const { data, error } = await supabase.from('notifications').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+}
+
+export function useDeleteNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('notifications').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+}
+
+// ===== AUDIT LOGS =====
+export function useAuditLogs() {
+  return useQuery({
+    queryKey: ['audit_logs'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ===== INCENTIVE PROGRAMS =====
+export function useIncentivePrograms() {
+  return useQuery({
+    queryKey: ['incentive_programs'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('incentive_programs').select('*, vendor_incentives(*, vendors(name, vendor_code))').order('name');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ===== TRAINING =====
+export function useTrainingModules() {
+  return useQuery({
+    queryKey: ['training_modules'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('training_modules').select('*, vendor_training_progress(*, vendors(name, vendor_code))').order('title');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useVendorTrainingProgress() {
+  return useQuery({
+    queryKey: ['vendor_training_progress'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('vendor_training_progress').select('*, vendors(name, vendor_code), training_modules(title, category, mandatory)').order('created_at');
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ===== FORECASTS =====
+export function useForecasts(outletId?: string | null) {
+  return useQuery({
+    queryKey: ['forecasts', outletId],
+    queryFn: async () => {
+      let query = supabase.from('forecasts').select('*, products(name, sku, unit, unit_price, category), outlets(name)').order('days_until_stockout');
+      if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+// ===== VENDORS WITH GPS =====
+export function useVendorLocations() {
+  return useQuery({
+    queryKey: ['vendor_locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('vendors').select('id, name, vendor_code, territory, latitude, longitude, route_data, outlets(name)').not('latitude', 'is', null).not('longitude', 'is', null);
       if (error) throw error;
       return data;
     },
