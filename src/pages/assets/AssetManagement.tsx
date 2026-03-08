@@ -22,6 +22,7 @@ export default function AssetManagement() {
   const { data: assets = [], isLoading } = useAssets(isAllOutlets ? 'all' : selectedOutletId);
   const { data: vendors = [] } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const updateAsset = useUpdateAsset();
+  const { viewerProps } = useViewerGuard();
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
