@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { OutletProvider } from "./contexts/OutletContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -38,6 +39,7 @@ import MonthlySettlement from "./pages/settlement/MonthlySettlement";
 import IncentivePrograms from "./pages/incentives/IncentivePrograms";
 import FanAcademy from "./pages/training/FanAcademy";
 import DepotManagement from "./pages/depots/DepotManagement";
+import OutletManagement from "./pages/outlets/OutletManagement";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +84,7 @@ function AppRoutes() {
         <Route path="orders" element={<AdminRoute><OrderPlacement /></AdminRoute>} />
         <Route path="audit" element={<AdminRoute><AuditTrail /></AdminRoute>} />
         <Route path="settlement" element={<AdminRoute><MonthlySettlement /></AdminRoute>} />
+        <Route path="outlets" element={<AdminRoute><OutletManagement /></AdminRoute>} />
         <Route path="incentives" element={<IncentivePrograms />} />
         <Route path="training" element={<FanAcademy />} />
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
@@ -97,13 +100,15 @@ const App = () => (
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
+          <OutletProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </OutletProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
