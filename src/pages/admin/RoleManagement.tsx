@@ -7,7 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Loader2, Search, ShieldCheck, UserCog } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Loader2, Search, ShieldCheck, UserCog, UserPlus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/contexts/AuthContext';
 import { ViewerBanner } from '@/components/ViewerGuard';
@@ -26,10 +29,16 @@ export default function RoleManagement() {
   const [search, setSearch] = useState('');
   const { viewerProps } = useViewerGuard();
 
+  // Create user dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newRole, setNewRole] = useState<UserRole>('assistant');
+
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-user-roles'],
     queryFn: async () => {
-      // Fetch all profiles and their roles
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
         .select('user_id, display_name, email, avatar_url');
@@ -54,7 +63,6 @@ export default function RoleManagement() {
 
   const updateRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
-      // Upsert: delete old then insert new (simple approach since no unique constraint on user_id alone may vary)
       const { error: delErr } = await supabase
         .from('user_roles')
         .delete()
@@ -75,6 +83,29 @@ export default function RoleManagement() {
     },
   });
 
+  const createUser = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: { email: newEmail, password: newPassword, display_name: newName, role: newRole },
+      });
+      if (error) throw new Error(error.message || 'Failed to create user');
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user-roles'] });
+      toast({ title: 'User Created', description: `${newEmail} has been created with role "${newRole}".` });
+      setCreateOpen(false);
+      setNewEmail('');
+      setNewPassword('');
+      setNewName('');
+      setNewRole('assistant');
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error Creating User', description: err.message, variant: 'destructive' });
+    },
+  });
+
   const filtered = users.filter(u => {
     const q = search.toLowerCase();
     return !q || u.display_name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
@@ -85,11 +116,64 @@ export default function RoleManagement() {
   return (
     <div className="space-y-6">
       <ViewerBanner />
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <UserCog className="h-6 w-6" /> Role Management
-        </h1>
-        <p className="text-muted-foreground">View and assign user roles across the platform.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <UserCog className="h-6 w-6" /> Role Management
+          </h1>
+          <p className="text-muted-foreground">View and assign user roles across the platform.</p>
+        </div>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button {...viewerProps} className="gap-2">
+              <UserPlus className="h-4 w-4" /> Create User
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+              <DialogDescription>Create a new user account and assign them a role.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="new-name">Display Name</Label>
+                <Input id="new-name" placeholder="John Doe" value={newName} onChange={e => setNewName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-email">Email *</Label>
+                <Input id="new-email" type="email" placeholder="user@example.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Password *</Label>
+                <Input id="new-password" type="password" placeholder="Minimum 6 characters" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Role *</Label>
+                <Select value={newRole} onValueChange={(v) => setNewRole(v as UserRole)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="assistant">Assistant</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
+              <Button
+                onClick={() => createUser.mutate()}
+                disabled={!newEmail || !newPassword || newPassword.length < 6 || createUser.isPending}
+              >
+                {createUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
