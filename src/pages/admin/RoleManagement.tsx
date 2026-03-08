@@ -84,6 +84,7 @@ export default function RoleManagement() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <UserCog className="h-6 w-6" /> Role Management
