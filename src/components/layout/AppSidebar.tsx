@@ -2,7 +2,7 @@ import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
   Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
-  Building2, GraduationCap, Gift, Handshake
+  Building2, GraduationCap, Gift, Handshake, Store
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -67,6 +67,7 @@ const navGroups = [
     label: 'Admin',
     adminOnly: true,
     items: [
+      { title: 'Outlets', url: '/outlets', icon: Store },
       { title: 'Commissions', url: '/commissions', icon: Award },
       { title: 'Payouts', url: '/payouts', icon: Truck },
       { title: 'Orders', url: '/orders', icon: ShoppingCart },

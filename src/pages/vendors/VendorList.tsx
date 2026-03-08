@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { vendors as mockVendors, Vendor } from '@/data/mockData';
+import { vendors as mockVendors, Vendor, getOutletName } from '@/data/mockData';
+import { useOutletContext } from '@/contexts/OutletContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Phone, MapPin, Fingerprint, Edit } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Fingerprint, Edit, Building2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -22,12 +23,14 @@ export default function VendorList() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const navigate = useNavigate();
+  const { selectedOutletId, isAllOutlets } = useOutletContext();
 
   const filtered = vendors.filter(v => {
     const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.id.toLowerCase().includes(search.toLowerCase());
     const matchTerritory = territory === 'All' || v.territory === territory;
     const matchStatus = statusFilter === 'all' || v.status === statusFilter;
-    return matchSearch && matchTerritory && matchStatus;
+    const matchOutlet = isAllOutlets || v.outletId === selectedOutletId;
+    return matchSearch && matchTerritory && matchStatus && matchOutlet;
   });
 
   const handleSave = (updates: Partial<Vendor> & { id: string }) => {
@@ -41,12 +44,11 @@ export default function VendorList() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Vendors</h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} vendors found</p>
+          <p className="text-muted-foreground text-sm">{filtered.length} vendors found{!isAllOutlets && ` in ${getOutletName(selectedOutletId)}`}</p>
         </div>
         <Button onClick={() => navigate('/vendors/onboard')}><Plus className="h-4 w-4 mr-1" /> Onboard Vendor</Button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -67,7 +69,6 @@ export default function VendorList() {
         </Select>
       </div>
 
-      {/* Vendor Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {filtered.map(v => (
           <Card key={v.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/vendors/${v.id}`)}>
@@ -88,6 +89,7 @@ export default function VendorList() {
                   <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{v.phone}</span>
                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.territory}</span>
+                    <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{getOutletName(v.outletId)}</span>
                     {v.biometricsEnabled && <span className="flex items-center gap-1 text-success"><Fingerprint className="h-3 w-3" />Bio</span>}
                   </div>
                   <div className="flex items-center justify-between mt-2">
@@ -103,7 +105,6 @@ export default function VendorList() {
         ))}
       </div>
 
-      {/* Quick Edit Dialog */}
       <Dialog open={!!editVendor} onOpenChange={open => !open && setEditVendor(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Quick Edit Vendor</DialogTitle></DialogHeader>
@@ -115,14 +116,16 @@ export default function VendorList() {
 }
 
 function QuickEditForm({ vendor, onSave }: { vendor: Vendor; onSave: (v: Partial<Vendor> & { id: string }) => void }) {
+  const { allOutlets } = useOutletContext();
   const [name, setName] = useState(vendor.name);
   const [phone, setPhone] = useState(vendor.phone);
   const [terr, setTerr] = useState(vendor.territory);
+  const [outletId, setOutletId] = useState(vendor.outletId);
   const [bio, setBio] = useState(vendor.biometricsEnabled);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ id: vendor.id, name, phone, territory: terr, biometricsEnabled: bio });
+    onSave({ id: vendor.id, name, phone, territory: terr, outletId, biometricsEnabled: bio });
   };
 
   return (
@@ -134,6 +137,13 @@ function QuickEditForm({ vendor, onSave }: { vendor: Vendor; onSave: (v: Partial
         <Select value={terr} onValueChange={setTerr}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>{['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>Outlet</Label>
+        <Select value={outletId} onValueChange={setOutletId}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>{allOutlets.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <div className="flex items-center gap-2"><Switch checked={bio} onCheckedChange={setBio} /><Label>Enable Biometrics</Label></div>

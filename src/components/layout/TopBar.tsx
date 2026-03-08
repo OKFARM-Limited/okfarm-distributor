@@ -1,7 +1,8 @@
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Bell, Moon, Sun, Search, Wifi, WifiOff, LogOut } from 'lucide-react';
+import { useOutletContext } from '@/contexts/OutletContext';
+import { Bell, Moon, Sun, Search, Wifi, WifiOff, LogOut, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,6 +10,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -17,13 +19,14 @@ import { toast } from '@/hooks/use-toast';
 export function TopBar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { selectedOutletId, setSelectedOutletId, selectedOutlet, allOutlets, isAllOutlets } = useOutletContext();
   const [isOnline] = useState(true);
   const navigate = useNavigate();
 
   const handleNotification = () => {
     toast({
       title: '⚠️ Low Stock Alert',
-      description: 'FanYogo Strawberry is running low at Ikeja depot. 15 packs remaining.',
+      description: `FanYogo Strawberry is running low at ${selectedOutlet?.name || 'multiple outlets'}. 15 packs remaining.`,
     });
   };
 
@@ -31,22 +34,44 @@ export function TopBar() {
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur px-4">
       <SidebarTrigger className="shrink-0" />
 
+      {/* Outlet Selector */}
+      <div className="flex items-center gap-2">
+        <MapPin className="h-4 w-4 text-primary shrink-0" />
+        <Select value={selectedOutletId} onValueChange={setSelectedOutletId}>
+          <SelectTrigger className="h-9 w-[180px] md:w-[200px] text-sm font-medium border-primary/30">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Outlets (Overview)</SelectItem>
+            {allOutlets.map(o => (
+              <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="hidden md:flex flex-1 max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search vendors, SKUs, orders..." className="pl-9 h-9 bg-muted/50" />
+          <Input placeholder={`Search${!isAllOutlets ? ` in ${selectedOutlet?.shortCode}` : ''}...`} className="pl-9 h-9 bg-muted/50" />
         </div>
       </div>
 
       <div className="flex-1" />
 
+      {/* Current Outlet Badge */}
+      {!isAllOutlets && selectedOutlet && (
+        <Badge variant="outline" className="hidden lg:flex items-center gap-1 text-xs border-primary/30 text-primary">
+          <MapPin className="h-3 w-3" />
+          {selectedOutlet.shortCode}
+        </Badge>
+      )}
+
       <div className="flex items-center gap-1">
-        {/* Sync Status */}
         <Button variant="ghost" size="icon" className="h-9 w-9" title={isOnline ? 'Online — Synced' : 'Offline'}>
           {isOnline ? <Wifi className="h-4 w-4 text-success" /> : <WifiOff className="h-4 w-4 text-destructive" />}
         </Button>
 
-        {/* Notifications */}
         <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={handleNotification}>
           <Bell className="h-4 w-4" />
           <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-destructive text-destructive-foreground">
@@ -54,12 +79,10 @@ export function TopBar() {
           </Badge>
         </Button>
 
-        {/* Dark Mode Toggle */}
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
 
-        {/* User Menu */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
