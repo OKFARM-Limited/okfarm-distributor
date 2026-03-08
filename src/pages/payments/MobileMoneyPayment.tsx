@@ -27,6 +27,7 @@ export default function MobileMoneyPayment() {
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [reference, setReference] = useState('');
+  const { viewerProps } = useViewerGuard();
 
   const { data: vendors = [] } = useVendors('all');
   const { data: sales = [] } = useSales('all');

@@ -25,6 +25,7 @@ export default function VendorOnboarding() {
   const navigate = useNavigate();
   const { allOutlets } = useOutletContext();
   const upsertVendor = useUpsertVendor();
+  const { viewerProps } = useViewerGuard();
   const [photoPreview, setPhotoPreview] = useState('');
   const [form, setForm] = useState({
     name: '', phone: '', email: '', date_of_birth: '', gender: 'male',

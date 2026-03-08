@@ -33,6 +33,7 @@ export default function ProductManagement() {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { data: products = [], isLoading } = useProducts();
+  const { viewerProps } = useViewerGuard();
   const upsertProduct = useUpsertProduct();
   const deleteProduct = useDeleteProduct();
 
