@@ -77,6 +77,7 @@ const navGroups = [
       { title: 'Depots', url: '/depots', icon: Building2 },
       { title: 'Audit Trail', url: '/audit', icon: Shield },
       { title: 'User Roles', url: '/roles', icon: UserCog },
+      { title: 'Permissions', url: '/permissions', icon: Grid3X3 },
     ],
   },
   {
