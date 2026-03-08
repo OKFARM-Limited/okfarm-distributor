@@ -1,10 +1,16 @@
+import { useState } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useCommissions } from '@/hooks/useSupabaseData';
+import { useCommissions, useCalculateCommissions } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, Trophy, TrendingUp, Calendar, Zap, MapPin, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { toast } from '@/hooks/use-toast';
+import { Info, Trophy, TrendingUp, Calendar, Zap, MapPin, Loader2, Calculator } from 'lucide-react';
 
 const tierColors: Record<string, string> = {
   platinum: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
@@ -16,12 +22,29 @@ const tierColors: Record<string, string> = {
 export default function CommissionCalculator() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: commissions = [], isLoading } = useCommissions(isAllOutlets ? 'all' : selectedOutletId);
+  const calculateCommissions = useCalculateCommissions();
+  const [calcDialog, setCalcDialog] = useState(false);
+  const [calcMonth, setCalcMonth] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   const filtered = commissions as any[];
   const totalPending = filtered.filter(c => c.status === 'pending').reduce((s, c) => s + Number(c.total_commission), 0);
   const totalDisbursed = filtered.filter(c => c.status === 'disbursed').reduce((s, c) => s + Number(c.total_commission), 0);
   const avgConsistency = filtered.length ? Math.round(filtered.reduce((s, c) => s + Number(c.consistency_rate), 0) / filtered.length) : 0;
   const avgDaysActive = filtered.length ? Math.round(filtered.reduce((s, c) => s + c.days_active, 0) / filtered.length) : 0;
+
+  const handleCalculate = () => {
+    calculateCommissions.mutate(
+      { month: calcMonth, outletId: isAllOutlets ? undefined : selectedOutletId },
+      {
+        onSuccess: () => { toast({ title: '✅ Calculated', description: `Commissions for ${calcMonth} computed from sales data.` }); setCalcDialog(false); },
+        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      }
+    );
+  };
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -32,16 +55,21 @@ export default function CommissionCalculator() {
           <h1 className="text-2xl font-bold">Commission Calculator</h1>
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger><Info className="h-5 w-5 text-muted-foreground" /></TooltipTrigger>
-            <TooltipContent className="max-w-xs text-xs">
-              <p className="font-medium mb-1">Commission Formula:</p>
-              <p>(Volume Bonus + Consistency Bonus + Attendance Bonus) × Consistency Multiplier</p>
-              <p className="mt-1 text-muted-foreground">Multiplier: ≥85% = 1.5x, ≥70% = 1.25x, ≥50% = 1.0x, &lt;50% = 0.75x</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setCalcDialog(true)} className="gap-1">
+            <Calculator className="h-4 w-4" /> Auto-Calculate
+          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger><Info className="h-5 w-5 text-muted-foreground" /></TooltipTrigger>
+              <TooltipContent className="max-w-xs text-xs">
+                <p className="font-medium mb-1">Commission Formula:</p>
+                <p>(Volume Bonus + Consistency Bonus + Attendance Bonus) × Consistency Multiplier</p>
+                <p className="mt-1 text-muted-foreground">Multiplier: ≥85% = 1.15x, ≥70% = 1.08x, ≥50% = 1.02x, &lt;50% = 1.00x</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
@@ -84,12 +112,30 @@ export default function CommissionCalculator() {
                 </TableRow>
               ))}
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={isAllOutlets ? 9 : 8} className="text-center text-muted-foreground py-8">No commission data yet.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={isAllOutlets ? 9 : 8} className="text-center text-muted-foreground py-8">No commission data yet. Use Auto-Calculate to generate from sales.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* Auto-Calculate Dialog */}
+      <Dialog open={calcDialog} onOpenChange={setCalcDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Auto-Calculate Commissions</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">This will compute commissions from actual sales and attendance data for the selected month.</p>
+          <div className="space-y-2">
+            <Label>Month (YYYY-MM)</Label>
+            <Input value={calcMonth} onChange={e => setCalcMonth(e.target.value)} placeholder="e.g. 2026-03" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCalcDialog(false)}>Cancel</Button>
+            <Button onClick={handleCalculate} disabled={calculateCommissions.isPending}>
+              {calculateCommissions.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}Calculate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

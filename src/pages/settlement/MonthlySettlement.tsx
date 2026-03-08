@@ -1,23 +1,70 @@
+import { useState } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useSettlements } from '@/hooks/useSupabaseData';
+import { useSettlements, useCreateSettlement, useOutlets, useInboundDeliveries } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { FileText, Download, CheckCircle, Clock, AlertTriangle, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { FileText, Download, CheckCircle, Clock, AlertTriangle, Loader2, Plus } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function MonthlySettlement() {
   const { selectedOutletId, isAllOutlets } = useOutletContext();
   const { data: settlements = [], isLoading } = useSettlements(isAllOutlets ? 'all' : selectedOutletId);
-  const { toast } = useToast();
+  const { data: outlets = [] } = useOutlets();
+  const { data: deliveries = [] } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
+  const createSettlement = useCreateSettlement();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newMonth, setNewMonth] = useState('');
+  const [newOutlet, setNewOutlet] = useState('');
+  const [newDiscountRate, setNewDiscountRate] = useState(2.5);
+
+  const handleCreate = () => {
+    if (!newMonth || !newOutlet) {
+      toast({ title: 'Error', description: 'Month and outlet are required', variant: 'destructive' });
+      return;
+    }
+    // Auto-generate lines from deliveries for that month & outlet
+    const monthDeliveries = (deliveries as any[]).filter(
+      d => d.outlet_id === newOutlet && d.date?.startsWith(newMonth.substring(0, 7))
+    );
+    const totalReceivable = monthDeliveries.reduce((s, d) => s + Number(d.total_value), 0);
+    const discount = totalReceivable * (newDiscountRate / 100);
+    const lines = monthDeliveries.map(d => ({
+      invoice_number: d.invoice_number,
+      date: d.date,
+      due_date: d.due_date || d.date,
+      amount: Number(d.total_value),
+      amount_paid: 0,
+      credit_days: d.credit_term_days || 30,
+      status: 'due',
+    }));
+
+    createSettlement.mutate({
+      outlet_id: newOutlet,
+      month: newMonth,
+      total_receivable: totalReceivable,
+      total_paid: 0,
+      discount_rate: newDiscountRate,
+      discount,
+      net_payable: totalReceivable - discount,
+      status: 'open',
+      lines,
+    } as any, {
+      onSuccess: () => { toast({ title: '✅ Created', description: 'Settlement created.' }); setDialogOpen(false); },
+      onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+    });
+  };
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const latest = (settlements as any[])[0];
   const lines = latest?.settlement_lines || [];
-
   const totalReceivable = Number(latest?.total_receivable || 0);
   const totalPaid = Number(latest?.total_paid || 0);
   const totalOutstanding = totalReceivable - totalPaid;
@@ -26,8 +73,8 @@ export default function MonthlySettlement() {
   const netPayable = Number(latest?.net_payable || 0);
   const overdueCount = lines.filter((l: any) => l.status === 'overdue').length;
 
-  const statusIcon: Record<string, React.ReactNode> = { paid: <CheckCircle className="h-4 w-4 text-green-500" />, due: <Clock className="h-4 w-4 text-yellow-500" />, overdue: <AlertTriangle className="h-4 w-4 text-red-500" /> };
-  const statusVariant: Record<string, 'default' | 'secondary' | 'destructive'> = { paid: 'default', due: 'secondary', overdue: 'destructive' };
+  const statusIcon: Record<string, React.ReactNode> = { paid: <CheckCircle className="h-4 w-4 text-green-500" />, due: <Clock className="h-4 w-4 text-yellow-500" />, overdue: <AlertTriangle className="h-4 w-4 text-red-500" />, partial: <Clock className="h-4 w-4 text-orange-500" /> };
+  const statusVariant: Record<string, 'default' | 'secondary' | 'destructive'> = { paid: 'default', due: 'secondary', overdue: 'destructive', partial: 'secondary' };
 
   return (
     <div className="space-y-6">
@@ -36,9 +83,12 @@ export default function MonthlySettlement() {
           <h1 className="text-2xl font-bold text-foreground">Monthly Settlement</h1>
           <p className="text-muted-foreground">{latest ? `${latest.month} — ${latest.outlets?.name || 'All Outlets'}` : 'No settlement data yet'}</p>
         </div>
-        <Button variant="outline" onClick={() => toast({ title: 'Exported', description: 'Settlement report downloaded.' })}>
-          <Download className="h-4 w-4 mr-2" />Export
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => toast({ title: 'Exported', description: 'Settlement report downloaded.' })}>
+            <Download className="h-4 w-4 mr-2" />Export
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> New Settlement</Button>
+        </div>
       </div>
 
       {latest ? (
@@ -47,7 +97,7 @@ export default function MonthlySettlement() {
             <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Total Receivables</p><p className="text-xl font-bold text-foreground">₦{totalReceivable.toLocaleString()}</p></CardContent></Card>
             <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Total Paid</p><p className="text-xl font-bold text-green-600">₦{totalPaid.toLocaleString()}</p></CardContent></Card>
             <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Outstanding</p><p className="text-xl font-bold text-destructive">₦{totalOutstanding.toLocaleString()}</p></CardContent></Card>
-            <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Volume Discount ({(discountRate * 100).toFixed(0)}%)</p><p className="text-xl font-bold text-primary">-₦{discount.toLocaleString()}</p></CardContent></Card>
+            <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Volume Discount ({discountRate}%)</p><p className="text-xl font-bold text-primary">-₦{discount.toLocaleString()}</p></CardContent></Card>
             <Card className="border-primary"><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Net Payable</p><p className="text-xl font-bold text-foreground">₦{netPayable.toLocaleString()}</p></CardContent></Card>
           </div>
 
@@ -89,8 +139,40 @@ export default function MonthlySettlement() {
           </Card>
         </>
       ) : (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No settlement data available yet. Settlements will appear here once created.</CardContent></Card>
+        <Card><CardContent className="py-12 text-center text-muted-foreground">No settlement data available yet. Click "New Settlement" to create one.</CardContent></Card>
       )}
+
+      {/* Create Settlement Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Create New Settlement</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Month (YYYY-MM)</Label>
+              <Input value={newMonth} onChange={e => setNewMonth(e.target.value)} placeholder="e.g. 2026-03" />
+            </div>
+            <div className="space-y-2">
+              <Label>Outlet</Label>
+              <Select value={newOutlet} onValueChange={setNewOutlet}>
+                <SelectTrigger><SelectValue placeholder="Select outlet" /></SelectTrigger>
+                <SelectContent>
+                  {(outlets as any[]).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Discount Rate (%)</Label>
+              <Input type="number" min={0} max={100} step={0.5} value={newDiscountRate} onChange={e => setNewDiscountRate(parseFloat(e.target.value) || 0)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={createSettlement.isPending}>
+              {createSettlement.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

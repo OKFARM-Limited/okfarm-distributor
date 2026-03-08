@@ -1552,6 +1552,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_commissions: {
+        Args: { p_month: string; p_outlet_id?: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

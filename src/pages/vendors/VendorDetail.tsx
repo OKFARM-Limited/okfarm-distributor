@@ -1,29 +1,62 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useVendor, useAssets } from '@/hooks/useSupabaseData';
+import { useVendor, useAssets, useUpsertVendor } from '@/hooks/useSupabaseData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Phone, MapPin, Fingerprint, Package, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ArrowLeft, Phone, MapPin, Fingerprint, Package, Loader2, UserX, UserCheck } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 export default function VendorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getOutletName } = useOutletContext();
+  const { user } = useAuth();
   const { data: vendor, isLoading } = useVendor(id);
   const { data: allAssets = [] } = useAssets('all');
+  const upsertVendor = useUpsertVendor();
+  const [confirmDialog, setConfirmDialog] = useState(false);
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!vendor) return <div className="p-8 text-center text-muted-foreground">Vendor not found</div>;
 
   const vendorAssets = allAssets.filter((a: any) => a.assigned_to === vendor.id);
+  const isActive = vendor.status === 'active';
+
+  const handleToggleStatus = () => {
+    const newStatus = isActive ? 'inactive' : 'active';
+    upsertVendor.mutate(
+      { id: vendor.id, status: newStatus },
+      {
+        onSuccess: () => {
+          toast({ title: isActive ? '🚫 Vendor Deactivated' : '✅ Vendor Reactivated', description: `${vendor.name} is now ${newStatus}.` });
+          setConfirmDialog(false);
+        },
+        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      }
+    );
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
-        <ArrowLeft className="h-4 w-4" /> Back to Vendors
-      </Button>
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
+          <ArrowLeft className="h-4 w-4" /> Back to Vendors
+        </Button>
+        {(user?.role === 'admin' || user?.role === 'assistant') && (
+          <Button
+            variant={isActive ? 'destructive' : 'default'}
+            onClick={() => setConfirmDialog(true)}
+            className="gap-1"
+          >
+            {isActive ? <><UserX className="h-4 w-4" /> Deactivate</> : <><UserCheck className="h-4 w-4" /> Reactivate</>}
+          </Button>
+        )}
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
         <Card className="flex-1">
@@ -67,6 +100,31 @@ export default function VendorDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* Deactivate/Reactivate Confirmation Dialog */}
+      <Dialog open={confirmDialog} onOpenChange={setConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isActive ? 'Deactivate Vendor?' : 'Reactivate Vendor?'}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {isActive
+              ? `${vendor.name} will no longer appear in active vendor lists, allocation, or check-in workflows.`
+              : `${vendor.name} will be restored to active status and can resume operations.`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDialog(false)}>Cancel</Button>
+            <Button
+              variant={isActive ? 'destructive' : 'default'}
+              onClick={handleToggleStatus}
+              disabled={upsertVendor.isPending}
+            >
+              {upsertVendor.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              {isActive ? 'Deactivate' : 'Reactivate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -38,6 +38,7 @@ import ForecastReorder from "./pages/forecast/ForecastReorder";
 import MonthlySettlement from "./pages/settlement/MonthlySettlement";
 import IncentivePrograms from "./pages/incentives/IncentivePrograms";
 import FanAcademy from "./pages/training/FanAcademy";
+import ProductManagement from "./pages/products/ProductManagement";
 import DepotManagement from "./pages/depots/DepotManagement";
 import OutletManagement from "./pages/outlets/OutletManagement";
 import { Loader2 } from "lucide-react";
@@ -90,6 +91,7 @@ function AppRoutes() {
         <Route path="incentives" element={<IncentivePrograms />} />
         <Route path="training" element={<FanAcademy />} />
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
+        <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />

@@ -47,6 +47,35 @@ export function useProducts() {
   });
 }
 
+export function useUpsertProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (product: TablesInsert<'products'> | (TablesUpdate<'products'> & { id: string })) => {
+      if ('id' in product && product.id) {
+        const { id, ...rest } = product;
+        const { data, error } = await supabase.from('products').update(rest).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+      }
+      const { data, error } = await supabase.from('products').insert(product as TablesInsert<'products'>).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
+export function useDeleteProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+  });
+}
+
 // ===== VENDORS =====
 export type DbVendor = Tables<'vendors'>;
 
@@ -407,6 +436,52 @@ export function useCreateOrder() {
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+}
+
+export function useUpdateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
+      const { data, error } = await supabase.from('orders').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+}
+
+// ===== SETTLEMENTS =====
+export function useCreateSettlement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lines, ...settlement }: TablesInsert<'settlements'> & { lines: TablesInsert<'settlement_lines'>[] }) => {
+      const { data, error } = await supabase.from('settlements').insert(settlement).select().single();
+      if (error) throw error;
+      if (lines.length > 0) {
+        const { error: lineErr } = await supabase.from('settlement_lines').insert(
+          lines.map(l => ({ ...l, settlement_id: data.id }))
+        );
+        if (lineErr) throw lineErr;
+      }
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settlements'] }),
+  });
+}
+
+// ===== CALCULATE COMMISSIONS RPC =====
+export function useCalculateCommissions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ month, outletId }: { month: string; outletId?: string }) => {
+      const { error } = await supabase.rpc('calculate_commissions', {
+        p_month: month,
+        p_outlet_id: outletId || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['commissions'] }),
   });
 }
 

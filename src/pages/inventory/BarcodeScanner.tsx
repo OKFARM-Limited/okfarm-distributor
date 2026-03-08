@@ -5,19 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { ScanLine, Package, Keyboard, Loader2 } from 'lucide-react';
+import { ScanLine, Package, Keyboard, Loader2, Camera, CameraOff } from 'lucide-react';
 
 export default function BarcodeScanner() {
-  const [mode, setMode] = useState<'scan' | 'manual'>('scan');
+  const [mode, setMode] = useState<'camera' | 'manual'>('manual');
   const [barcodeInput, setBarcodeInput] = useState('');
   const [scannedItems, setScannedItems] = useState<{ productId: string; productName: string; barcode: string; quantity: number; time: string }[]>([]);
-  const [scanning, setScanning] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const scannerRef = useRef<any>(null);
+  const scannerDivRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: products = [], isLoading } = useProducts();
-
-  useEffect(() => {
-    if (mode === 'scan') inputRef.current?.focus();
-  }, [mode]);
 
   const lookupBarcode = (barcode: string) => {
     const product = products.find(p => p.barcode === barcode || p.sku === barcode);
@@ -34,14 +32,48 @@ export default function BarcodeScanner() {
     setBarcodeInput('');
   };
 
-  const simulateScan = () => {
-    setScanning(true);
-    setTimeout(() => {
-      const randomProduct = products[Math.floor(Math.random() * products.length)];
-      if (randomProduct) lookupBarcode(randomProduct.barcode || randomProduct.sku);
-      setScanning(false);
-    }, 1500);
+  const startCamera = async () => {
+    try {
+      const { Html5Qrcode } = await import('html5-qrcode');
+      if (scannerRef.current) {
+        await scannerRef.current.stop().catch(() => {});
+      }
+      const scanner = new Html5Qrcode('barcode-scanner-view');
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 100 } },
+        (decodedText: string) => {
+          lookupBarcode(decodedText);
+        },
+        () => {} // ignore errors during scanning
+      );
+      setCameraActive(true);
+    } catch (err: any) {
+      toast({ title: 'Camera Error', description: err?.message || 'Could not access camera. Try manual mode.', variant: 'destructive' });
+      setMode('manual');
+    }
   };
+
+  const stopCamera = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+      } catch {}
+      scannerRef.current = null;
+    }
+    setCameraActive(false);
+  };
+
+  useEffect(() => {
+    if (mode === 'camera') {
+      startCamera();
+    } else {
+      stopCamera();
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+    return () => { stopCamera(); };
+  }, [mode]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && barcodeInput.trim()) lookupBarcode(barcodeInput.trim());
@@ -53,31 +85,26 @@ export default function BarcodeScanner() {
     <div className="space-y-4 animate-fade-in max-w-2xl">
       <h1 className="text-2xl font-bold flex items-center gap-2"><ScanLine className="h-6 w-6" /> Barcode Scanner</h1>
       <div className="flex gap-2">
-        <Button variant={mode === 'scan' ? 'default' : 'outline'} onClick={() => setMode('scan')} className="gap-1"><ScanLine className="h-4 w-4" /> Scanner</Button>
+        <Button variant={mode === 'camera' ? 'default' : 'outline'} onClick={() => setMode('camera')} className="gap-1"><Camera className="h-4 w-4" /> Camera</Button>
         <Button variant={mode === 'manual' ? 'default' : 'outline'} onClick={() => setMode('manual')} className="gap-1"><Keyboard className="h-4 w-4" /> Manual</Button>
       </div>
       <Card>
         <CardContent className="pt-6">
-          {mode === 'scan' ? (
+          {mode === 'camera' ? (
             <div className="space-y-4">
-              <div className="relative bg-muted rounded-lg h-64 flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center"><div className="w-48 h-32 border-2 border-dashed border-primary/50 rounded-lg" /></div>
-                {scanning && <div className="absolute w-48 h-0.5 bg-destructive animate-pulse" />}
-                <div className="text-center z-10">
-                  <ScanLine className={`h-12 w-12 mx-auto mb-2 ${scanning ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`} />
-                  <p className="text-sm text-muted-foreground">{scanning ? 'Scanning...' : 'Point camera at barcode'}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Input ref={inputRef} value={barcodeInput} onChange={e => setBarcodeInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Barcode auto-reads here..." className="flex-1" />
-                <Button onClick={simulateScan} disabled={scanning}>Simulate Scan</Button>
-              </div>
+              <div id="barcode-scanner-view" ref={scannerDivRef} className="rounded-lg overflow-hidden bg-muted min-h-[280px]" />
+              {cameraActive && (
+                <p className="text-xs text-center text-muted-foreground">Point camera at a barcode. It will auto-detect.</p>
+              )}
+              <Button variant="outline" onClick={() => { stopCamera(); setMode('manual'); }} className="w-full gap-1">
+                <CameraOff className="h-4 w-4" /> Stop Camera
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Enter barcode or SKU manually</p>
+              <p className="text-sm text-muted-foreground">Enter barcode or SKU manually, or use an external USB/Bluetooth scanner</p>
               <div className="flex gap-2">
-                <Input value={barcodeInput} onChange={e => setBarcodeInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Enter barcode or SKU..." className="flex-1" />
+                <Input ref={inputRef} value={barcodeInput} onChange={e => setBarcodeInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Scan or type barcode/SKU..." className="flex-1" autoFocus />
                 <Button onClick={() => barcodeInput.trim() && lookupBarcode(barcodeInput.trim())}>Lookup</Button>
               </div>
               <div className="flex flex-wrap gap-2">
