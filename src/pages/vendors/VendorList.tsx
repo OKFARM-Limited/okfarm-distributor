@@ -1,43 +1,39 @@
-import { useState } from 'react';
-import { vendors as mockVendors, Vendor, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { useVendors, useAssets } from '@/hooks/useSupabaseData';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Phone, MapPin, Fingerprint, Edit, Building2 } from 'lucide-react';
+import { Search, Plus, Phone, MapPin, Fingerprint, Edit, Building2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { useUpsertVendor } from '@/hooks/useSupabaseData';
 
 const territories = ['All', 'Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
 
 export default function VendorList() {
-  const [vendors, setVendors] = useState<Vendor[]>(mockVendors);
   const [search, setSearch] = useState('');
   const [territory, setTerritory] = useState('All');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [editVendor, setEditVendor] = useState<Vendor | null>(null);
+  const [editVendor, setEditVendor] = useState<any>(null);
   const navigate = useNavigate();
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: vendors = [], isLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
 
-  const filtered = vendors.filter(v => {
-    const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.id.toLowerCase().includes(search.toLowerCase());
+  const filtered = vendors.filter((v: any) => {
+    const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.vendor_code.toLowerCase().includes(search.toLowerCase());
     const matchTerritory = territory === 'All' || v.territory === territory;
     const matchStatus = statusFilter === 'all' || v.status === statusFilter;
-    const matchOutlet = isAllOutlets || v.outletId === selectedOutletId;
-    return matchSearch && matchTerritory && matchStatus && matchOutlet;
+    return matchSearch && matchTerritory && matchStatus;
   });
 
-  const handleSave = (updates: Partial<Vendor> & { id: string }) => {
-    setVendors(prev => prev.map(v => v.id === updates.id ? { ...v, ...updates } : v));
-    setEditVendor(null);
-    toast({ title: 'Vendor saved', description: `Vendor has been updated.` });
-  };
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -70,13 +66,13 @@ export default function VendorList() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filtered.map(v => (
+        {filtered.map((v: any) => (
           <Card key={v.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/vendors/${v.id}`)}>
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={v.photo} />
-                  <AvatarFallback>{v.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  <AvatarImage src={v.photo_url} />
+                  <AvatarFallback>{v.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
@@ -85,15 +81,15 @@ export default function VendorList() {
                       {v.status}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">{v.id}</p>
+                  <p className="text-xs text-muted-foreground">{v.vendor_code}</p>
                   <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{v.phone}</span>
                     <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{v.territory}</span>
-                    <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{getOutletName(v.outletId)}</span>
-                    {v.biometricsEnabled && <span className="flex items-center gap-1 text-success"><Fingerprint className="h-3 w-3" />Bio</span>}
+                    <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{v.outlets?.name || getOutletName(v.outlet_id)}</span>
+                    {v.biometrics_enabled && <span className="flex items-center gap-1 text-success"><Fingerprint className="h-3 w-3" />Bio</span>}
                   </div>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs font-medium">₦{v.totalSales.toLocaleString()}</span>
+                    <span className="text-xs font-medium">₦{Number(v.total_sales || 0).toLocaleString()}</span>
                     <Button size="sm" variant="ghost" className="h-7 px-2" onClick={e => { e.stopPropagation(); setEditVendor(v); }}>
                       <Edit className="h-3 w-3" />
                     </Button>
@@ -108,24 +104,31 @@ export default function VendorList() {
       <Dialog open={!!editVendor} onOpenChange={open => !open && setEditVendor(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Quick Edit Vendor</DialogTitle></DialogHeader>
-          {editVendor && <QuickEditForm vendor={editVendor} onSave={handleSave} />}
+          {editVendor && <QuickEditForm vendor={editVendor} onDone={() => setEditVendor(null)} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-function QuickEditForm({ vendor, onSave }: { vendor: Vendor; onSave: (v: Partial<Vendor> & { id: string }) => void }) {
+function QuickEditForm({ vendor, onDone }: { vendor: any; onDone: () => void }) {
   const { allOutlets } = useOutletContext();
+  const upsertVendor = useUpsertVendor();
   const [name, setName] = useState(vendor.name);
-  const [phone, setPhone] = useState(vendor.phone);
-  const [terr, setTerr] = useState(vendor.territory);
-  const [outletId, setOutletId] = useState(vendor.outletId);
-  const [bio, setBio] = useState(vendor.biometricsEnabled);
+  const [phone, setPhone] = useState(vendor.phone || '');
+  const [terr, setTerr] = useState(vendor.territory || '');
+  const [outletId, setOutletId] = useState(vendor.outlet_id || '');
+  const [bio, setBio] = useState(vendor.biometrics_enabled || false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ id: vendor.id, name, phone, territory: terr, outletId, biometricsEnabled: bio });
+    try {
+      await upsertVendor.mutateAsync({ id: vendor.id, name, phone, territory: terr, outlet_id: outletId, biometrics_enabled: bio });
+      toast({ title: 'Vendor saved', description: 'Vendor has been updated.' });
+      onDone();
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
   };
 
   return (
@@ -147,7 +150,9 @@ function QuickEditForm({ vendor, onSave }: { vendor: Vendor; onSave: (v: Partial
         </Select>
       </div>
       <div className="flex items-center gap-2"><Switch checked={bio} onCheckedChange={setBio} /><Label>Enable Biometrics</Label></div>
-      <Button type="submit" className="w-full">Save Vendor</Button>
+      <Button type="submit" className="w-full" disabled={upsertVendor.isPending}>
+        {upsertVendor.isPending ? 'Saving...' : 'Save Vendor'}
+      </Button>
     </form>
   );
 }

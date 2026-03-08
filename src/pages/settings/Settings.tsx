@@ -71,7 +71,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader><CardTitle className="text-base">Account</CardTitle></CardHeader>
         <CardContent>
-          <Button variant="destructive" onClick={() => { logout(); navigate('/login'); }}>Logout</Button>
+          <Button variant="destructive" onClick={async () => { await logout(); navigate('/login'); }}>Logout</Button>
         </CardContent>
       </Card>
     </div>

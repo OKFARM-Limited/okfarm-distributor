@@ -53,7 +53,7 @@ export function TopBar() {
       <div className="hidden md:flex flex-1 max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={`Search${!isAllOutlets ? ` in ${selectedOutlet?.shortCode}` : ''}...`} className="pl-9 h-9 bg-muted/50" />
+          <Input placeholder={`Search${!isAllOutlets ? ` in ${selectedOutlet?.short_code}` : ''}...`} className="pl-9 h-9 bg-muted/50" />
         </div>
       </div>
 
@@ -63,7 +63,7 @@ export function TopBar() {
       {!isAllOutlets && selectedOutlet && (
         <Badge variant="outline" className="hidden lg:flex items-center gap-1 text-xs border-primary/30 text-primary">
           <MapPin className="h-3 w-3" />
-          {selectedOutlet.shortCode}
+          {selectedOutlet.short_code}
         </Badge>
       )}
 

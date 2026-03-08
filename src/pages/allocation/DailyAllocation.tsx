@@ -1,32 +1,35 @@
 import { useState } from 'react';
-import { vendors, products, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useVendors, useProducts } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CheckCircle, ChevronRight, MapPin } from 'lucide-react';
+import { CheckCircle, ChevronRight, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function DailyAllocation() {
   const [step, setStep] = useState(0);
   const [vendorId, setVendorId] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: products = [], isLoading: pLoading } = useProducts();
 
-  const filteredVendors = isAllOutlets ? vendors : vendors.filter(v => v.outletId === selectedOutletId);
-  const vendor = vendors.find(v => v.id === vendorId);
-  const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * p.unitPrice, 0);
+  const vendor = vendors.find((v: any) => v.id === vendorId);
+  const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
   const handleConfirm = () => {
-    const alloc = { vendorId, outletId: vendor?.outletId, date: new Date().toISOString().split('T')[0], items: products.map(p => ({ productId: p.id, quantity: quantities[p.id] || 0 })), totalValue };
+    const alloc = { vendorId, outletId: vendor?.outlet_id, date: new Date().toISOString().split('T')[0], items: products.map(p => ({ productId: p.id, quantity: quantities[p.id] || 0 })), totalValue };
     const drafts = JSON.parse(localStorage.getItem('okfarm_alloc_drafts') || '[]');
     drafts.push(alloc);
     localStorage.setItem('okfarm_alloc_drafts', JSON.stringify(drafts));
     toast({ title: 'Allocation Confirmed', description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` });
     setStep(0); setVendorId(''); setQuantities({});
   };
+
+  if (vLoading || pLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -54,7 +57,7 @@ export default function DailyAllocation() {
             <Select value={vendorId} onValueChange={setVendorId}>
               <SelectTrigger><SelectValue placeholder="Choose a vendor..." /></SelectTrigger>
               <SelectContent>
-                {filteredVendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.territory})</SelectItem>)}
+                {vendors.filter((v: any) => v.status === 'active').map((v: any) => <SelectItem key={v.id} value={v.id}>{v.name} ({v.territory})</SelectItem>)}
               </SelectContent>
             </Select>
             <Button onClick={() => setStep(1)} disabled={!vendorId}>Next <ChevronRight className="h-4 w-4" /></Button>
@@ -72,9 +75,9 @@ export default function DailyAllocation() {
                 {products.map(p => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell>₦{p.unitPrice}</TableCell>
+                    <TableCell>₦{Number(p.unit_price)}</TableCell>
                     <TableCell><Input type="number" min={0} className="w-20 h-8" value={quantities[p.id] || ''} onChange={e => setQuantities(q => ({ ...q, [p.id]: parseInt(e.target.value) || 0 }))} /></TableCell>
-                    <TableCell className="text-right">₦{((quantities[p.id] || 0) * p.unitPrice).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">₦{((quantities[p.id] || 0) * Number(p.unit_price)).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -95,13 +98,13 @@ export default function DailyAllocation() {
           <CardHeader><CardTitle className="text-base">Confirm Allocation</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm"><strong>Vendor:</strong> {vendor?.name} ({vendor?.territory})</p>
-            <p className="text-sm"><strong>Outlet:</strong> {getOutletName(vendor?.outletId || '')}</p>
+            <p className="text-sm"><strong>Outlet:</strong> {getOutletName(vendor?.outlet_id || null)}</p>
             <p className="text-sm"><strong>Date:</strong> {new Date().toLocaleDateString()}</p>
             <div className="space-y-1">
               {products.filter(p => quantities[p.id] > 0).map(p => (
                 <div key={p.id} className="flex justify-between text-sm">
                   <span>{p.name} × {quantities[p.id]}</span>
-                  <span>₦{((quantities[p.id] || 0) * p.unitPrice).toLocaleString()}</span>
+                  <span>₦{((quantities[p.id] || 0) * Number(p.unit_price)).toLocaleString()}</span>
                 </div>
               ))}
             </div>
