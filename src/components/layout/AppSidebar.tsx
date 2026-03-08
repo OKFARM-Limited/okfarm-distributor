@@ -65,7 +65,7 @@ const navGroups = [
   },
   {
     label: 'Admin',
-    adminOnly: true,
+    adminOrManager: true,
     items: [
       { title: 'Outlets', url: '/outlets', icon: Store },
       { title: 'Products', url: '/products', icon: Package },
