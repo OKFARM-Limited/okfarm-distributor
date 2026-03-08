@@ -99,7 +99,7 @@ function AppRoutes() {
         <Route path="training" element={<FanAcademy />} />
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
         <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
-        <Route path="roles" element={<AdminRoute><RoleManagement /></AdminRoute>} />
+        <Route path="roles" element={<AdminOnlyRoute><RoleManagement /></AdminOnlyRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
