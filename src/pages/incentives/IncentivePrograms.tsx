@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Star, Trophy, Gift, Target, TrendingUp, Award, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
 
 const defaultPrograms = [
   { name: 'Right to Dream', description: 'Top vendors transition to full agents with their own territory and sub-vendors.', icon: '⭐', eligibility: '6+ months, Platinum tier, 90%+ attendance', reward: 'Agent License + Territory', status: 'active' },
@@ -54,6 +55,7 @@ export default function IncentivePrograms() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold text-foreground">Incentive Programs</h1>
         <p className="text-muted-foreground">Rewards, trade premiums & vendor advancement opportunities</p>

@@ -14,6 +14,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { useUpsertVendor } from '@/hooks/useSupabaseData';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const territories = ['All', 'Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
 
@@ -23,6 +25,7 @@ export default function VendorList() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [editVendor, setEditVendor] = useState<any>(null);
   const navigate = useNavigate();
+  const { viewerProps } = useViewerGuard();
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: vendors = [], isLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
 
@@ -37,12 +40,13 @@ export default function VendorList() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Vendors</h1>
           <p className="text-muted-foreground text-sm">{filtered.length} vendors found{!isAllOutlets && ` in ${getOutletName(selectedOutletId)}`}</p>
         </div>
-        <Button onClick={() => navigate('/vendors/onboard')}><Plus className="h-4 w-4 mr-1" /> Onboard Vendor</Button>
+        <Button onClick={() => navigate('/vendors/onboard')} {...viewerProps}><Plus className="h-4 w-4 mr-1" /> Onboard Vendor</Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">

@@ -8,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GraduationCap, BookOpen, CheckCircle, Clock, Users, Award, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const defaultCourses = [
   { title: 'Road Safety & Traffic Awareness', category: 'safety', duration: '2 hours', mandatory: true, description: 'Essential road safety rules for push cart and bicycle vendors.' },
@@ -31,6 +33,7 @@ const categoryColors: Record<string, string> = {
 export default function FanAcademy() {
   const [tab, setTab] = useState('courses');
   const { toast } = useToast();
+  const { viewerProps } = useViewerGuard();
   const { data: modules = [], isLoading: mLoading } = useTrainingModules();
   const { data: progress = [], isLoading: pLoading } = useVendorTrainingProgress();
   const { data: vendors = [], isLoading: vLoading } = useVendors('all');
@@ -58,12 +61,13 @@ export default function FanAcademy() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Fan Academy</h1>
           <p className="text-muted-foreground">Vendor training & upskilling tracker</p>
         </div>
-        <Button onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })}>
+        <Button onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })} {...viewerProps}>
           <GraduationCap className="h-4 w-4 mr-2" />Export Report
         </Button>
       </div>

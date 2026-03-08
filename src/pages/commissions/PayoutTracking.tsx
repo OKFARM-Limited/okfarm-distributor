@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function PayoutTracking() {
   const { data: commissions = [], isLoading } = useCommissions('all');
   const createPayout = useCreatePayout();
+  const { viewerProps } = useViewerGuard();
 
   const handleDisburse = (commission: any) => {
     createPayout.mutate(
@@ -32,6 +35,7 @@ export default function PayoutTracking() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold">Payout Tracking</h1>
 
       <Card>
@@ -55,7 +59,7 @@ export default function PayoutTracking() {
                   <TableCell><Badge variant={c.status === 'disbursed' ? 'default' : 'secondary'}>{c.status}</Badge></TableCell>
                   <TableCell>
                     {c.status !== 'disbursed' && (
-                      <Button size="sm" onClick={() => handleDisburse(c)} disabled={createPayout.isPending}>
+                      <Button size="sm" onClick={() => handleDisburse(c)} disabled={createPayout.isPending} {...viewerProps}>
                         {createPayout.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                         Disburse
                       </Button>

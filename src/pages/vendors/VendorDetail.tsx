@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ArrowLeft, Phone, MapPin, Fingerprint, Package, Loader2, UserX, UserCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function VendorDetail() {
   const { id } = useParams();
@@ -19,6 +21,7 @@ export default function VendorDetail() {
   const { data: vendor, isLoading } = useVendor(id);
   const { data: allAssets = [] } = useAssets('all');
   const upsertVendor = useUpsertVendor();
+  const { viewerProps } = useViewerGuard();
   const [confirmDialog, setConfirmDialog] = useState(false);
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -43,6 +46,7 @@ export default function VendorDetail() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
           <ArrowLeft className="h-4 w-4" /> Back to Vendors
@@ -52,6 +56,7 @@ export default function VendorDetail() {
             variant={isActive ? 'destructive' : 'default'}
             onClick={() => setConfirmDialog(true)}
             className="gap-1"
+            {...viewerProps}
           >
             {isActive ? <><UserX className="h-4 w-4" /> Deactivate</> : <><UserCheck className="h-4 w-4" /> Reactivate</>}
           </Button>

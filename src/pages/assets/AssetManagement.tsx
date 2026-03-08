@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Package, Bike, Truck, Wrench, History, CalendarClock, AlertTriangle, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,6 +22,7 @@ export default function AssetManagement() {
   const { data: assets = [], isLoading } = useAssets(isAllOutlets ? 'all' : selectedOutletId);
   const { data: vendors = [] } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const updateAsset = useUpdateAsset();
+  const { viewerProps } = useViewerGuard();
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
@@ -78,6 +81,7 @@ export default function AssetManagement() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold">Asset Management</h1>
         {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
@@ -161,7 +165,7 @@ export default function AssetManagement() {
                                 <Select value={scheduleType} onValueChange={v => setScheduleType(v as any)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="routine">Routine</SelectItem><SelectItem value="repair">Repair</SelectItem><SelectItem value="inspection">Inspection</SelectItem></SelectContent></Select>
                               </div>
                               <div className="space-y-2"><Label>Description</Label><Input value={scheduleDesc} onChange={e => setScheduleDesc(e.target.value)} placeholder="What needs to be done..." /></div>
-                              <Button onClick={() => handleScheduleMaintenance(a.id)} disabled={!scheduleDate} className="w-full">Schedule</Button>
+                              <Button onClick={() => handleScheduleMaintenance(a.id)} disabled={!scheduleDate} className="w-full" {...viewerProps}>Schedule</Button>
                             </div>
                           </DialogContent>
                         </Dialog>

@@ -11,12 +11,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Building2, Plus, Users, Package, Edit, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function OutletManagement() {
   const { data: outlets = [], isLoading } = useOutlets();
   const { data: allVendors = [] } = useVendors('all');
   const { data: allAssets = [] } = useAssets('all');
   const upsertOutlet = useUpsertOutlet();
+  const { viewerProps } = useViewerGuard();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editOutlet, setEditOutlet] = useState<DbOutlet | null>(null);
   const [form, setForm] = useState({ name: '', short_code: '', address: '', manager: '', phone: '', description: '' });
@@ -54,12 +57,13 @@ export default function OutletManagement() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Outlets Management</h1>
           <p className="text-sm text-muted-foreground">{outlets.length} outlets configured</p>
         </div>
-        <Button onClick={openAdd}><Plus className="h-4 w-4 mr-1" /> Add Outlet</Button>
+        <Button onClick={openAdd} {...viewerProps}><Plus className="h-4 w-4 mr-1" /> Add Outlet</Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

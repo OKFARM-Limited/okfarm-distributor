@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { FileText, Download, CheckCircle, Clock, AlertTriangle, Loader2, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function MonthlySettlement() {
   const { selectedOutletId, isAllOutlets } = useOutletContext();
@@ -19,6 +21,7 @@ export default function MonthlySettlement() {
   const { data: outlets = [] } = useOutlets();
   const { data: deliveries = [] } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const createSettlement = useCreateSettlement();
+  const { viewerProps } = useViewerGuard();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newMonth, setNewMonth] = useState('');
   const [newOutlet, setNewOutlet] = useState('');
@@ -78,6 +81,7 @@ export default function MonthlySettlement() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Monthly Settlement</h1>
@@ -87,7 +91,7 @@ export default function MonthlySettlement() {
           <Button variant="outline" onClick={() => toast({ title: 'Exported', description: 'Settlement report downloaded.' })}>
             <Download className="h-4 w-4 mr-2" />Export
           </Button>
-          <Button onClick={() => setDialogOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> New Settlement</Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-1" {...viewerProps}><Plus className="h-4 w-4" /> New Settlement</Button>
         </div>
       </div>
 

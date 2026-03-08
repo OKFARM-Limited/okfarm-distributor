@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
 import { TrendingUp, ShoppingCart, AlertTriangle, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function ForecastReorder() {
   const { selectedOutletId, isAllOutlets } = useOutletContext();
@@ -15,6 +17,7 @@ export default function ForecastReorder() {
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
 
   const isLoading = fLoading || pLoading || sLoading;
+  const { viewerProps } = useViewerGuard();
 
   // If we have forecasts from DB, use them; otherwise compute from stock levels
   const productStats = (forecasts as any[]).length > 0
@@ -57,9 +60,10 @@ export default function ForecastReorder() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2"><TrendingUp className="h-6 w-6" /> Forecast & Reorder</h1>
-        <Button onClick={handleAutoOrder} className="gap-1" disabled={totalSuggested === 0}>
+        <Button onClick={handleAutoOrder} className="gap-1" disabled={totalSuggested === 0} {...viewerProps}>
           <ShoppingCart className="h-4 w-4" /> Auto-Order (₦{totalSuggested.toLocaleString()})
         </Button>
       </div>

@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building2, MapPin, Users, Package, Plus, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function DepotManagement() {
   const { selectedOutletId, isAllOutlets, allOutlets } = useOutletContext();
@@ -18,6 +20,7 @@ export default function DepotManagement() {
   const { data: allVendors = [] } = useVendors('all');
   const { data: allAssets = [] } = useAssets('all');
   const upsertDepot = useUpsertDepot();
+  const { viewerProps } = useViewerGuard();
   const [activeDepot, setActiveDepot] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newDepot, setNewDepot] = useState({ name: '', address: '', territory: '', manager: '', phone: '', fridge_capacity: '', outlet_id: '', depot_code: '' });
@@ -48,6 +51,7 @@ export default function DepotManagement() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Depot Management</h1>
@@ -66,7 +70,7 @@ export default function DepotManagement() {
           )}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-2" />Add Depot</Button>
+              <Button {...viewerProps}><Plus className="h-4 w-4 mr-2" />Add Depot</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Register New Depot</DialogTitle></DialogHeader>

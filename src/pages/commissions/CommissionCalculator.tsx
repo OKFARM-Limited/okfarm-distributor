@@ -11,6 +11,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Info, Trophy, TrendingUp, Calendar, Zap, MapPin, Loader2, Calculator } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const tierColors: Record<string, string> = {
   platinum: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
@@ -23,6 +25,7 @@ export default function CommissionCalculator() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: commissions = [], isLoading } = useCommissions(isAllOutlets ? 'all' : selectedOutletId);
   const calculateCommissions = useCalculateCommissions();
+  const { viewerProps } = useViewerGuard();
   const [calcDialog, setCalcDialog] = useState(false);
   const [calcMonth, setCalcMonth] = useState(() => {
     const d = new Date();
@@ -50,13 +53,14 @@ export default function CommissionCalculator() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Commission Calculator</h1>
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setCalcDialog(true)} className="gap-1">
+          <Button onClick={() => setCalcDialog(true)} className="gap-1" {...viewerProps}>
             <Calculator className="h-4 w-4" /> Auto-Calculate
           </Button>
           <TooltipProvider>

@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Search, ShieldCheck, UserCog } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/contexts/AuthContext';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 interface UserWithRole {
   user_id: string;
@@ -22,6 +24,7 @@ interface UserWithRole {
 export default function RoleManagement() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  const { viewerProps } = useViewerGuard();
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-user-roles'],
@@ -81,6 +84,7 @@ export default function RoleManagement() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <UserCog className="h-6 w-6" /> Role Management
@@ -174,6 +178,7 @@ export default function RoleManagement() {
                       <Select
                         value={user.role}
                         onValueChange={(v) => updateRole.mutate({ userId: user.user_id, role: v as UserRole })}
+                        disabled={viewerProps.disabled}
                       >
                         <SelectTrigger className="h-8 text-xs">
                           <SelectValue />

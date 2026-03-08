@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bell, AlertTriangle, Package, Clock, CreditCard, Wrench, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const typeIcons: Record<string, any> = {
   low_stock: Package, expiry: AlertTriangle, pending_return: Clock,
@@ -23,6 +25,7 @@ export default function NotificationCenter() {
   const { data: notifs = [], isLoading } = useNotifications(isAllOutlets ? 'all' : selectedOutletId);
   const updateNotif = useUpdateNotification();
   const deleteNotif = useDeleteNotification();
+  const { viewerProps } = useViewerGuard();
 
   const allNotifs = notifs as any[];
   const unread = allNotifs.filter(n => !n.read);
@@ -59,12 +62,13 @@ export default function NotificationCenter() {
 
   return (
     <div className="space-y-4 animate-fade-in max-w-3xl">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2"><Bell className="h-6 w-6" /> Notifications</h1>
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
-        <Button variant="outline" size="sm" onClick={markAllRead} disabled={unread.length === 0}>Mark All Read</Button>
+        <Button variant="outline" size="sm" onClick={markAllRead} disabled={unread.length === 0} {...viewerProps}>Mark All Read</Button>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
