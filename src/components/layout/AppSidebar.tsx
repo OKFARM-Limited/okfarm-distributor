@@ -68,6 +68,7 @@ const navGroups = [
     adminOnly: true,
     items: [
       { title: 'Outlets', url: '/outlets', icon: Store },
+      { title: 'Products', url: '/products', icon: Package },
       { title: 'Commissions', url: '/commissions', icon: Award },
       { title: 'Payouts', url: '/payouts', icon: Truck },
       { title: 'Orders', url: '/orders', icon: ShoppingCart },
