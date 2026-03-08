@@ -21,6 +21,7 @@ export default function VendorDetail() {
   const { data: vendor, isLoading } = useVendor(id);
   const { data: allAssets = [] } = useAssets('all');
   const upsertVendor = useUpsertVendor();
+  const { viewerProps } = useViewerGuard();
   const [confirmDialog, setConfirmDialog] = useState(false);
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
