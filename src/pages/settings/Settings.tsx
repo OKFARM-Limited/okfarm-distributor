@@ -68,7 +68,7 @@ export default function SettingsPage() {
         <CardHeader><CardTitle className="text-base">Offline Storage</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm text-muted-foreground">Draft allocations and sales entries are stored locally for offline use.</p>
-          <Button variant="outline" size="sm" onClick={() => { localStorage.removeItem('okfarm_alloc_drafts'); localStorage.removeItem('okfarm_sales_drafts'); }}>Clear Local Drafts</Button>
+          <Button variant="outline" size="sm" onClick={() => { localStorage.removeItem('okfarm_alloc_drafts'); localStorage.removeItem('okfarm_sales_drafts'); }} {...viewerProps}>Clear Local Drafts</Button>
         </CardContent>
       </Card>
 
