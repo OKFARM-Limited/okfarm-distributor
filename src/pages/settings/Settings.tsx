@@ -21,6 +21,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold">{t('settings')}</h1>
 
       <Card>
