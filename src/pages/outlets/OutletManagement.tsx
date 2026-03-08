@@ -19,6 +19,7 @@ export default function OutletManagement() {
   const { data: allVendors = [] } = useVendors('all');
   const { data: allAssets = [] } = useAssets('all');
   const upsertOutlet = useUpsertOutlet();
+  const { viewerProps } = useViewerGuard();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editOutlet, setEditOutlet] = useState<DbOutlet | null>(null);
   const [form, setForm] = useState({ name: '', short_code: '', address: '', manager: '', phone: '', description: '' });
