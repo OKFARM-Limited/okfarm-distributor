@@ -1,3 +1,13 @@
+// ===== OUTLET IDS =====
+const outletIds = ['sangotedo', 'abraham-adesanya', 'epe', 'ogombo', 'eleko'];
+const outletNames: Record<string, string> = {
+  'sangotedo': 'Sangotedo (Main)',
+  'abraham-adesanya': 'Abraham Adesanya',
+  'epe': 'Epe',
+  'ogombo': 'Ogombo',
+  'eleko': 'Eleko',
+};
+
 // ===== VENDORS =====
 export interface Vendor {
   id: string;
@@ -5,13 +15,13 @@ export interface Vendor {
   phone: string;
   photo: string;
   territory: string;
+  outletId: string;
   biometricsEnabled: boolean;
   status: 'active' | 'inactive' | 'suspended';
   joinDate: string;
   totalSales: number;
   daysWorked: number;
   assignedAssets: string[];
-  // Extended onboarding fields
   email: string;
   dateOfBirth: string;
   gender: 'male' | 'female' | 'other';
@@ -38,12 +48,22 @@ const lastNames = ['Okafor', 'Adeyemi', 'Balogun', 'Chukwu', 'Danjuma', 'Eze', '
 const banks = ['GTBank', 'First Bank', 'UBA', 'Access Bank', 'Zenith Bank'];
 const eduLevels = ['Primary', 'Secondary', 'OND', 'HND', 'BSc', 'None'];
 
+// Distribute vendors: 10 in Sangotedo, 5-6 in others
+const vendorOutletAssignment = (i: number): string => {
+  if (i < 10) return 'sangotedo';
+  if (i < 15) return 'abraham-adesanya';
+  if (i < 20) return 'epe';
+  if (i < 25) return 'ogombo';
+  return 'eleko';
+};
+
 export const vendors: Vendor[] = Array.from({ length: 30 }, (_, i) => ({
   id: `VND-${String(i + 1).padStart(3, '0')}`,
   name: `${firstNames[i]} ${lastNames[i]}`,
   phone: `+234${String(8010000000 + Math.floor(Math.random() * 89999999))}`,
   photo: `https://api.dicebear.com/7.x/avataaars/svg?seed=${firstNames[i]}${lastNames[i]}`,
   territory: territories[i % territories.length],
+  outletId: vendorOutletAssignment(i),
   biometricsEnabled: Math.random() > 0.3,
   status: i < 25 ? 'active' : i < 28 ? 'inactive' : 'suspended',
   joinDate: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
@@ -92,6 +112,7 @@ export interface Asset {
   name: string;
   status: 'available' | 'assigned' | 'maintenance';
   assignedTo: string | null;
+  outletId: string;
   condition: 'good' | 'fair' | 'poor';
   nextMaintenanceDate: string;
   maintenanceHistory: MaintenanceRecord[];
@@ -128,22 +149,25 @@ const getNextMaintenanceDate = (condition: string): string => {
   return d.toISOString().split('T')[0];
 };
 
+// Assign assets across outlets: 3 per outlet
+const assetOutletAssignment = (i: number): string => outletIds[i % outletIds.length];
+
 const rawAssets: Omit<Asset, 'nextMaintenanceDate' | 'maintenanceHistory' | 'conditionHistory'>[] = [
-  { id: 'AST-001', type: 'push_cart', name: 'Push Cart Alpha', status: 'assigned', assignedTo: 'VND-001', condition: 'good' },
-  { id: 'AST-002', type: 'push_cart', name: 'Push Cart Beta', status: 'assigned', assignedTo: 'VND-002', condition: 'good' },
-  { id: 'AST-003', type: 'push_cart', name: 'Push Cart Gamma', status: 'available', assignedTo: null, condition: 'fair' },
-  { id: 'AST-004', type: 'bicycle', name: 'Bike Delta', status: 'assigned', assignedTo: 'VND-003', condition: 'good' },
-  { id: 'AST-005', type: 'bicycle', name: 'Bike Epsilon', status: 'assigned', assignedTo: 'VND-004', condition: 'good' },
-  { id: 'AST-006', type: 'push_cart', name: 'Push Cart Zeta', status: 'maintenance', assignedTo: null, condition: 'poor' },
-  { id: 'AST-007', type: 'tricycle', name: 'Trike Eta', status: 'assigned', assignedTo: 'VND-005', condition: 'good' },
-  { id: 'AST-008', type: 'push_cart', name: 'Push Cart Theta', status: 'available', assignedTo: null, condition: 'good' },
-  { id: 'AST-009', type: 'bicycle', name: 'Bike Iota', status: 'assigned', assignedTo: 'VND-006', condition: 'fair' },
-  { id: 'AST-010', type: 'push_cart', name: 'Push Cart Kappa', status: 'assigned', assignedTo: 'VND-007', condition: 'good' },
-  { id: 'AST-011', type: 'tricycle', name: 'Trike Lambda', status: 'available', assignedTo: null, condition: 'good' },
-  { id: 'AST-012', type: 'bicycle', name: 'Bike Mu', status: 'maintenance', assignedTo: null, condition: 'poor' },
-  { id: 'AST-013', type: 'push_cart', name: 'Push Cart Nu', status: 'assigned', assignedTo: 'VND-008', condition: 'good' },
-  { id: 'AST-014', type: 'push_cart', name: 'Push Cart Xi', status: 'assigned', assignedTo: 'VND-009', condition: 'fair' },
-  { id: 'AST-015', type: 'bicycle', name: 'Bike Omicron', status: 'available', assignedTo: null, condition: 'good' },
+  { id: 'AST-001', type: 'push_cart', name: 'Push Cart Alpha', status: 'assigned', assignedTo: 'VND-001', outletId: 'sangotedo', condition: 'good' },
+  { id: 'AST-002', type: 'push_cart', name: 'Push Cart Beta', status: 'assigned', assignedTo: 'VND-002', outletId: 'sangotedo', condition: 'good' },
+  { id: 'AST-003', type: 'push_cart', name: 'Push Cart Gamma', status: 'available', assignedTo: null, outletId: 'sangotedo', condition: 'fair' },
+  { id: 'AST-004', type: 'bicycle', name: 'Bike Delta', status: 'assigned', assignedTo: 'VND-003', outletId: 'sangotedo', condition: 'good' },
+  { id: 'AST-005', type: 'bicycle', name: 'Bike Epsilon', status: 'assigned', assignedTo: 'VND-011', outletId: 'abraham-adesanya', condition: 'good' },
+  { id: 'AST-006', type: 'push_cart', name: 'Push Cart Zeta', status: 'maintenance', assignedTo: null, outletId: 'abraham-adesanya', condition: 'poor' },
+  { id: 'AST-007', type: 'tricycle', name: 'Trike Eta', status: 'assigned', assignedTo: 'VND-012', outletId: 'abraham-adesanya', condition: 'good' },
+  { id: 'AST-008', type: 'push_cart', name: 'Push Cart Theta', status: 'available', assignedTo: null, outletId: 'epe', condition: 'good' },
+  { id: 'AST-009', type: 'bicycle', name: 'Bike Iota', status: 'assigned', assignedTo: 'VND-016', outletId: 'epe', condition: 'fair' },
+  { id: 'AST-010', type: 'push_cart', name: 'Push Cart Kappa', status: 'assigned', assignedTo: 'VND-017', outletId: 'epe', condition: 'good' },
+  { id: 'AST-011', type: 'tricycle', name: 'Trike Lambda', status: 'available', assignedTo: null, outletId: 'ogombo', condition: 'good' },
+  { id: 'AST-012', type: 'bicycle', name: 'Bike Mu', status: 'maintenance', assignedTo: null, outletId: 'ogombo', condition: 'poor' },
+  { id: 'AST-013', type: 'push_cart', name: 'Push Cart Nu', status: 'assigned', assignedTo: 'VND-021', outletId: 'ogombo', condition: 'good' },
+  { id: 'AST-014', type: 'push_cart', name: 'Push Cart Xi', status: 'assigned', assignedTo: 'VND-026', outletId: 'eleko', condition: 'fair' },
+  { id: 'AST-015', type: 'bicycle', name: 'Bike Omicron', status: 'available', assignedTo: null, outletId: 'eleko', condition: 'good' },
 ];
 
 export const assets: Asset[] = rawAssets.map(a => ({
@@ -216,6 +240,7 @@ export interface InboundDelivery {
   creditTermDays: number;
   dueDate: string;
   receivedBy: string;
+  outletId: string;
 }
 
 export const inboundDeliveries: InboundDelivery[] = Array.from({ length: 15 }, (_, i) => {
@@ -238,6 +263,7 @@ export const inboundDeliveries: InboundDelivery[] = Array.from({ length: 15 }, (
     creditTermDays: 30,
     dueDate: due.toISOString().split('T')[0],
     receivedBy: i < 2 ? '' : 'Depot Manager',
+    outletId: outletIds[i % outletIds.length],
   };
 });
 
@@ -249,16 +275,20 @@ export interface StockLevel {
   minStock: number;
   maxStock: number;
   lastRestocked: string;
+  outletId: string;
 }
 
-export const stockLevels: StockLevel[] = products.map(p => ({
-  productId: p.id,
-  productName: p.name,
-  currentStock: Math.floor(Math.random() * 300) + 20,
-  minStock: 50,
-  maxStock: 500,
-  lastRestocked: new Date(Date.now() - Math.floor(Math.random() * 5) * 86400000).toISOString().split('T')[0],
-}));
+export const stockLevels: StockLevel[] = outletIds.flatMap(outletId =>
+  products.map(p => ({
+    productId: p.id,
+    productName: p.name,
+    currentStock: Math.floor(Math.random() * 300) + 20,
+    minStock: 50,
+    maxStock: 500,
+    lastRestocked: new Date(Date.now() - Math.floor(Math.random() * 5) * 86400000).toISOString().split('T')[0],
+    outletId,
+  }))
+);
 
 // ===== NOTIFICATIONS =====
 export interface AppNotification {
@@ -270,17 +300,18 @@ export interface AppNotification {
   read: boolean;
   priority: 'high' | 'medium' | 'low';
   actionUrl?: string;
+  outletId: string;
 }
 
 export const notifications: AppNotification[] = [
-  { id: 'NTF-001', type: 'low_stock', title: 'Low Stock Alert', message: 'FanYogo Strawberry is below minimum stock (15 packs remaining)', timestamp: new Date().toISOString(), read: false, priority: 'high', actionUrl: '/inventory' },
-  { id: 'NTF-002', type: 'expiry', title: 'Product Expiry Warning', message: 'GoSlo Popsicle batch #B045 expires in 2 days', timestamp: new Date(Date.now() - 3600000).toISOString(), read: false, priority: 'high' },
-  { id: 'NTF-003', type: 'pending_return', title: 'Pending Returns', message: '5 vendors have not returned stock from yesterday', timestamp: new Date(Date.now() - 7200000).toISOString(), read: false, priority: 'medium', actionUrl: '/reconciliation' },
-  { id: 'NTF-004', type: 'attendance', title: 'Absent Vendors', message: '3 active vendors have not checked in today', timestamp: new Date(Date.now() - 10800000).toISOString(), read: false, priority: 'medium', actionUrl: '/checkin' },
-  { id: 'NTF-005', type: 'payment', title: 'Outstanding Payment', message: 'VND-003 has ₦45,000 outstanding for 5+ days', timestamp: new Date(Date.now() - 14400000).toISOString(), read: true, priority: 'high', actionUrl: '/payments' },
-  { id: 'NTF-006', type: 'maintenance', title: 'Maintenance Due', message: 'Push Cart Zeta is overdue for maintenance', timestamp: new Date(Date.now() - 18000000).toISOString(), read: true, priority: 'medium', actionUrl: '/assets' },
-  { id: 'NTF-007', type: 'low_stock', title: 'Low Stock Alert', message: 'FanMilk Sachet below minimum stock (30 sachets remaining)', timestamp: new Date(Date.now() - 21600000).toISOString(), read: true, priority: 'medium' },
-  { id: 'NTF-008', type: 'attendance', title: 'Late Check-In', message: 'VND-012 checked in 2 hours late today', timestamp: new Date(Date.now() - 25200000).toISOString(), read: true, priority: 'low' },
+  { id: 'NTF-001', type: 'low_stock', title: 'Low Stock Alert', message: 'FanYogo Strawberry is below minimum stock (15 packs remaining)', timestamp: new Date().toISOString(), read: false, priority: 'high', actionUrl: '/inventory', outletId: 'sangotedo' },
+  { id: 'NTF-002', type: 'expiry', title: 'Product Expiry Warning', message: 'GoSlo Popsicle batch #B045 expires in 2 days', timestamp: new Date(Date.now() - 3600000).toISOString(), read: false, priority: 'high', outletId: 'epe' },
+  { id: 'NTF-003', type: 'pending_return', title: 'Pending Returns', message: '5 vendors have not returned stock from yesterday', timestamp: new Date(Date.now() - 7200000).toISOString(), read: false, priority: 'medium', actionUrl: '/reconciliation', outletId: 'sangotedo' },
+  { id: 'NTF-004', type: 'attendance', title: 'Absent Vendors', message: '3 vendors in Abraham Adesanya have not checked in today', timestamp: new Date(Date.now() - 10800000).toISOString(), read: false, priority: 'medium', actionUrl: '/checkin', outletId: 'abraham-adesanya' },
+  { id: 'NTF-005', type: 'payment', title: 'Outstanding Payment', message: 'VND-003 has ₦45,000 outstanding for 5+ days', timestamp: new Date(Date.now() - 14400000).toISOString(), read: true, priority: 'high', actionUrl: '/payments', outletId: 'sangotedo' },
+  { id: 'NTF-006', type: 'maintenance', title: 'Maintenance Due', message: 'Push Cart Zeta is overdue for maintenance', timestamp: new Date(Date.now() - 18000000).toISOString(), read: true, priority: 'medium', actionUrl: '/assets', outletId: 'abraham-adesanya' },
+  { id: 'NTF-007', type: 'low_stock', title: 'Low Stock Alert', message: 'FanMilk Sachet below minimum stock in Epe (30 sachets remaining)', timestamp: new Date(Date.now() - 21600000).toISOString(), read: true, priority: 'medium', outletId: 'epe' },
+  { id: 'NTF-008', type: 'attendance', title: 'Late Check-In', message: 'VND-022 in Ogombo checked in 2 hours late today', timestamp: new Date(Date.now() - 25200000).toISOString(), read: true, priority: 'low', outletId: 'ogombo' },
 ];
 
 // ===== ALLOCATIONS =====
@@ -289,6 +320,7 @@ export interface Allocation {
   date: string;
   vendorId: string;
   vendorName: string;
+  outletId: string;
   items: { productId: string; productName: string; quantity: number; unitPrice: number }[];
   totalValue: number;
   status: 'pending' | 'confirmed' | 'reconciled';
@@ -314,6 +346,7 @@ export const generateAllocations = (): Allocation[] => {
         date: dateStr,
         vendorId: vendor.id,
         vendorName: vendor.name,
+        outletId: vendor.outletId,
         items,
         totalValue: items.reduce((s, i) => s + i.quantity * i.unitPrice, 0),
         status: d === 0 ? 'confirmed' : 'reconciled',
@@ -331,6 +364,7 @@ export interface SaleRecord {
   date: string;
   vendorId: string;
   vendorName: string;
+  outletId: string;
   items: { productId: string; productName: string; qtySold: number; unitPrice: number }[];
   totalValue: number;
   paymentMethod: 'cash' | 'mobile_money' | 'mixed';
@@ -359,6 +393,7 @@ export const generateSales = (): SaleRecord[] => {
         date: dateStr,
         vendorId: vendor.id,
         vendorName: vendor.name,
+        outletId: vendor.outletId,
         items,
         totalValue,
         paymentMethod: Math.random() > 0.5 ? 'cash' : Math.random() > 0.5 ? 'mobile_money' : 'mixed',
@@ -377,6 +412,7 @@ export interface Commission {
   id: string;
   vendorId: string;
   vendorName: string;
+  outletId: string;
   month: string;
   totalSales: number;
   daysWorked: number;
@@ -407,6 +443,7 @@ export const commissions: Commission[] = vendors.slice(0, 20).map((v, i) => {
     id: `COM-${String(i + 1).padStart(3, '0')}`,
     vendorId: v.id,
     vendorName: v.name,
+    outletId: v.outletId,
     month: '2026-02',
     totalSales,
     daysWorked,
@@ -452,13 +489,13 @@ export interface VendorLocation {
   lat: number;
   lng: number;
   territory: string;
+  outletId: string;
   route?: { lat: number; lng: number }[];
 }
 
 export const vendorLocations: VendorLocation[] = vendors.slice(0, 20).map((v, i) => {
   const baseLat = 6.45 + (Math.random() * 0.15);
   const baseLng = 3.35 + (Math.random() * 0.2);
-  // Generate route waypoints for each vendor
   const routePoints = Array.from({ length: 6 }, (_, j) => ({
     lat: baseLat + (Math.random() - 0.5) * 0.02 * (j + 1),
     lng: baseLng + (Math.random() - 0.5) * 0.02 * (j + 1),
@@ -469,22 +506,36 @@ export const vendorLocations: VendorLocation[] = vendors.slice(0, 20).map((v, i)
     lat: baseLat,
     lng: baseLng,
     territory: v.territory,
+    outletId: v.outletId,
     route: [{ lat: baseLat, lng: baseLng }, ...routePoints],
   };
 });
 
-// ===== DAILY METRICS =====
-export const dailyMetrics = Array.from({ length: 30 }, (_, i) => {
-  const date = new Date();
-  date.setDate(date.getDate() - (29 - i));
-  return {
-    date: date.toISOString().split('T')[0],
-    totalSales: Math.floor(Math.random() * 300000) + 150000,
-    vendorsActive: Math.floor(Math.random() * 10) + 18,
-    cashCollected: Math.floor(Math.random() * 250000) + 100000,
-    mobileMoneyCollected: Math.floor(Math.random() * 80000) + 20000,
-  };
-});
+// ===== DAILY METRICS (per outlet) =====
+export interface DailyMetric {
+  date: string;
+  outletId: string;
+  totalSales: number;
+  vendorsActive: number;
+  cashCollected: number;
+  mobileMoneyCollected: number;
+}
+
+export const dailyMetrics: DailyMetric[] = outletIds.flatMap(outletId =>
+  Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - i));
+    const scale = outletId === 'sangotedo' ? 1 : 0.5 + Math.random() * 0.3;
+    return {
+      date: date.toISOString().split('T')[0],
+      outletId,
+      totalSales: Math.floor((Math.random() * 300000 + 150000) * scale),
+      vendorsActive: Math.floor((Math.random() * 10 + 18) * scale),
+      cashCollected: Math.floor((Math.random() * 250000 + 100000) * scale),
+      mobileMoneyCollected: Math.floor((Math.random() * 80000 + 20000) * scale),
+    };
+  })
+);
 
 // ===== MOBILE MONEY PROVIDERS =====
 export interface MobileMoneyProvider {
@@ -501,3 +552,6 @@ export const mobileMoneyProviders: MobileMoneyProvider[] = [
   { id: 'momo-4', name: 'Kuda', code: 'KUDA', logo: '🏦' },
   { id: 'momo-5', name: 'Moniepoint', code: 'MONIEPOINT', logo: '🔵' },
 ];
+
+// ===== HELPER: Get outlet name =====
+export const getOutletName = (outletId: string): string => outletNames[outletId] || outletId;
