@@ -88,7 +88,7 @@ export default function RoleManagement() {
         <p className="text-muted-foreground">View and assign user roles across the platform.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Users</CardDescription>
@@ -99,6 +99,12 @@ export default function RoleManagement() {
           <CardHeader className="pb-2">
             <CardDescription>Admins</CardDescription>
             <CardTitle className="text-3xl text-destructive">{roleCount('admin')}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Managers</CardDescription>
+            <CardTitle className="text-3xl text-primary">{roleCount('manager')}</CardTitle>
           </CardHeader>
         </Card>
         <Card>

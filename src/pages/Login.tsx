@@ -112,13 +112,14 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={signupRole} onValueChange={v => setSignupRole(v as 'admin' | 'assistant')}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="assistant">Assistant</SelectItem>
-                    </SelectContent>
-                  </Select>
+                   <Select value={signupRole} onValueChange={v => setSignupRole(v as 'admin' | 'manager' | 'assistant')}>
+                     <SelectTrigger><SelectValue /></SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="admin">Admin</SelectItem>
+                       <SelectItem value="manager">Manager</SelectItem>
+                       <SelectItem value="assistant">Assistant</SelectItem>
+                     </SelectContent>
+                   </Select>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Creating account...' : 'Create Account'}

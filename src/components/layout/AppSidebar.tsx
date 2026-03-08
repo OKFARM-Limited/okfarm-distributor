@@ -117,7 +117,7 @@ export function AppSidebar() {
 
       <SidebarContent className="scrollbar-thin">
         {navGroups.map(group => {
-          if (group.adminOnly && !isAdmin) return null;
+          if ((group as any).adminOrManager && !isAdmin && !isManager) return null;
           return (
             <SidebarGroup key={group.label}>
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
