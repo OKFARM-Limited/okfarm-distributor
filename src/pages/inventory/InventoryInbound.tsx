@@ -39,6 +39,7 @@ export default function InventoryInbound() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Inventory Inbound</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
