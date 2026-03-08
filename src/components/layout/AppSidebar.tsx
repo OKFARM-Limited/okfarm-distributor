@@ -57,6 +57,13 @@ const navGroups = [
     ],
   },
   {
+    label: 'Programs',
+    items: [
+      { title: 'Incentives', url: '/incentives', icon: Gift },
+      { title: 'Fan Academy', url: '/training', icon: GraduationCap },
+    ],
+  },
+  {
     label: 'Admin',
     adminOnly: true,
     items: [
@@ -64,6 +71,8 @@ const navGroups = [
       { title: 'Payouts', url: '/payouts', icon: Truck },
       { title: 'Orders', url: '/orders', icon: ShoppingCart },
       { title: 'Forecast', url: '/forecast', icon: TrendingUp },
+      { title: 'Settlement', url: '/settlement', icon: Handshake },
+      { title: 'Depots', url: '/depots', icon: Building2 },
       { title: 'Audit Trail', url: '/audit', icon: Shield },
     ],
   },
