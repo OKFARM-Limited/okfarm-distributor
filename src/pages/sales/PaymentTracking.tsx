@@ -1,4 +1,5 @@
 import { useOutletContext } from '@/contexts/OutletContext';
+import { ViewerBanner } from '@/components/ViewerGuard';
 import { useSales } from '@/hooks/useSupabaseData';
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +21,7 @@ export default function PaymentTracking() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Payment Tracking</h1>

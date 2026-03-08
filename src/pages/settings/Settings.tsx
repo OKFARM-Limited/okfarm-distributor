@@ -7,6 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,9 +17,11 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
+  const { viewerProps } = useViewerGuard();
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold">{t('settings')}</h1>
 
       <Card>
@@ -64,7 +68,7 @@ export default function SettingsPage() {
         <CardHeader><CardTitle className="text-base">Offline Storage</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm text-muted-foreground">Draft allocations and sales entries are stored locally for offline use.</p>
-          <Button variant="outline" size="sm" onClick={() => { localStorage.removeItem('okfarm_alloc_drafts'); localStorage.removeItem('okfarm_sales_drafts'); }}>Clear Local Drafts</Button>
+          <Button variant="outline" size="sm" onClick={() => { localStorage.removeItem('okfarm_alloc_drafts'); localStorage.removeItem('okfarm_sales_drafts'); }} {...viewerProps}>Clear Local Drafts</Button>
         </CardContent>
       </Card>
 

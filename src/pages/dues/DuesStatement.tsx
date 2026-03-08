@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { useVendors, useSales, useAllocations } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +12,7 @@ import { Printer, FileText, Loader2 } from 'lucide-react';
 export default function DuesStatement() {
   const [selectedVendor, setSelectedVendor] = useState('');
   const printRef = useRef<HTMLDivElement>(null);
+  const { viewerProps } = useViewerGuard();
   const { data: vendors = [], isLoading: vLoading } = useVendors('all');
   const { data: sales = [], isLoading: sLoading } = useSales('all');
   const { data: allocations = [], isLoading: aLoading } = useAllocations('all');
@@ -50,9 +53,10 @@ export default function DuesStatement() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2"><FileText className="h-6 w-6" /> Dues Statement</h1>
-        <Button onClick={handlePrint} disabled={!selectedVendor} className="gap-1"><Printer className="h-4 w-4" /> Print / PDF</Button>
+        <Button onClick={handlePrint} disabled={!selectedVendor} className="gap-1" {...viewerProps}><Printer className="h-4 w-4" /> Print / PDF</Button>
       </div>
 
       <Select value={selectedVendor} onValueChange={setSelectedVendor}>
