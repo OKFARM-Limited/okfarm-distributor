@@ -40,12 +40,13 @@ export default function VendorList() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Vendors</h1>
           <p className="text-muted-foreground text-sm">{filtered.length} vendors found{!isAllOutlets && ` in ${getOutletName(selectedOutletId)}`}</p>
         </div>
-        <Button onClick={() => navigate('/vendors/onboard')}><Plus className="h-4 w-4 mr-1" /> Onboard Vendor</Button>
+        <Button onClick={() => navigate('/vendors/onboard')} {...viewerProps}><Plus className="h-4 w-4 mr-1" /> Onboard Vendor</Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">

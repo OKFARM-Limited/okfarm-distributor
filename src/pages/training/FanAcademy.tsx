@@ -61,12 +61,13 @@ export default function FanAcademy() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Fan Academy</h1>
           <p className="text-muted-foreground">Vendor training & upskilling tracker</p>
         </div>
-        <Button onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })}>
+        <Button onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })} {...viewerProps}>
           <GraduationCap className="h-4 w-4 mr-2" />Export Report
         </Button>
       </div>

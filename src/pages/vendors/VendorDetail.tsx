@@ -56,6 +56,7 @@ export default function VendorDetail() {
             variant={isActive ? 'destructive' : 'default'}
             onClick={() => setConfirmDialog(true)}
             className="gap-1"
+            {...viewerProps}
           >
             {isActive ? <><UserX className="h-4 w-4" /> Deactivate</> : <><UserCheck className="h-4 w-4" /> Reactivate</>}
           </Button>

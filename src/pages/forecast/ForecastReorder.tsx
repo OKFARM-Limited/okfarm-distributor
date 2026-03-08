@@ -60,9 +60,10 @@ export default function ForecastReorder() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2"><TrendingUp className="h-6 w-6" /> Forecast & Reorder</h1>
-        <Button onClick={handleAutoOrder} className="gap-1" disabled={totalSuggested === 0}>
+        <Button onClick={handleAutoOrder} className="gap-1" disabled={totalSuggested === 0} {...viewerProps}>
           <ShoppingCart className="h-4 w-4" /> Auto-Order (₦{totalSuggested.toLocaleString()})
         </Button>
       </div>

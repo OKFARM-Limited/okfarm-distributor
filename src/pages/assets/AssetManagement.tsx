@@ -165,7 +165,7 @@ export default function AssetManagement() {
                                 <Select value={scheduleType} onValueChange={v => setScheduleType(v as any)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="routine">Routine</SelectItem><SelectItem value="repair">Repair</SelectItem><SelectItem value="inspection">Inspection</SelectItem></SelectContent></Select>
                               </div>
                               <div className="space-y-2"><Label>Description</Label><Input value={scheduleDesc} onChange={e => setScheduleDesc(e.target.value)} placeholder="What needs to be done..." /></div>
-                              <Button onClick={() => handleScheduleMaintenance(a.id)} disabled={!scheduleDate} className="w-full">Schedule</Button>
+                              <Button onClick={() => handleScheduleMaintenance(a.id)} disabled={!scheduleDate} className="w-full" {...viewerProps}>Schedule</Button>
                             </div>
                           </DialogContent>
                         </Dialog>

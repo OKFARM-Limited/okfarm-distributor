@@ -55,6 +55,7 @@ export default function IncentivePrograms() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold text-foreground">Incentive Programs</h1>
         <p className="text-muted-foreground">Rewards, trade premiums & vendor advancement opportunities</p>

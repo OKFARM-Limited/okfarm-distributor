@@ -59,7 +59,7 @@ export default function PayoutTracking() {
                   <TableCell><Badge variant={c.status === 'disbursed' ? 'default' : 'secondary'}>{c.status}</Badge></TableCell>
                   <TableCell>
                     {c.status !== 'disbursed' && (
-                      <Button size="sm" onClick={() => handleDisburse(c)} disabled={createPayout.isPending}>
+                      <Button size="sm" onClick={() => handleDisburse(c)} disabled={createPayout.isPending} {...viewerProps}>
                         {createPayout.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
                         Disburse
                       </Button>

@@ -178,6 +178,7 @@ export default function RoleManagement() {
                       <Select
                         value={user.role}
                         onValueChange={(v) => updateRole.mutate({ userId: user.user_id, role: v as UserRole })}
+                        disabled={viewerProps.disabled}
                       >
                         <SelectTrigger className="h-8 text-xs">
                           <SelectValue />

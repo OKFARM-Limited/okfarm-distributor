@@ -53,13 +53,14 @@ export default function CommissionCalculator() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Commission Calculator</h1>
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setCalcDialog(true)} className="gap-1">
+          <Button onClick={() => setCalcDialog(true)} className="gap-1" {...viewerProps}>
             <Calculator className="h-4 w-4" /> Auto-Calculate
           </Button>
           <TooltipProvider>

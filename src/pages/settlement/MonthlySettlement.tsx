@@ -81,6 +81,7 @@ export default function MonthlySettlement() {
 
   return (
     <div className="space-y-6">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Monthly Settlement</h1>
@@ -90,7 +91,7 @@ export default function MonthlySettlement() {
           <Button variant="outline" onClick={() => toast({ title: 'Exported', description: 'Settlement report downloaded.' })}>
             <Download className="h-4 w-4 mr-2" />Export
           </Button>
-          <Button onClick={() => setDialogOpen(true)} className="gap-1"><Plus className="h-4 w-4" /> New Settlement</Button>
+          <Button onClick={() => setDialogOpen(true)} className="gap-1" {...viewerProps}><Plus className="h-4 w-4" /> New Settlement</Button>
         </div>
       </div>
 

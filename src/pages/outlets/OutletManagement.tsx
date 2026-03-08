@@ -57,12 +57,13 @@ export default function OutletManagement() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Outlets Management</h1>
           <p className="text-sm text-muted-foreground">{outlets.length} outlets configured</p>
         </div>
-        <Button onClick={openAdd}><Plus className="h-4 w-4 mr-1" /> Add Outlet</Button>
+        <Button onClick={openAdd} {...viewerProps}><Plus className="h-4 w-4 mr-1" /> Add Outlet</Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
