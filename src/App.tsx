@@ -42,6 +42,7 @@ import ProductManagement from "./pages/products/ProductManagement";
 import DepotManagement from "./pages/depots/DepotManagement";
 import OutletManagement from "./pages/outlets/OutletManagement";
 import RoleManagement from "./pages/admin/RoleManagement";
+import PermissionsMatrix from "./pages/admin/PermissionsMatrix";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -100,6 +101,7 @@ function AppRoutes() {
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
         <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
         <Route path="roles" element={<AdminOnlyRoute><RoleManagement /></AdminOnlyRoute>} />
+        <Route path="permissions" element={<AdminOnlyRoute><PermissionsMatrix /></AdminOnlyRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />

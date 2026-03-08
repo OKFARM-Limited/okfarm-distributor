@@ -2,7 +2,7 @@ import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
   Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
-  Building2, GraduationCap, Gift, Handshake, Store, UserCog
+  Building2, GraduationCap, Gift, Handshake, Store, UserCog, Grid3X3
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -77,6 +77,7 @@ const navGroups = [
       { title: 'Depots', url: '/depots', icon: Building2 },
       { title: 'Audit Trail', url: '/audit', icon: Shield },
       { title: 'User Roles', url: '/roles', icon: UserCog },
+      { title: 'Permissions', url: '/permissions', icon: Grid3X3 },
     ],
   },
   {
