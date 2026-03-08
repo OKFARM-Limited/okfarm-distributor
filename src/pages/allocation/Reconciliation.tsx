@@ -17,6 +17,7 @@ export default function Reconciliation() {
   const [returns, setReturns] = useState<Record<string, number>>({});
   const [spoilage, setSpoilage] = useState<Record<string, number>>({});
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { viewerProps } = useViewerGuard();
 
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: allocations = [], isLoading: aLoading } = useAllocations(isAllOutlets ? 'all' : selectedOutletId);
