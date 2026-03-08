@@ -17,6 +17,7 @@ export default function ForecastReorder() {
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
 
   const isLoading = fLoading || pLoading || sLoading;
+  const { viewerProps } = useViewerGuard();
 
   // If we have forecasts from DB, use them; otherwise compute from stock levels
   const productStats = (forecasts as any[]).length > 0
