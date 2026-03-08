@@ -30,6 +30,7 @@ export default function OrderPlacement() {
   const { data: orders = [], isLoading: oLoading } = useOrders(isAllOutlets ? 'all' : selectedOutletId);
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
+  const { viewerProps } = useViewerGuard();
 
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
