@@ -1,4 +1,5 @@
 import { useOutletContext } from '@/contexts/OutletContext';
+import { ViewerBanner } from '@/components/ViewerGuard';
 import { useSales } from '@/hooks/useSupabaseData';
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
