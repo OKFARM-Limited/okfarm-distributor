@@ -25,6 +25,7 @@ export default function VendorList() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [editVendor, setEditVendor] = useState<any>(null);
   const navigate = useNavigate();
+  const { viewerProps } = useViewerGuard();
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: vendors = [], isLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
 
