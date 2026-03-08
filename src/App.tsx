@@ -41,6 +41,7 @@ import FanAcademy from "./pages/training/FanAcademy";
 import ProductManagement from "./pages/products/ProductManagement";
 import DepotManagement from "./pages/depots/DepotManagement";
 import OutletManagement from "./pages/outlets/OutletManagement";
+import RoleManagement from "./pages/admin/RoleManagement";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -92,6 +93,7 @@ function AppRoutes() {
         <Route path="training" element={<FanAcademy />} />
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
         <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
+        <Route path="roles" element={<AdminRoute><RoleManagement /></AdminRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
