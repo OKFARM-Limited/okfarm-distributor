@@ -112,12 +112,13 @@ export default function Login() {
                 </div>
                 <div className="space-y-2">
                   <Label>Role</Label>
-                   <Select value={signupRole} onValueChange={v => setSignupRole(v as 'admin' | 'manager' | 'assistant')}>
+                   <Select value={signupRole} onValueChange={v => setSignupRole(v as 'admin' | 'manager' | 'assistant' | 'viewer')}>
                      <SelectTrigger><SelectValue /></SelectTrigger>
                      <SelectContent>
                        <SelectItem value="admin">Admin</SelectItem>
                        <SelectItem value="manager">Manager</SelectItem>
                        <SelectItem value="assistant">Assistant</SelectItem>
+                       <SelectItem value="viewer">Viewer</SelectItem>
                      </SelectContent>
                    </Select>
                 </div>
