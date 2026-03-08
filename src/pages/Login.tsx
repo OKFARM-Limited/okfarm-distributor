@@ -18,7 +18,7 @@ export default function Login() {
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
-  const [signupRole, setSignupRole] = useState<'admin' | 'manager' | 'assistant'>('assistant');
+  const [signupRole, setSignupRole] = useState<'admin' | 'manager' | 'assistant' | 'viewer'>('assistant');
   const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
