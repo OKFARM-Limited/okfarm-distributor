@@ -21,6 +21,7 @@ export default function MonthlySettlement() {
   const { data: outlets = [] } = useOutlets();
   const { data: deliveries = [] } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const createSettlement = useCreateSettlement();
+  const { viewerProps } = useViewerGuard();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newMonth, setNewMonth] = useState('');
   const [newOutlet, setNewOutlet] = useState('');
