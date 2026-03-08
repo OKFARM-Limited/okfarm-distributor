@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
+  const { viewerProps } = useViewerGuard();
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
