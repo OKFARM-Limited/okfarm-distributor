@@ -55,6 +55,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  if (user?.role !== 'admin' && user?.role !== 'manager') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
@@ -86,14 +92,14 @@ function AppRoutes() {
         <Route path="commissions" element={<AdminRoute><CommissionCalculator /></AdminRoute>} />
         <Route path="payouts" element={<AdminRoute><PayoutTracking /></AdminRoute>} />
         <Route path="orders" element={<AdminRoute><OrderPlacement /></AdminRoute>} />
-        <Route path="audit" element={<AdminRoute><AuditTrail /></AdminRoute>} />
+        <Route path="audit" element={<AdminOnlyRoute><AuditTrail /></AdminOnlyRoute>} />
         <Route path="settlement" element={<AdminRoute><MonthlySettlement /></AdminRoute>} />
         <Route path="outlets" element={<AdminRoute><OutletManagement /></AdminRoute>} />
         <Route path="incentives" element={<IncentivePrograms />} />
         <Route path="training" element={<FanAcademy />} />
         <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
         <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
-        <Route path="roles" element={<AdminRoute><RoleManagement /></AdminRoute>} />
+        <Route path="roles" element={<AdminOnlyRoute><RoleManagement /></AdminOnlyRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />

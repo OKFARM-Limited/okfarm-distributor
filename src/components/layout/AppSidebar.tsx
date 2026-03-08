@@ -65,7 +65,7 @@ const navGroups = [
   },
   {
     label: 'Admin',
-    adminOnly: true,
+    adminOrManager: true,
     items: [
       { title: 'Outlets', url: '/outlets', icon: Store },
       { title: 'Products', url: '/products', icon: Package },
@@ -93,6 +93,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
 
   return (
     <Sidebar collapsible="icon">
@@ -116,7 +117,7 @@ export function AppSidebar() {
 
       <SidebarContent className="scrollbar-thin">
         {navGroups.map(group => {
-          if (group.adminOnly && !isAdmin) return null;
+          if ((group as any).adminOrManager && !isAdmin && !isManager) return null;
           return (
             <SidebarGroup key={group.label}>
               <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
