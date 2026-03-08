@@ -76,6 +76,7 @@ const navGroups = [
       { title: 'Settlement', url: '/settlement', icon: Handshake },
       { title: 'Depots', url: '/depots', icon: Building2 },
       { title: 'Audit Trail', url: '/audit', icon: Shield },
+      { title: 'User Roles', url: '/roles', icon: UserCog },
     ],
   },
   {
