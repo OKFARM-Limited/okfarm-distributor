@@ -9,12 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function Reconciliation() {
   const [vendorId, setVendorId] = useState('');
   const [returns, setReturns] = useState<Record<string, number>>({});
   const [spoilage, setSpoilage] = useState<Record<string, number>>({});
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { viewerProps } = useViewerGuard();
 
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: allocations = [], isLoading: aLoading } = useAllocations(isAllOutlets ? 'all' : selectedOutletId);
@@ -72,6 +75,7 @@ export default function Reconciliation() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold">Evening Reconciliation</h1>
         {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
@@ -114,7 +118,7 @@ export default function Reconciliation() {
               </TableBody>
             </Table>
             <div className="flex justify-end mt-4">
-              <Button onClick={handleReconcile} disabled={createReconciliation.isPending}>
+              <Button onClick={handleReconcile} disabled={createReconciliation.isPending} {...viewerProps}>
                 {createReconciliation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Save Reconciliation
               </Button>

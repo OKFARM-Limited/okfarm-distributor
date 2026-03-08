@@ -10,6 +10,8 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<any>(null);
@@ -17,6 +19,7 @@ export default function InventoryInbound() {
   const { data: deliveries = [], isLoading: dLoading } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
   const updateDelivery = useUpdateDelivery();
+  const { viewerProps } = useViewerGuard();
 
   const totalStock = (stockLevels as any[]).reduce((s, l) => s + l.current_stock, 0);
   const lowStockItems = (stockLevels as any[]).filter(s => s.current_stock <= s.min_stock);
@@ -36,6 +39,7 @@ export default function InventoryInbound() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Inventory Inbound</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -89,7 +93,7 @@ export default function InventoryInbound() {
                       <TableCell><Badge variant={d.status === 'received' ? 'default' : d.status === 'verified' ? 'secondary' : 'outline'}>{d.status}</Badge></TableCell>
                       <TableCell className="text-right space-x-1">
                         <Button size="sm" variant="ghost" onClick={() => setViewDelivery(d)}><Eye className="h-3 w-3" /></Button>
-                        {d.status === 'pending' && <Button size="sm" onClick={() => markReceived(d.id)}>Receive</Button>}
+                        {d.status === 'pending' && <Button size="sm" onClick={() => markReceived(d.id)} {...viewerProps}>Receive</Button>}
                       </TableCell>
                     </TableRow>
                   ))}

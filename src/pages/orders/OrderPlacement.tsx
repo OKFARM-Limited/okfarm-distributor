@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { ShoppingCart, Loader2, CheckCircle, Truck, Clock } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   pending: 'secondary', confirmed: 'outline', in_transit: 'outline', delivered: 'default', cancelled: 'destructive',
@@ -28,6 +30,7 @@ export default function OrderPlacement() {
   const { data: orders = [], isLoading: oLoading } = useOrders(isAllOutlets ? 'all' : selectedOutletId);
   const createOrder = useCreateOrder();
   const updateOrder = useUpdateOrder();
+  const { viewerProps } = useViewerGuard();
 
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
@@ -87,7 +90,7 @@ export default function OrderPlacement() {
                 <div className="space-y-2"><Label>Notes</Label><Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Special instructions..." /></div>
                 <div className="flex items-center justify-between">
                   <p className="text-xl font-bold">Total: ₦{totalValue.toLocaleString()}</p>
-                  <Button onClick={handleSubmit} disabled={totalValue === 0 || createOrder.isPending}>
+                  <Button onClick={handleSubmit} disabled={totalValue === 0 || createOrder.isPending} {...viewerProps}>
                     {createOrder.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}Submit Order
                   </Button>
                 </div>
