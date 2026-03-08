@@ -56,6 +56,7 @@ export default function VendorCheckIn() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="h-6 w-6" /> Vendor Check-In / Check-Out</h1>
 
       <div className="grid grid-cols-3 gap-3">

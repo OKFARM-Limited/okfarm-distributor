@@ -75,6 +75,7 @@ export default function SalesEntry() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Daily Sales Entry</h1>
