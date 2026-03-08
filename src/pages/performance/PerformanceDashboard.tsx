@@ -1,21 +1,25 @@
-import { vendors, dailyMetrics, salesRecords, products, checkInRecords, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useVendors, useSales, useCheckIns, useOutlets } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { Download, AlertTriangle, TrendingUp, Users, Calendar, Award, Clock, MapPin } from 'lucide-react';
+import { Download, AlertTriangle, TrendingUp, Users, Calendar, Award, Clock, MapPin, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function PerformanceDashboard() {
   const navigate = useNavigate();
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: sales = [], isLoading: sLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: checkIns = [], isLoading: cLoading } = useCheckIns();
 
-  const filteredVendors = isAllOutlets ? vendors : vendors.filter(v => v.outletId === selectedOutletId);
-  const filteredSales = isAllOutlets ? salesRecords : salesRecords.filter(s => s.outletId === selectedOutletId);
-  const activeCount = filteredVendors.filter(v => v.status === 'active').length;
+  const isLoading = vLoading || sLoading || cLoading;
+
+  const activeVendors = (vendors as any[]).filter(v => v.status === 'active');
+  const activeCount = activeVendors.length;
 
   const today = new Date().toISOString().split('T')[0];
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -23,64 +27,54 @@ export default function PerformanceDashboard() {
     return d.toISOString().split('T')[0];
   });
 
-  const filteredCheckIns = checkInRecords.filter(c => {
-    const vendor = vendors.find(v => v.id === c.vendorId);
-    return vendor && (isAllOutlets || vendor.outletId === selectedOutletId);
-  });
-
-  const todayCheckIns = filteredCheckIns.filter(c => c.date === today);
+  const todayCheckIns = (checkIns as any[]).filter(c => c.date === today);
   const todayAttendanceRate = activeCount ? Math.round((todayCheckIns.length / activeCount) * 100) : 0;
 
-  const vendorAttendance = filteredVendors.filter(v => v.status === 'active').map(v => {
-    const checkins = filteredCheckIns.filter(c => c.vendorId === v.id);
-    const last7 = checkins.filter(c => last7Days.includes(c.date)).length;
-    const last30 = checkins.length;
-    const avgCheckIn = checkins.length > 0
-      ? checkins.reduce((sum, c) => sum + parseInt(c.checkInTime.split(':')[0]) * 60 + parseInt(c.checkInTime.split(':')[1]), 0) / checkins.length
-      : 0;
-    return { ...v, attendanceLast7: last7, attendanceLast30: last30, attendanceRate30: Math.round((last30 / 30) * 100), avgCheckInMinutes: avgCheckIn };
-  });
-
+  // Attendance trend
   const attendanceTrend = [...last7Days].reverse().map(date => {
-    const count = filteredCheckIns.filter(c => c.date === date).length;
+    const count = (checkIns as any[]).filter(c => c.date === date).length;
     return {
       date: new Date(date).toLocaleDateString('en', { day: '2-digit', month: 'short' }),
-      present: count, absent: activeCount - count,
+      present: count, absent: Math.max(0, activeCount - count),
       rate: activeCount ? Math.round((count / activeCount) * 100) : 0,
     };
   });
 
-  const filteredMetrics = isAllOutlets
-    ? aggregateMetrics(dailyMetrics)
-    : dailyMetrics.filter(m => m.outletId === selectedOutletId);
-
-  const avgDailySales = filteredMetrics.length ? Math.round(filteredMetrics.reduce((s, d) => s + d.totalSales, 0) / filteredMetrics.length) : 0;
-  const topPerformers = [...filteredVendors].sort((a, b) => b.totalSales - a.totalSales).slice(0, 5);
-
-  const skuTotals = products.map(p => {
-    const total = filteredSales.reduce((s, r) => s + (r.items.find(i => i.productId === p.id)?.qtySold || 0), 0);
-    return { name: p.name.split(' ').slice(0, 2).join(' '), total };
-  }).sort((a, b) => b.total - a.total);
-
-  const weeklyTrend = filteredMetrics.slice(-14).map(d => ({
-    date: new Date(d.date).toLocaleDateString('en', { day: '2-digit', month: 'short' }),
-    sales: d.totalSales, vendors: d.vendorsActive,
+  // Sales by date for trend
+  const salesByDate: Record<string, number> = {};
+  (sales as any[]).forEach(s => {
+    salesByDate[s.date] = (salesByDate[s.date] || 0) + Number(s.total_value);
+  });
+  const last14Days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  }).reverse();
+  const salesTrend = last14Days.map(date => ({
+    date: new Date(date).toLocaleDateString('en', { day: '2-digit', month: 'short' }),
+    sales: salesByDate[date] || 0,
   }));
+  const avgDailySales = salesTrend.length ? Math.round(salesTrend.reduce((s, d) => s + d.sales, 0) / salesTrend.length) : 0;
 
-  const lowActivity = vendorAttendance.filter(v => v.attendanceRate30 < 40);
+  // Top performers by total sales
+  const vendorSalesMap: Record<string, number> = {};
+  (sales as any[]).forEach(s => {
+    vendorSalesMap[s.vendor_id] = (vendorSalesMap[s.vendor_id] || 0) + Number(s.total_value);
+  });
+  const topPerformers = activeVendors
+    .map(v => ({ ...v, totalSales: vendorSalesMap[v.id] || Number(v.total_sales) || 0 }))
+    .sort((a, b) => b.totalSales - a.totalSales)
+    .slice(0, 5);
 
   const handleExport = () => {
-    const csv = 'Vendor,Outlet,Territory,Total Sales,Days Worked,Attendance Rate,Avg Check-In\n' +
-      vendorAttendance.map(v => {
-        const hrs = Math.floor(v.avgCheckInMinutes / 60);
-        const mins = Math.round(v.avgCheckInMinutes % 60);
-        return `${v.name},${getOutletName(v.outletId)},${v.territory},${v.totalSales},${v.daysWorked},${v.attendanceRate30}%,${hrs}:${String(mins).padStart(2, '0')}`;
-      }).join('\n');
+    const csv = 'Vendor,Territory,Total Sales\n' +
+      topPerformers.map(v => `${v.name},${v.territory},${v.totalSales}`).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'performance_report.csv'; a.click();
     toast({ title: 'Report Exported', description: 'CSV file downloaded.' });
   };
+
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -92,30 +86,19 @@ export default function PerformanceDashboard() {
         <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Total Vendors</p><p className="text-2xl font-bold">{filteredVendors.length}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center"><Calendar className="h-5 w-5 text-secondary" /></div><div><p className="text-xs text-muted-foreground">Today's Attendance</p><p className="text-2xl font-bold">{todayAttendanceRate}%</p><p className="text-[10px] text-muted-foreground">{todayCheckIns.length}/{activeCount} checked in</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-success" /></div><div><p className="text-xs text-muted-foreground">Avg Daily Sales</p><p className="text-2xl font-bold">₦{avgDailySales.toLocaleString()}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center"><Award className="h-5 w-5 text-warning" /></div><div><p className="text-xs text-muted-foreground">Top Performer</p><p className="text-sm font-bold truncate">{topPerformers[0]?.name}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center"><Clock className="h-5 w-5 text-info" /></div><div><p className="text-xs text-muted-foreground">30-Day Avg Attendance</p><p className="text-2xl font-bold">{vendorAttendance.length ? Math.round(vendorAttendance.reduce((s, v) => s + v.attendanceRate30, 0) / vendorAttendance.length) : 0}%</p></div></CardContent></Card>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Active Vendors</p><p className="text-2xl font-bold">{activeCount}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center"><Calendar className="h-5 w-5 text-secondary" /></div><div><p className="text-xs text-muted-foreground">Today's Attendance</p><p className="text-2xl font-bold">{todayAttendanceRate}%</p><p className="text-[10px] text-muted-foreground">{todayCheckIns.length}/{activeCount}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-green-600" /></div><div><p className="text-xs text-muted-foreground">Avg Daily Sales</p><p className="text-2xl font-bold">₦{avgDailySales.toLocaleString()}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center"><Award className="h-5 w-5 text-yellow-600" /></div><div><p className="text-xs text-muted-foreground">Top Performer</p><p className="text-sm font-bold truncate">{topPerformers[0]?.name || '—'}</p></div></CardContent></Card>
       </div>
-
-      {lowActivity.length > 0 && (
-        <div className="flex items-start gap-2 rounded-lg bg-warning/10 border border-warning/30 p-4">
-          <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium text-sm">Low Attendance Vendors (&lt;40% rate)</p>
-            <p className="text-xs text-muted-foreground mt-1">{lowActivity.map(v => `${v.name} (${v.attendanceRate30}%)`).join(', ')}</p>
-          </div>
-        </div>
-      )}
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader><CardTitle className="text-base">Sales Trend (14 days)</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={weeklyTrend}>
+              <LineChart data={salesTrend}>
                 <XAxis dataKey="date" fontSize={11} tickLine={false} />
                 <YAxis fontSize={11} tickLine={false} tickFormatter={v => `₦${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => `₦${v.toLocaleString()}`} />
@@ -133,48 +116,10 @@ export default function PerformanceDashboard() {
                 <XAxis dataKey="date" fontSize={11} tickLine={false} />
                 <YAxis fontSize={11} tickLine={false} />
                 <Tooltip />
-                <Bar dataKey="present" fill="hsl(var(--success))" name="Present" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="present" fill="hsl(var(--primary))" name="Present" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="absent" fill="hsl(var(--destructive))" name="Absent" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Top SKUs by Volume</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={skuTotals.slice(0, 6)} layout="vertical">
-                <XAxis type="number" fontSize={11} tickLine={false} />
-                <YAxis type="category" dataKey="name" fontSize={11} tickLine={false} width={100} />
-                <Tooltip />
-                <Bar dataKey="total" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Vendor Attendance Breakdown</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader><TableRow><TableHead>Vendor</TableHead><TableHead>Last 7d</TableHead><TableHead>Last 30d</TableHead><TableHead>Rate</TableHead><TableHead>Avg Check-In</TableHead></TableRow></TableHeader>
-              <TableBody>
-                {vendorAttendance.sort((a, b) => b.attendanceRate30 - a.attendanceRate30).slice(0, 10).map(v => {
-                  const hrs = Math.floor(v.avgCheckInMinutes / 60);
-                  const mins = Math.round(v.avgCheckInMinutes % 60);
-                  return (
-                    <TableRow key={v.id}>
-                      <TableCell className="font-medium text-sm">{v.name}</TableCell>
-                      <TableCell>{v.attendanceLast7}/7</TableCell>
-                      <TableCell>{v.attendanceLast30}/30</TableCell>
-                      <TableCell><Badge variant={v.attendanceRate30 >= 70 ? 'default' : v.attendanceRate30 >= 50 ? 'secondary' : 'destructive'}>{v.attendanceRate30}%</Badge></TableCell>
-                      <TableCell className="text-muted-foreground">{hrs}:{String(mins).padStart(2, '0')}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
           </CardContent>
         </Card>
       </div>
@@ -188,26 +133,15 @@ export default function PerformanceDashboard() {
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">{i + 1}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{v.name}</p>
-                  <p className="text-xs text-muted-foreground">{v.territory} • {getOutletName(v.outletId)} • {v.daysWorked} days</p>
+                  <p className="text-xs text-muted-foreground">{v.territory} • {v.outlets?.name || ''}</p>
                 </div>
                 <p className="font-bold text-sm">₦{v.totalSales.toLocaleString()}</p>
               </div>
             ))}
+            {topPerformers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No sales data yet.</p>}
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
-
-function aggregateMetrics(metrics: typeof dailyMetrics) {
-  const byDate: Record<string, any> = {};
-  metrics.forEach(m => {
-    if (!byDate[m.date]) byDate[m.date] = { date: m.date, totalSales: 0, vendorsActive: 0, cashCollected: 0, mobileMoneyCollected: 0, outletId: 'all' };
-    byDate[m.date].totalSales += m.totalSales;
-    byDate[m.date].vendorsActive += m.vendorsActive;
-    byDate[m.date].cashCollected += m.cashCollected;
-    byDate[m.date].mobileMoneyCollected += m.mobileMoneyCollected;
-  });
-  return Object.values(byDate).sort((a: any, b: any) => a.date.localeCompare(b.date));
 }

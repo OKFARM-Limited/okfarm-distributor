@@ -170,6 +170,39 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       check_ins: {
         Row: {
           check_in_time: string | null
@@ -293,6 +326,48 @@ export type Database = {
           },
         ]
       }
+      delivery_items: {
+        Row: {
+          created_at: string
+          delivery_id: string
+          id: string
+          product_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          delivery_id: string
+          id?: string
+          product_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_items_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "inbound_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       depots: {
         Row: {
           address: string | null
@@ -345,6 +420,282 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "depots_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forecasts: {
+        Row: {
+          avg_daily_sales: number
+          calculated_at: string
+          current_stock: number
+          days_until_stockout: number
+          id: string
+          order_value: number
+          outlet_id: string | null
+          product_id: string
+          suggested_order: number
+        }
+        Insert: {
+          avg_daily_sales?: number
+          calculated_at?: string
+          current_stock?: number
+          days_until_stockout?: number
+          id?: string
+          order_value?: number
+          outlet_id?: string | null
+          product_id: string
+          suggested_order?: number
+        }
+        Update: {
+          avg_daily_sales?: number
+          calculated_at?: string
+          current_stock?: number
+          days_until_stockout?: number
+          id?: string
+          order_value?: number
+          outlet_id?: string | null
+          product_id?: string
+          suggested_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forecasts_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forecasts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbound_deliveries: {
+        Row: {
+          created_at: string
+          credit_term_days: number
+          date: string
+          due_date: string | null
+          id: string
+          invoice_number: string
+          notes: string | null
+          outlet_id: string | null
+          received_by: string | null
+          status: string
+          supplier: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_term_days?: number
+          date?: string
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          outlet_id?: string | null
+          received_by?: string | null
+          status?: string
+          supplier?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_term_days?: number
+          date?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          outlet_id?: string | null
+          received_by?: string | null
+          status?: string
+          supplier?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_deliveries_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incentive_programs: {
+        Row: {
+          created_at: string
+          description: string | null
+          eligibility_criteria: string | null
+          icon: string | null
+          id: string
+          name: string
+          reward: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          eligibility_criteria?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          reward?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          eligibility_criteria?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          reward?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          outlet_id: string | null
+          priority: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          outlet_id?: string | null
+          priority?: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          outlet_id?: string | null
+          priority?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          expected_delivery: string | null
+          id: string
+          notes: string | null
+          order_date: string
+          outlet_id: string | null
+          status: string
+          total_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          outlet_id?: string | null
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_delivery?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string
+          outlet_id?: string | null
+          status?: string
+          total_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_outlet_id_fkey"
             columns: ["outlet_id"]
             isOneToOne: false
             referencedRelation: "outlets"
@@ -888,6 +1239,84 @@ export type Database = {
           },
         ]
       }
+      stock_levels: {
+        Row: {
+          current_stock: number
+          id: string
+          max_stock: number
+          min_stock: number
+          outlet_id: string | null
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          current_stock?: number
+          id?: string
+          max_stock?: number
+          min_stock?: number
+          outlet_id?: string | null
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          current_stock?: number
+          id?: string
+          max_stock?: number
+          min_stock?: number
+          outlet_id?: string | null
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_levels_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_levels_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_modules: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          mandatory: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          mandatory?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          mandatory?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -905,6 +1334,96 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vendor_incentives: {
+        Row: {
+          awarded_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          program_id: string
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          program_id: string
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          program_id?: string
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_incentives_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "incentive_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_incentives_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_training_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          module_id: string
+          score: number | null
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          score?: number | null
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          score?: number | null
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_training_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_training_progress_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendors: {
         Row: {
@@ -924,6 +1443,8 @@ export type Database = {
           id: string
           join_date: string | null
           languages: string[] | null
+          latitude: number | null
+          longitude: number | null
           marital_status: string | null
           mobile_money_number: string | null
           name: string
@@ -934,6 +1455,7 @@ export type Database = {
           outlet_id: string | null
           phone: string | null
           photo_url: string | null
+          route_data: Json | null
           status: string
           territory: string | null
           total_sales: number | null
@@ -958,6 +1480,8 @@ export type Database = {
           id?: string
           join_date?: string | null
           languages?: string[] | null
+          latitude?: number | null
+          longitude?: number | null
           marital_status?: string | null
           mobile_money_number?: string | null
           name: string
@@ -968,6 +1492,7 @@ export type Database = {
           outlet_id?: string | null
           phone?: string | null
           photo_url?: string | null
+          route_data?: Json | null
           status?: string
           territory?: string | null
           total_sales?: number | null
@@ -992,6 +1517,8 @@ export type Database = {
           id?: string
           join_date?: string | null
           languages?: string[] | null
+          latitude?: number | null
+          longitude?: number | null
           marital_status?: string | null
           mobile_money_number?: string | null
           name?: string
@@ -1002,6 +1529,7 @@ export type Database = {
           outlet_id?: string | null
           phone?: string | null
           photo_url?: string | null
+          route_data?: Json | null
           status?: string
           territory?: string | null
           total_sales?: number | null

@@ -1,37 +1,54 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { vendors, salesRecords, dailyMetrics, allocations, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { Users, TrendingUp, DollarSign, Package, AlertTriangle, CheckCircle, MapPin, Building2 } from 'lucide-react';
+import { useVendors, useSales, useOutlets } from '@/hooks/useSupabaseData';
+import { Users, TrendingUp, DollarSign, Package, AlertTriangle, MapPin, Building2, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Dashboard() {
   const { selectedOutletId, isAllOutlets, selectedOutlet } = useOutletContext();
+  const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: sales = [], isLoading: sLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: outlets = [], isLoading: oLoading } = useOutlets();
 
-  const filteredVendors = isAllOutlets ? vendors : vendors.filter(v => v.outletId === selectedOutletId);
-  const filteredSales = isAllOutlets ? salesRecords : salesRecords.filter(s => s.outletId === selectedOutletId);
-  const filteredMetrics = isAllOutlets
-    ? aggregateMetrics(dailyMetrics)
-    : dailyMetrics.filter(m => m.outletId === selectedOutletId);
+  const isLoading = vLoading || sLoading || oLoading;
 
-  const activeVendors = filteredVendors.filter(v => v.status === 'active').length;
-  const todayMetrics = filteredMetrics[filteredMetrics.length - 1];
-  const topPerformers = [...filteredVendors].sort((a, b) => b.totalSales - a.totalSales).slice(0, 5);
-
+  const activeVendors = (vendors as any[]).filter(v => v.status === 'active').length;
   const todayStr = new Date().toISOString().split('T')[0];
-  const totalOutstanding = filteredSales.filter(s => s.date === todayStr).reduce((s, r) => s + r.outstanding, 0);
+  const todaySales = (sales as any[]).filter(s => s.date === todayStr);
+  const todayTotal = todaySales.reduce((s, r) => s + Number(r.total_value), 0);
+  const todayCash = todaySales.reduce((s, r) => s + Number(r.amount_paid), 0);
+  const totalOutstanding = todaySales.reduce((s, r) => s + Number(r.outstanding), 0);
+
+  // Weekly data
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  }).reverse();
+
+  const weeklyData = last7.map(date => {
+    const daySales = (sales as any[]).filter(s => s.date === date);
+    return {
+      date: new Date(date).toLocaleDateString('en', { weekday: 'short' }),
+      sales: daySales.reduce((s, r) => s + Number(r.total_value), 0),
+      cash: daySales.reduce((s, r) => s + Number(r.amount_paid), 0),
+    };
+  });
 
   const paymentBreakdown = [
-    { name: 'Cash', value: 65, color: 'hsl(210, 80%, 45%)' },
-    { name: 'Mobile Money', value: 25, color: 'hsl(152, 55%, 42%)' },
-    { name: 'Outstanding', value: 10, color: 'hsl(38, 92%, 50%)' },
+    { name: 'Cash', value: todayCash || 65, color: 'hsl(210, 80%, 45%)' },
+    { name: 'Outstanding', value: totalOutstanding || 10, color: 'hsl(38, 92%, 50%)' },
   ];
 
-  const weeklyData = filteredMetrics.slice(-7).map(d => ({
-    date: new Date(d.date).toLocaleDateString('en', { weekday: 'short' }),
-    sales: d.totalSales,
-    cash: d.cashCollected,
-  }));
+  // Top performers
+  const vendorSalesMap: Record<string, number> = {};
+  (sales as any[]).forEach(s => { vendorSalesMap[s.vendor_id] = (vendorSalesMap[s.vendor_id] || 0) + Number(s.total_value); });
+  const topPerformers = (vendors as any[])
+    .map(v => ({ ...v, totalSales: vendorSalesMap[v.id] || Number(v.total_sales) || 0 }))
+    .sort((a, b) => b.totalSales - a.totalSales)
+    .slice(0, 5);
+
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -45,100 +62,53 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Alert Banners */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="flex items-center gap-2 rounded-lg bg-warning/10 border border-warning/30 px-4 py-2 text-sm flex-1">
-          <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
-          <span>3 vendors have not reported today's sales{!isAllOutlets && ` in ${selectedOutlet?.name}`}</span>
-        </div>
-        <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/30 px-4 py-2 text-sm flex-1">
-          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-          <span>FanYogo Strawberry low stock{!isAllOutlets ? ` in ${selectedOutlet?.name}` : ' in Epe'} — 15 packs left</span>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active Vendors</p>
-                <p className="text-2xl font-bold">{activeVendors}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10">
-                <TrendingUp className="h-5 w-5 text-secondary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Today's Sales</p>
-                <p className="text-2xl font-bold">₦{(todayMetrics?.totalSales || 0).toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-                <DollarSign className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Cash Collected</p>
-                <p className="text-2xl font-bold">₦{(todayMetrics?.cashCollected || 0).toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-                <Package className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Outstanding</p>
-                <p className="text-2xl font-bold">₦{totalOutstanding.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-sm text-muted-foreground">Active Vendors</p><p className="text-2xl font-bold">{activeVendors}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10"><TrendingUp className="h-5 w-5 text-secondary" /></div><div><p className="text-sm text-muted-foreground">Today's Sales</p><p className="text-2xl font-bold">₦{todayTotal.toLocaleString()}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-sm text-muted-foreground">Cash Collected</p><p className="text-2xl font-bold">₦{todayCash.toLocaleString()}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><Package className="h-5 w-5 text-yellow-600" /></div><div><p className="text-sm text-muted-foreground">Outstanding</p><p className="text-2xl font-bold">₦{totalOutstanding.toLocaleString()}</p></div></div></CardContent></Card>
       </div>
 
-      {/* Outlets Overview — only in "All" mode */}
-      {isAllOutlets && <OutletsOverview />}
+      {isAllOutlets && outlets.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" /> Outlets Overview</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {outlets.map((o: any) => {
+                const oVendors = (vendors as any[]).filter(v => v.outlet_id === o.id && v.status === 'active').length;
+                const oSales = (sales as any[]).filter(s => s.outlet_id === o.id && s.date === todayStr).reduce((s, r) => s + Number(r.total_value), 0);
+                return (
+                  <div key={o.id} className="rounded-lg border p-3 space-y-2">
+                    <p className="font-medium text-sm truncate">{o.name}</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div><p className="text-muted-foreground">Vendors</p><p className="font-bold text-lg">{oVendors}</p></div>
+                      <div><p className="text-muted-foreground">Sales Today</p><p className="font-bold text-sm">₦{oSales.toLocaleString()}</p></div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Charts Row */}
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Weekly Sales Trend</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Weekly Sales Trend</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={weeklyData}>
                 <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `₦${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => `₦${v.toLocaleString()}`} />
-                <Bar dataKey="sales" fill="hsl(210, 80%, 45%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="cash" fill="hsl(152, 55%, 42%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cash" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Payment Methods</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Payment Breakdown</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -152,7 +122,7 @@ export default function Dashboard() {
               {paymentBreakdown.map(p => (
                 <div key={p.name} className="flex items-center gap-1.5 text-xs">
                   <div className="h-2.5 w-2.5 rounded-full" style={{ background: p.color }} />
-                  {p.name} ({p.value}%)
+                  {p.name}
                 </div>
               ))}
             </div>
@@ -160,18 +130,13 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Top Performers */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Top Performers{!isAllOutlets && ` — ${selectedOutlet?.name}`}</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-base">Top Performers{!isAllOutlets && selectedOutlet ? ` — ${selectedOutlet.name}` : ''}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {topPerformers.map((v, i) => (
               <div key={v.id} className="flex items-center gap-3 rounded-lg border p-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
-                  {i + 1}
-                </div>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">{i + 1}</div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">{v.name}</p>
                   <p className="text-xs text-muted-foreground">₦{v.totalSales.toLocaleString()}</p>
@@ -179,75 +144,10 @@ export default function Dashboard() {
                 <Badge variant="secondary" className="text-xs">{v.territory}</Badge>
               </div>
             ))}
+            {topPerformers.length === 0 && <p className="text-sm text-muted-foreground col-span-5 text-center py-4">No sales data yet.</p>}
           </div>
         </CardContent>
       </Card>
     </div>
   );
-}
-
-function OutletsOverview() {
-  const outletIds = ['sangotedo', 'abraham-adesanya', 'epe', 'ogombo', 'eleko'];
-
-  const outletData = outletIds.map(id => {
-    const outletVendors = vendors.filter(v => v.outletId === id);
-    const outletSales = salesRecords.filter(s => s.outletId === id);
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todaySales = outletSales.filter(s => s.date === todayStr).reduce((s, r) => s + r.totalValue, 0);
-    const outstanding = outletSales.filter(s => s.date === todayStr).reduce((s, r) => s + r.outstanding, 0);
-    return {
-      id,
-      name: getOutletName(id),
-      activeVendors: outletVendors.filter(v => v.status === 'active').length,
-      todaySales,
-      outstanding,
-    };
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Building2 className="h-4 w-4" /> Outlets Overview
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {outletData.map(o => (
-            <div key={o.id} className="rounded-lg border p-3 space-y-2">
-              <p className="font-medium text-sm truncate">{o.name}</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <p className="text-muted-foreground">Vendors</p>
-                  <p className="font-bold text-lg">{o.activeVendors}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Sales Today</p>
-                  <p className="font-bold text-sm">₦{o.todaySales.toLocaleString()}</p>
-                </div>
-              </div>
-              {o.outstanding > 0 && (
-                <p className="text-xs text-destructive">₦{o.outstanding.toLocaleString()} outstanding</p>
-              )}
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Helper to aggregate daily metrics across outlets
-function aggregateMetrics(metrics: typeof dailyMetrics) {
-  const byDate: Record<string, { date: string; totalSales: number; vendorsActive: number; cashCollected: number; mobileMoneyCollected: number; outletId: string }> = {};
-  metrics.forEach(m => {
-    if (!byDate[m.date]) {
-      byDate[m.date] = { date: m.date, totalSales: 0, vendorsActive: 0, cashCollected: 0, mobileMoneyCollected: 0, outletId: 'all' };
-    }
-    byDate[m.date].totalSales += m.totalSales;
-    byDate[m.date].vendorsActive += m.vendorsActive;
-    byDate[m.date].cashCollected += m.cashCollected;
-    byDate[m.date].mobileMoneyCollected += m.mobileMoneyCollected;
-  });
-  return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
 }

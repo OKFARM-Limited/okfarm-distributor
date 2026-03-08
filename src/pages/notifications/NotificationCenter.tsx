@@ -1,37 +1,40 @@
-import { useState } from 'react';
-import { notifications as mockNotifications, AppNotification, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useNotifications, useUpdateNotification, useDeleteNotification } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Bell, AlertTriangle, Package, Clock, CreditCard, Wrench, Trash2, MapPin } from 'lucide-react';
+import { Bell, AlertTriangle, Package, Clock, CreditCard, Wrench, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const typeIcons: Record<string, any> = {
   low_stock: Package, expiry: AlertTriangle, pending_return: Clock,
-  attendance: Clock, payment: CreditCard, maintenance: Wrench,
+  attendance: Clock, payment: CreditCard, maintenance: Wrench, info: Bell,
 };
 
 const typeColors: Record<string, string> = {
-  low_stock: 'text-destructive', expiry: 'text-warning', pending_return: 'text-primary',
-  attendance: 'text-secondary', payment: 'text-destructive', maintenance: 'text-warning',
+  low_stock: 'text-destructive', expiry: 'text-yellow-600', pending_return: 'text-primary',
+  attendance: 'text-secondary', payment: 'text-destructive', maintenance: 'text-yellow-600', info: 'text-primary',
 };
 
 export default function NotificationCenter() {
-  const [notifs, setNotifs] = useState<AppNotification[]>(mockNotifications);
   const navigate = useNavigate();
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: notifs = [], isLoading } = useNotifications(isAllOutlets ? 'all' : selectedOutletId);
+  const updateNotif = useUpdateNotification();
+  const deleteNotif = useDeleteNotification();
 
-  const outletNotifs = isAllOutlets ? notifs : notifs.filter(n => n.outletId === selectedOutletId);
-  const unread = outletNotifs.filter(n => !n.read);
-  const highPriority = outletNotifs.filter(n => n.priority === 'high');
+  const allNotifs = notifs as any[];
+  const unread = allNotifs.filter(n => !n.read);
+  const highPriority = allNotifs.filter(n => n.priority === 'high');
 
-  const markRead = (id: string) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const markAllRead = () => setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-  const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
+  const markRead = (id: string) => updateNotif.mutate({ id, read: true });
+  const markAllRead = () => unread.forEach(n => updateNotif.mutate({ id: n.id, read: true }));
+  const dismissNotif = (id: string) => deleteNotif.mutate(id);
 
-  const renderNotif = (n: AppNotification) => {
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+
+  const renderNotif = (n: any) => {
     const Icon = typeIcons[n.type] || Bell;
     return (
       <div key={n.id} className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${n.read ? 'bg-background' : 'bg-primary/5 border-primary/20'}`}>
@@ -40,13 +43,13 @@ export default function NotificationCenter() {
           <div className="flex items-center gap-2">
             <p className={`font-medium text-sm ${n.read ? '' : 'text-foreground'}`}>{n.title}</p>
             <Badge variant={n.priority === 'high' ? 'destructive' : n.priority === 'medium' ? 'secondary' : 'outline'} className="text-xs">{n.priority}</Badge>
-            <Badge variant="outline" className="text-[10px]">{getOutletName(n.outletId)}</Badge>
+            {n.outlets?.name && <Badge variant="outline" className="text-[10px]">{n.outlets.name}</Badge>}
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{n.message}</p>
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs text-muted-foreground">{new Date(n.timestamp).toLocaleString()}</span>
+            <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleString()}</span>
             {!n.read && <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => markRead(n.id)}>Mark Read</Button>}
-            {n.actionUrl && <Button size="sm" variant="link" className="h-6 text-xs px-0" onClick={() => navigate(n.actionUrl!)}>View →</Button>}
+            {n.action_url && <Button size="sm" variant="link" className="h-6 text-xs px-0" onClick={() => navigate(n.action_url)}>View →</Button>}
           </div>
         </div>
         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 shrink-0" onClick={() => dismissNotif(n.id)}><Trash2 className="h-3 w-3" /></Button>
@@ -67,20 +70,24 @@ export default function NotificationCenter() {
       <div className="grid grid-cols-3 gap-3">
         <Card><CardContent className="pt-4 text-center"><p className="text-2xl font-bold">{unread.length}</p><p className="text-xs text-muted-foreground">Unread</p></CardContent></Card>
         <Card><CardContent className="pt-4 text-center"><p className="text-2xl font-bold text-destructive">{highPriority.length}</p><p className="text-xs text-muted-foreground">High Priority</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><p className="text-2xl font-bold">{outletNotifs.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><p className="text-2xl font-bold">{allNotifs.length}</p><p className="text-xs text-muted-foreground">Total</p></CardContent></Card>
       </div>
 
       <Tabs defaultValue="all">
         <TabsList>
-          <TabsTrigger value="all">All ({outletNotifs.length})</TabsTrigger>
+          <TabsTrigger value="all">All ({allNotifs.length})</TabsTrigger>
           <TabsTrigger value="unread">Unread ({unread.length})</TabsTrigger>
           <TabsTrigger value="high">High Priority ({highPriority.length})</TabsTrigger>
         </TabsList>
-        <TabsContent value="all" className="space-y-2">{outletNotifs.map(renderNotif)}</TabsContent>
+        <TabsContent value="all" className="space-y-2">
+          {allNotifs.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No notifications yet.</p> : allNotifs.map(renderNotif)}
+        </TabsContent>
         <TabsContent value="unread" className="space-y-2">
           {unread.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">All caught up! 🎉</p> : unread.map(renderNotif)}
         </TabsContent>
-        <TabsContent value="high" className="space-y-2">{highPriority.map(renderNotif)}</TabsContent>
+        <TabsContent value="high" className="space-y-2">
+          {highPriority.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No high priority items.</p> : highPriority.map(renderNotif)}
+        </TabsContent>
       </Tabs>
     </div>
   );

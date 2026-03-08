@@ -1,48 +1,49 @@
-import { products, salesRecords, stockLevels } from '@/data/mockData';
+import { useOutletContext } from '@/contexts/OutletContext';
+import { useForecasts, useProducts, useStockLevels, useSales } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { toast } from '@/hooks/use-toast';
-import { TrendingUp, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { TrendingUp, ShoppingCart, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function ForecastReorder() {
-  // Calculate daily averages for each product over last 14 days
-  const productStats = products.map(p => {
-    const last14 = salesRecords.filter(s => {
-      const d = new Date(s.date);
-      const now = new Date();
-      return (now.getTime() - d.getTime()) / 86400000 <= 14;
-    });
+  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { data: forecasts = [], isLoading: fLoading } = useForecasts(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: products = [], isLoading: pLoading } = useProducts();
+  const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
 
-    const dailySales: Record<string, number> = {};
-    last14.forEach(s => {
-      const item = s.items.find(i => i.productId === p.id);
-      if (item) {
-        dailySales[s.date] = (dailySales[s.date] || 0) + item.qtySold;
-      }
-    });
+  const isLoading = fLoading || pLoading || sLoading;
 
-    const days = Object.keys(dailySales);
-    const totalQty = Object.values(dailySales).reduce((s, v) => s + v, 0);
-    const avgDaily = days.length > 0 ? Math.round(totalQty / days.length) : 0;
-
-    const stock = stockLevels.find(sl => sl.productId === p.id);
-    const currentStock = stock?.currentStock || 0;
-    const daysUntilStockout = avgDaily > 0 ? Math.floor(currentStock / avgDaily) : 999;
-    const suggestedOrder = Math.max(0, avgDaily * 7 - currentStock); // 7-day supply minus current
-
-    // Trend data
-    const trendData = Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() - (13 - i));
-      const dateStr = d.toISOString().split('T')[0];
-      return { date: d.toLocaleDateString('en', { day: '2-digit', month: 'short' }), qty: dailySales[dateStr] || 0 };
-    });
-
-    return { ...p, avgDaily, currentStock, daysUntilStockout, suggestedOrder, trendData, minStock: stock?.minStock || 50 };
-  });
+  // If we have forecasts from DB, use them; otherwise compute from stock levels
+  const productStats = (forecasts as any[]).length > 0
+    ? (forecasts as any[]).map(f => ({
+        id: f.product_id,
+        name: f.products?.name || 'Unknown',
+        unit: f.products?.unit || 'pack',
+        unitPrice: Number(f.products?.unit_price || 0),
+        avgDaily: Number(f.avg_daily_sales),
+        currentStock: f.current_stock,
+        daysUntilStockout: f.days_until_stockout,
+        suggestedOrder: f.suggested_order,
+        minStock: 50,
+      }))
+    : (stockLevels as any[]).map(s => {
+        const avgDaily = 10; // default estimate
+        const daysLeft = avgDaily > 0 ? Math.floor(s.current_stock / avgDaily) : 999;
+        return {
+          id: s.product_id,
+          name: s.products?.name || 'Unknown',
+          unit: s.products?.unit || 'pack',
+          unitPrice: Number(s.products?.unit_price || 0),
+          avgDaily,
+          currentStock: s.current_stock,
+          daysUntilStockout: daysLeft,
+          suggestedOrder: Math.max(0, avgDaily * 7 - s.current_stock),
+          minStock: s.min_stock,
+        };
+      });
 
   const urgentItems = productStats.filter(p => p.daysUntilStockout <= 3);
   const totalSuggested = productStats.reduce((s, p) => s + p.suggestedOrder * p.unitPrice, 0);
@@ -51,6 +52,8 @@ export default function ForecastReorder() {
     const itemsToOrder = productStats.filter(p => p.suggestedOrder > 0);
     toast({ title: '📦 Order Drafted', description: `${itemsToOrder.length} items added to depot order totaling ₦${totalSuggested.toLocaleString()}` });
   };
+
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -61,7 +64,6 @@ export default function ForecastReorder() {
         </Button>
       </div>
 
-      {/* Urgent Alerts */}
       {urgentItems.length > 0 && (
         <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/30 px-4 py-2">
           <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
@@ -69,37 +71,12 @@ export default function ForecastReorder() {
         </div>
       )}
 
-      {/* Trend Chart for top product */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">14-Day Sales Trend — {productStats[0]?.name}</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={productStats[0]?.trendData}>
-              <XAxis dataKey="date" fontSize={11} tickLine={false} />
-              <YAxis fontSize={11} tickLine={false} />
-              <Tooltip />
-              <ReferenceLine y={productStats[0]?.avgDaily} stroke="hsl(38, 92%, 50%)" strokeDasharray="3 3" label="Avg" />
-              <Line type="monotone" dataKey="qty" stroke="hsl(210, 80%, 45%)" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Product Forecast Table */}
       <Card>
         <CardHeader><CardTitle className="text-base">Reorder Suggestions (7-Day Supply Target)</CardTitle></CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Avg Daily</TableHead>
-                <TableHead>Current Stock</TableHead>
-                <TableHead>Days Left</TableHead>
-                <TableHead>Stock Level</TableHead>
-                <TableHead>Suggested Order</TableHead>
-                <TableHead className="text-right">Order Value</TableHead>
-              </TableRow>
+              <TableRow><TableHead>Product</TableHead><TableHead>Avg Daily</TableHead><TableHead>Current Stock</TableHead><TableHead>Days Left</TableHead><TableHead>Stock Level</TableHead><TableHead>Suggested Order</TableHead><TableHead className="text-right">Order Value</TableHead></TableRow>
             </TableHeader>
             <TableBody>
               {productStats.map(p => (
@@ -119,6 +96,9 @@ export default function ForecastReorder() {
                   <TableCell className="text-right">{p.suggestedOrder > 0 ? `₦${(p.suggestedOrder * p.unitPrice).toLocaleString()}` : '—'}</TableCell>
                 </TableRow>
               ))}
+              {productStats.length === 0 && (
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No forecast data available. Add stock levels or sales data to generate forecasts.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
