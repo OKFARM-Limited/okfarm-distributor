@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useVendors, useProducts } from '@/hooks/useSupabaseData';
+import { useVendors, useProducts, useCreateAllocation } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,17 +16,34 @@ export default function DailyAllocation() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [], isLoading: pLoading } = useProducts();
+  const createAllocation = useCreateAllocation();
 
   const vendor = vendors.find((v: any) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
   const handleConfirm = () => {
-    const alloc = { vendorId, outletId: vendor?.outlet_id, date: new Date().toISOString().split('T')[0], items: products.map(p => ({ productId: p.id, quantity: quantities[p.id] || 0 })), totalValue };
-    const drafts = JSON.parse(localStorage.getItem('okfarm_alloc_drafts') || '[]');
-    drafts.push(alloc);
-    localStorage.setItem('okfarm_alloc_drafts', JSON.stringify(drafts));
-    toast({ title: 'Allocation Confirmed', description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` });
-    setStep(0); setVendorId(''); setQuantities({});
+    const items = products.filter(p => quantities[p.id] > 0).map(p => ({
+      product_id: p.id,
+      quantity: quantities[p.id],
+      unit_price: Number(p.unit_price),
+    }));
+    createAllocation.mutate(
+      {
+        vendor_id: vendorId,
+        outlet_id: vendor?.outlet_id || null,
+        date: new Date().toISOString().split('T')[0],
+        total_value: totalValue,
+        status: 'confirmed',
+        items,
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Allocation Confirmed', description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` });
+          setStep(0); setVendorId(''); setQuantities({});
+        },
+        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      }
+    );
   };
 
   if (vLoading || pLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -111,7 +128,10 @@ export default function DailyAllocation() {
             <div className="border-t pt-3 flex justify-between font-bold"><span>Total</span><span>₦{totalValue.toLocaleString()}</span></div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={handleConfirm}>Confirm Allocation</Button>
+              <Button onClick={handleConfirm} disabled={createAllocation.isPending}>
+                {createAllocation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Confirm Allocation
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { vendors, products, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useVendors, useProducts, useCreateSale } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Download, MapPin } from 'lucide-react';
+import { Download, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function SalesEntry() {
@@ -15,26 +15,46 @@ export default function SalesEntry() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mobile_money' | 'mixed'>('cash');
   const [amountPaid, setAmountPaid] = useState(0);
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: products = [], isLoading: pLoading } = useProducts();
+  const createSale = useCreateSale();
 
-  const filteredVendors = isAllOutlets ? vendors : vendors.filter(v => v.outletId === selectedOutletId);
-  const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * p.unitPrice, 0);
-  const vendor = vendors.find(v => v.id === vendorId);
+  const vendor = vendors.find((v: any) => v.id === vendorId);
+  const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
   const handleSubmit = () => {
-    const sale = { vendorId, outletId: vendor?.outletId, date: new Date().toISOString().split('T')[0], items: products.filter(p => quantities[p.id] > 0).map(p => ({ productId: p.id, productName: p.name, qty: quantities[p.id], unitPrice: p.unitPrice })), totalValue, paymentMethod, amountPaid };
-    const drafts = JSON.parse(localStorage.getItem('okfarm_sales_drafts') || '[]');
-    drafts.push(sale);
-    localStorage.setItem('okfarm_sales_drafts', JSON.stringify(drafts));
-    toast({ title: 'Sales Recorded', description: `₦${totalValue.toLocaleString()} for ${vendor?.name}` });
-    setVendorId(''); setQuantities({}); setAmountPaid(0);
+    const items = products.filter(p => quantities[p.id] > 0).map(p => ({
+      product_id: p.id,
+      quantity: quantities[p.id],
+      unit_price: Number(p.unit_price),
+    }));
+    createSale.mutate(
+      {
+        vendor_id: vendorId,
+        outlet_id: vendor?.outlet_id || null,
+        date: new Date().toISOString().split('T')[0],
+        total_value: totalValue,
+        amount_paid: amountPaid,
+        outstanding: Math.max(0, totalValue - amountPaid),
+        payment_method: paymentMethod,
+        items,
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Sales Recorded', description: `₦${totalValue.toLocaleString()} for ${vendor?.name}` });
+          setVendorId(''); setQuantities({}); setAmountPaid(0);
+        },
+        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      }
+    );
   };
 
   const handleExportCSV = () => {
     if (!vendorId || totalValue === 0) { toast({ title: 'Nothing to export', description: 'Record sales first.' }); return; }
     const date = new Date().toISOString().split('T')[0];
     const rows = products.filter(p => quantities[p.id] > 0).map(p =>
-      `${date},${vendor?.name},${getOutletName(vendor?.outletId || '')},${p.name},${p.category},${p.unit},${p.unitPrice},${quantities[p.id]},${(quantities[p.id] || 0) * p.unitPrice}`
+      `${date},${vendor?.name},${getOutletName(vendor?.outlet_id || null)},${p.name},${p.category},${p.unit},${Number(p.unit_price)},${quantities[p.id]},${(quantities[p.id] || 0) * Number(p.unit_price)}`
     );
     const csv = 'Date,Vendor,Outlet,Product,Category,Unit,Unit Price (₦),Qty Sold,Total Value (₦)\n' + rows.join('\n') +
       `\n\n,,,,,,TOTAL,,₦${totalValue.toLocaleString()}` +
@@ -47,6 +67,8 @@ export default function SalesEntry() {
     a.href = url; a.download = `sales_log_${vendor?.name?.replace(/\s/g, '_')}_${date}.csv`; a.click();
     toast({ title: 'Sales Log Exported', description: 'CSV file downloaded.' });
   };
+
+  if (vLoading || pLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -67,7 +89,7 @@ export default function SalesEntry() {
               <Label>Vendor</Label>
               <Select value={vendorId} onValueChange={setVendorId}>
                 <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                <SelectContent>{filteredVendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{vendors.filter((v: any) => v.status === 'active').map((v: any) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
@@ -91,9 +113,9 @@ export default function SalesEntry() {
                   {products.map(p => (
                     <TableRow key={p.id}>
                       <TableCell>{p.name}</TableCell>
-                      <TableCell>₦{p.unitPrice}</TableCell>
+                      <TableCell>₦{Number(p.unit_price)}</TableCell>
                       <TableCell><Input type="number" min={0} className="w-20 h-8" value={quantities[p.id] || ''} onChange={e => setQuantities(q => ({ ...q, [p.id]: parseInt(e.target.value) || 0 }))} /></TableCell>
-                      <TableCell className="text-right">₦{((quantities[p.id] || 0) * p.unitPrice).toLocaleString()}</TableCell>
+                      <TableCell className="text-right">₦{((quantities[p.id] || 0) * Number(p.unit_price)).toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -105,7 +127,10 @@ export default function SalesEntry() {
                 <div><Label>Outstanding</Label><p className="text-xl font-bold text-destructive">₦{Math.max(0, totalValue - amountPaid).toLocaleString()}</p></div>
               </div>
 
-              <Button onClick={handleSubmit} disabled={totalValue === 0} className="w-full sm:w-auto">Record Sales</Button>
+              <Button onClick={handleSubmit} disabled={totalValue === 0 || createSale.isPending} className="w-full sm:w-auto">
+                {createSale.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Record Sales
+              </Button>
             </>
           )}
         </CardContent>

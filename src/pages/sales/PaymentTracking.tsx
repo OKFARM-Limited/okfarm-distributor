@@ -1,29 +1,22 @@
-import { useState } from 'react';
-import { salesRecords, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useSales } from '@/hooks/useSupabaseData';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MapPin } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { MapPin, Loader2 } from 'lucide-react';
 
 export default function PaymentTracking() {
-  const [paidIds, setPaidIds] = useState<Set<string>>(new Set());
   const [dateFilter, setDateFilter] = useState('');
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: sales = [], isLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
 
-  const outletFiltered = isAllOutlets ? salesRecords : salesRecords.filter(s => s.outletId === selectedOutletId);
-  const outstanding = outletFiltered.filter(s => s.outstanding > 0 && !paidIds.has(s.id));
-  const filtered = dateFilter ? outstanding.filter(s => s.date.includes(dateFilter)) : outstanding.slice(0, 30);
+  const outstanding = (sales as any[]).filter(s => Number(s.outstanding) > 0);
+  const filtered = dateFilter ? outstanding.filter(s => s.date?.includes(dateFilter)) : outstanding.slice(0, 30);
+  const totalDues = filtered.reduce((s, r) => s + Number(r.outstanding), 0);
 
-  const markPaid = (id: string) => {
-    setPaidIds(prev => new Set(prev).add(id));
-    toast({ title: 'Payment Marked', description: 'Dues cleared successfully.' });
-  };
-
-  const totalDues = filtered.reduce((s, r) => s + r.outstanding, 0);
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -50,22 +43,23 @@ export default function PaymentTracking() {
                 <TableHead>Paid</TableHead>
                 <TableHead>Outstanding</TableHead>
                 <TableHead>Method</TableHead>
-                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(s => (
+              {filtered.map((s: any) => (
                 <TableRow key={s.id}>
                   <TableCell>{s.date}</TableCell>
-                  <TableCell className="font-medium">{s.vendorName}</TableCell>
-                  {isAllOutlets && <TableCell className="text-xs">{getOutletName(s.outletId)}</TableCell>}
-                  <TableCell>₦{s.totalValue.toLocaleString()}</TableCell>
-                  <TableCell>₦{s.amountPaid.toLocaleString()}</TableCell>
-                  <TableCell className="text-destructive font-medium">₦{s.outstanding.toLocaleString()}</TableCell>
-                  <TableCell><Badge variant="outline" className="capitalize">{s.paymentMethod.replace('_', ' ')}</Badge></TableCell>
-                  <TableCell><Button size="sm" variant="outline" onClick={() => markPaid(s.id)}>Mark Paid</Button></TableCell>
+                  <TableCell className="font-medium">{s.vendors?.name}</TableCell>
+                  {isAllOutlets && <TableCell className="text-xs">{s.outlets?.name || '—'}</TableCell>}
+                  <TableCell>₦{Number(s.total_value).toLocaleString()}</TableCell>
+                  <TableCell>₦{Number(s.amount_paid).toLocaleString()}</TableCell>
+                  <TableCell className="text-destructive font-medium">₦{Number(s.outstanding).toLocaleString()}</TableCell>
+                  <TableCell><Badge variant="outline" className="capitalize">{s.payment_method?.replace('_', ' ')}</Badge></TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={isAllOutlets ? 7 : 6} className="text-center text-muted-foreground py-8">No outstanding payments found.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
