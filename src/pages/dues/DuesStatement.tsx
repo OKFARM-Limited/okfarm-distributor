@@ -12,6 +12,7 @@ import { Printer, FileText, Loader2 } from 'lucide-react';
 export default function DuesStatement() {
   const [selectedVendor, setSelectedVendor] = useState('');
   const printRef = useRef<HTMLDivElement>(null);
+  const { viewerProps } = useViewerGuard();
   const { data: vendors = [], isLoading: vLoading } = useVendors('all');
   const { data: sales = [], isLoading: sLoading } = useSales('all');
   const { data: allocations = [], isLoading: aLoading } = useAllocations('all');
