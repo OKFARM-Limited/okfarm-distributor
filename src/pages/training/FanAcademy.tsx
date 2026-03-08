@@ -33,6 +33,7 @@ const categoryColors: Record<string, string> = {
 export default function FanAcademy() {
   const [tab, setTab] = useState('courses');
   const { toast } = useToast();
+  const { viewerProps } = useViewerGuard();
   const { data: modules = [], isLoading: mLoading } = useTrainingModules();
   const { data: progress = [], isLoading: pLoading } = useVendorTrainingProgress();
   const { data: vendors = [], isLoading: vLoading } = useVendors('all');
