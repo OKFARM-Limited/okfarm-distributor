@@ -1,23 +1,25 @@
 import { useState } from 'react';
-import { allocations, getOutletName } from '@/data/mockData';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useAllocations } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { MapPin } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 
 export default function AllocationHistory() {
   const [dateFilter, setDateFilter] = useState('');
   const [vendorFilter, setVendorFilter] = useState('');
-  const { selectedOutletId, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
+  const { data: allocations = [], isLoading } = useAllocations(isAllOutlets ? 'all' : selectedOutletId);
 
-  const filtered = allocations.filter(a => {
-    const matchDate = !dateFilter || a.date.includes(dateFilter);
-    const matchVendor = !vendorFilter || a.vendorName.toLowerCase().includes(vendorFilter.toLowerCase());
-    const matchOutlet = isAllOutlets || a.outletId === selectedOutletId;
-    return matchDate && matchVendor && matchOutlet;
+  const filtered = allocations.filter((a: any) => {
+    const matchDate = !dateFilter || a.date?.includes(dateFilter);
+    const matchVendor = !vendorFilter || a.vendors?.name?.toLowerCase().includes(vendorFilter.toLowerCase());
+    return matchDate && matchVendor;
   }).slice(0, 50);
+
+  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -43,16 +45,19 @@ export default function AllocationHistory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(a => (
+              {filtered.map((a: any) => (
                 <TableRow key={a.id}>
                   <TableCell>{a.date}</TableCell>
-                  <TableCell className="font-medium">{a.vendorName}</TableCell>
-                  <TableCell className="text-xs">{getOutletName(a.outletId)}</TableCell>
-                  <TableCell>{a.items.length} SKUs</TableCell>
-                  <TableCell className="text-right">₦{a.totalValue.toLocaleString()}</TableCell>
+                  <TableCell className="font-medium">{a.vendors?.name}</TableCell>
+                  <TableCell className="text-xs">{a.outlets?.name || '—'}</TableCell>
+                  <TableCell>{a.allocation_items?.length || 0} SKUs</TableCell>
+                  <TableCell className="text-right">₦{Number(a.total_value).toLocaleString()}</TableCell>
                   <TableCell><Badge variant={a.status === 'reconciled' ? 'default' : 'secondary'}>{a.status}</Badge></TableCell>
                 </TableRow>
               ))}
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No allocations found.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

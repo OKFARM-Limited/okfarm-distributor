@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useVendors } from '@/hooks/useSupabaseData';
+import { useVendors, useCheckIns, useCreateCheckIn, useUpdateCheckIn } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,48 +9,56 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/hooks/use-toast';
 import { Clock, LogIn, LogOut, Search, UserCheck, UserX, Loader2 } from 'lucide-react';
 
-interface LocalCheckIn { vendorId: string; date: string; checkInTime: string; checkOutTime: string | null }
-
 export default function VendorCheckIn() {
   const today = new Date().toISOString().split('T')[0];
   const [search, setSearch] = useState('');
-  const [localRecords, setLocalRecords] = useState<LocalCheckIn[]>([]);
-  const { data: allVendors = [], isLoading } = useVendors('all');
+  const { data: allVendors = [], isLoading: vLoading } = useVendors('all');
+  const { data: todayCheckIns = [], isLoading: cLoading } = useCheckIns(today);
+  const createCheckIn = useCreateCheckIn();
+  const updateCheckIn = useUpdateCheckIn();
 
   const activeVendors = allVendors.filter((v: any) => v.status === 'active');
-  const checkedIn = localRecords.map(r => r.vendorId);
-  const checkedOut = localRecords.filter(r => r.checkOutTime).map(r => r.vendorId);
+  const checkedInIds = todayCheckIns.map((r: any) => r.vendor_id);
+  const checkedOutIds = todayCheckIns.filter((r: any) => r.check_out_time).map((r: any) => r.vendor_id);
 
   const filtered = activeVendors.filter((v: any) =>
     v.name.toLowerCase().includes(search.toLowerCase()) || v.vendor_code.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCheckIn = (vendorId: string) => {
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    setLocalRecords(prev => [...prev, { vendorId, date: today, checkInTime: time, checkOutTime: null }]);
     const vendor = allVendors.find((v: any) => v.id === vendorId);
-    toast({ title: '✅ Checked In', description: `${vendor?.name} checked in at ${time}` });
+    createCheckIn.mutate(
+      { vendor_id: vendorId, outlet_id: vendor?.outlet_id || null, date: today, check_in_time: new Date().toISOString() },
+      {
+        onSuccess: () => toast({ title: '✅ Checked In', description: `${vendor?.name} checked in` }),
+        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      }
+    );
   };
 
   const handleCheckOut = (vendorId: string) => {
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    setLocalRecords(prev => prev.map(r => r.vendorId === vendorId && r.date === today ? { ...r, checkOutTime: time } : r));
+    const record = todayCheckIns.find((r: any) => r.vendor_id === vendorId && !r.check_out_time);
+    if (!record) return;
     const vendor = allVendors.find((v: any) => v.id === vendorId);
-    toast({ title: '👋 Checked Out', description: `${vendor?.name} checked out at ${time}` });
+    updateCheckIn.mutate(
+      { id: record.id, check_out_time: new Date().toISOString() },
+      {
+        onSuccess: () => toast({ title: '👋 Checked Out', description: `${vendor?.name} checked out` }),
+        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      }
+    );
   };
 
-  if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (vLoading || cLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
       <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="h-6 w-6" /> Vendor Check-In / Check-Out</h1>
 
       <div className="grid grid-cols-3 gap-3">
-        <Card><CardContent className="pt-4 text-center"><UserCheck className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{checkedIn.length}</p><p className="text-xs text-muted-foreground">Checked In</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><LogOut className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{checkedOut.length}</p><p className="text-xs text-muted-foreground">Checked Out</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><UserX className="h-5 w-5 mx-auto text-destructive mb-1" /><p className="text-2xl font-bold">{activeVendors.length - checkedIn.length}</p><p className="text-xs text-muted-foreground">Absent</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><UserCheck className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{checkedInIds.length}</p><p className="text-xs text-muted-foreground">Checked In</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><LogOut className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{checkedOutIds.length}</p><p className="text-xs text-muted-foreground">Checked Out</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><UserX className="h-5 w-5 mx-auto text-destructive mb-1" /><p className="text-2xl font-bold">{activeVendors.length - checkedInIds.length}</p><p className="text-xs text-muted-foreground">Absent</p></CardContent></Card>
       </div>
 
       <div className="relative">
@@ -73,9 +81,11 @@ export default function VendorCheckIn() {
             </TableHeader>
             <TableBody>
               {filtered.map((v: any) => {
-                const record = localRecords.find(r => r.vendorId === v.id);
-                const isIn = checkedIn.includes(v.id);
-                const isOut = checkedOut.includes(v.id);
+                const record = todayCheckIns.find((r: any) => r.vendor_id === v.id);
+                const isIn = checkedInIds.includes(v.id);
+                const isOut = checkedOutIds.includes(v.id);
+                const inTime = record?.check_in_time ? new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+                const outTime = record?.check_out_time ? new Date(record.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
                 return (
                   <TableRow key={v.id}>
                     <TableCell>
@@ -85,8 +95,8 @@ export default function VendorCheckIn() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{v.territory}</TableCell>
-                    <TableCell className="text-sm">{record?.checkInTime || '—'}</TableCell>
-                    <TableCell className="text-sm">{record?.checkOutTime || '—'}</TableCell>
+                    <TableCell className="text-sm">{inTime}</TableCell>
+                    <TableCell className="text-sm">{outTime}</TableCell>
                     <TableCell>
                       <Badge variant={isOut ? 'secondary' : isIn ? 'default' : 'outline'} className="text-xs">
                         {isOut ? 'Returned' : isIn ? 'Out Selling' : 'Absent'}

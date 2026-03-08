@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { vendors, mobileMoneyProviders, salesRecords } from '@/data/mockData';
+import { useVendors, useSales, useCreatePayment } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Smartphone, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
+
+const providers = [
+  { id: 'mtn', name: 'MTN MoMo', code: '*170#', logo: '📱' },
+  { id: 'airtel', name: 'Airtel Money', code: '*778#', logo: '📲' },
+  { id: 'glo', name: 'Glo Mobile Money', code: '*805#', logo: '💳' },
+  { id: '9mobile', name: '9mobile Money', code: '*247#', logo: '💰' },
+];
 
 type PaymentStep = 'select' | 'details' | 'confirm' | 'processing' | 'success';
 
@@ -19,9 +26,13 @@ export default function MobileMoneyPayment() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [reference, setReference] = useState('');
 
-  const vendor = vendors.find(v => v.id === selectedVendor);
-  const vendorOutstanding = salesRecords.filter(s => s.vendorId === selectedVendor).reduce((s, r) => s + r.outstanding, 0);
-  const selectedProvider = mobileMoneyProviders.find(p => p.id === provider);
+  const { data: vendors = [] } = useVendors('all');
+  const { data: sales = [] } = useSales('all');
+  const createPayment = useCreatePayment();
+
+  const vendor = (vendors as any[]).find(v => v.id === selectedVendor);
+  const vendorOutstanding = (sales as any[]).filter(s => s.vendor_id === selectedVendor).reduce((s, r) => s + Number(r.outstanding), 0);
+  const selectedProvider = providers.find(p => p.id === provider);
 
   const handleProceed = () => {
     if (!selectedVendor || !provider || !amount || !phoneNumber) {
@@ -33,27 +44,41 @@ export default function MobileMoneyPayment() {
 
   const handleConfirm = () => {
     setStep('processing');
-    setTimeout(() => {
-      setReference(`TXN-${Date.now().toString(36).toUpperCase()}`);
-      setStep('success');
-      toast({ title: '✅ Payment Successful', description: `₦${Number(amount).toLocaleString()} collected via ${selectedProvider?.name}` });
-    }, 2500);
+    const ref = `TXN-${Date.now().toString(36).toUpperCase()}`;
+    createPayment.mutate(
+      {
+        vendor_id: selectedVendor,
+        outlet_id: vendor?.outlet_id || null,
+        amount: Number(amount),
+        method: 'mobile_money',
+        provider: selectedProvider?.name || '',
+        phone_number: phoneNumber,
+        reference: ref,
+        date: new Date().toISOString().split('T')[0],
+        status: 'completed',
+      },
+      {
+        onSuccess: () => {
+          setReference(ref);
+          setStep('success');
+          toast({ title: '✅ Payment Successful', description: `₦${Number(amount).toLocaleString()} collected via ${selectedProvider?.name}` });
+        },
+        onError: (err: any) => {
+          setStep('confirm');
+          toast({ title: 'Error', description: err.message, variant: 'destructive' });
+        },
+      }
+    );
   };
 
   const resetForm = () => {
-    setStep('select');
-    setSelectedVendor('');
-    setProvider('');
-    setAmount('');
-    setPhoneNumber('');
-    setReference('');
+    setStep('select'); setSelectedVendor(''); setProvider(''); setAmount(''); setPhoneNumber(''); setReference('');
   };
 
   return (
     <div className="space-y-4 animate-fade-in max-w-lg mx-auto">
       <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="h-6 w-6" /> Mobile Money Collection</h1>
 
-      {/* Step Indicator */}
       <div className="flex items-center gap-2 text-xs">
         {['Select Vendor', 'Payment Details', 'Confirm', 'Done'].map((label, i) => {
           const stepNames: PaymentStep[] = ['select', 'details', 'confirm', 'success'];
@@ -68,14 +93,13 @@ export default function MobileMoneyPayment() {
         })}
       </div>
 
-      {/* Step 1: Select Vendor */}
       {step === 'select' && (
         <Card>
           <CardHeader><CardTitle className="text-base">Select Vendor</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <Select value={selectedVendor} onValueChange={v => { setSelectedVendor(v); setPhoneNumber(vendors.find(vd => vd.id === v)?.mobileMoneyNumber || ''); }}>
+            <Select value={selectedVendor} onValueChange={v => { setSelectedVendor(v); const vd = (vendors as any[]).find(x => x.id === v); setPhoneNumber(vd?.mobile_money_number || ''); }}>
               <SelectTrigger><SelectValue placeholder="Choose vendor..." /></SelectTrigger>
-              <SelectContent>{vendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.id})</SelectItem>)}</SelectContent>
+              <SelectContent>{(vendors as any[]).filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.vendor_code})</SelectItem>)}</SelectContent>
             </Select>
             {vendor && (
               <div className="rounded-lg border p-3 space-y-1">
@@ -89,7 +113,6 @@ export default function MobileMoneyPayment() {
         </Card>
       )}
 
-      {/* Step 2: Payment Details */}
       {step === 'details' && (
         <Card>
           <CardHeader><CardTitle className="text-base">Payment Details</CardTitle></CardHeader>
@@ -97,14 +120,11 @@ export default function MobileMoneyPayment() {
             <div className="space-y-2">
               <Label>Mobile Money Provider</Label>
               <div className="grid grid-cols-2 gap-2">
-                {mobileMoneyProviders.map(p => (
+                {providers.map(p => (
                   <button key={p.id} type="button" onClick={() => setProvider(p.id)}
                     className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${provider === p.id ? 'border-primary bg-primary/5' : 'hover:bg-muted'}`}>
                     <span className="text-xl">{p.logo}</span>
-                    <div>
-                      <p className="font-medium text-sm">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.code}</p>
-                    </div>
+                    <div><p className="font-medium text-sm">{p.name}</p><p className="text-xs text-muted-foreground">{p.code}</p></div>
                   </button>
                 ))}
               </div>
@@ -127,7 +147,6 @@ export default function MobileMoneyPayment() {
         </Card>
       )}
 
-      {/* Step 3: Confirm */}
       {step === 'confirm' && (
         <Card>
           <CardHeader><CardTitle className="text-base">Confirm Payment</CardTitle></CardHeader>
@@ -146,7 +165,6 @@ export default function MobileMoneyPayment() {
         </Card>
       )}
 
-      {/* Step 3.5: Processing */}
       {step === 'processing' && (
         <Card>
           <CardContent className="pt-12 pb-12 text-center">
@@ -157,11 +175,10 @@ export default function MobileMoneyPayment() {
         </Card>
       )}
 
-      {/* Step 4: Success */}
       {step === 'success' && (
         <Card>
           <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <CheckCircle className="h-16 w-16 mx-auto text-success" />
+            <CheckCircle className="h-16 w-16 mx-auto text-green-500" />
             <div>
               <p className="text-xl font-bold">Payment Successful!</p>
               <p className="text-muted-foreground mt-1">₦{Number(amount).toLocaleString()} collected from {vendor?.name}</p>

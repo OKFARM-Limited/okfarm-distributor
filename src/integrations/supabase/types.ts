@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      allocation_items: {
+        Row: {
+          allocation_id: string
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          allocation_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          allocation_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocation_items_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "allocation_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      allocations: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          outlet_id: string | null
+          status: string
+          total_value: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          outlet_id?: string | null
+          status?: string
+          total_value?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          outlet_id?: string | null
+          status?: string
+          total_value?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocations_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "allocations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_code: string
@@ -73,6 +166,129 @@ export type Database = {
             columns: ["outlet_id"]
             isOneToOne: false
             referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      check_ins: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string
+          date: string
+          id: string
+          outlet_id: string | null
+          vendor_id: string
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          outlet_id?: string | null
+          vendor_id: string
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          outlet_id?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "check_ins_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "check_ins_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          attendance_bonus: number
+          avg_daily_sales: number
+          consistency_bonus: number
+          consistency_multiplier: number
+          consistency_rate: number
+          created_at: string
+          days_active: number
+          days_worked: number
+          id: string
+          month: string
+          outlet_id: string | null
+          status: string
+          tier: string
+          total_commission: number
+          total_sales: number
+          updated_at: string
+          vendor_id: string
+          volume_bonus: number
+        }
+        Insert: {
+          attendance_bonus?: number
+          avg_daily_sales?: number
+          consistency_bonus?: number
+          consistency_multiplier?: number
+          consistency_rate?: number
+          created_at?: string
+          days_active?: number
+          days_worked?: number
+          id?: string
+          month: string
+          outlet_id?: string | null
+          status?: string
+          tier?: string
+          total_commission?: number
+          total_sales?: number
+          updated_at?: string
+          vendor_id: string
+          volume_bonus?: number
+        }
+        Update: {
+          attendance_bonus?: number
+          avg_daily_sales?: number
+          consistency_bonus?: number
+          consistency_multiplier?: number
+          consistency_rate?: number
+          created_at?: string
+          days_active?: number
+          days_worked?: number
+          id?: string
+          month?: string
+          outlet_id?: string | null
+          status?: string
+          tier?: string
+          total_commission?: number
+          total_sales?: number
+          updated_at?: string
+          vendor_id?: string
+          volume_bonus?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -175,6 +391,117 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          method: string
+          notes: string | null
+          outlet_id: string | null
+          phone_number: string | null
+          provider: string | null
+          reference: string | null
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          outlet_id?: string | null
+          phone_number?: string | null
+          provider?: string | null
+          reference?: string | null
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          outlet_id?: string | null
+          phone_number?: string | null
+          provider?: string | null
+          reference?: string | null
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          commission_id: string
+          created_at: string
+          disbursed_at: string | null
+          id: string
+          method: string | null
+          reference: string | null
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          amount?: number
+          commission_id: string
+          created_at?: string
+          disbursed_at?: string | null
+          id?: string
+          method?: string | null
+          reference?: string | null
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          commission_id?: string
+          created_at?: string
+          disbursed_at?: string | null
+          id?: string
+          method?: string | null
+          reference?: string | null
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payouts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barcode: string | null
@@ -240,6 +567,326 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reconciliation_items: {
+        Row: {
+          allocated_qty: number
+          created_at: string
+          id: string
+          product_id: string
+          reconciliation_id: string
+          returned_qty: number
+          sold_qty: number
+          spoilage_qty: number
+          unit_price: number
+        }
+        Insert: {
+          allocated_qty?: number
+          created_at?: string
+          id?: string
+          product_id: string
+          reconciliation_id: string
+          returned_qty?: number
+          sold_qty?: number
+          spoilage_qty?: number
+          unit_price?: number
+        }
+        Update: {
+          allocated_qty?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+          reconciliation_id?: string
+          returned_qty?: number
+          sold_qty?: number
+          spoilage_qty?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_items_reconciliation_id_fkey"
+            columns: ["reconciliation_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliations: {
+        Row: {
+          allocation_id: string
+          cash_collected: number
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          outlet_id: string | null
+          status: string
+          total_returned: number
+          total_sold: number
+          total_spoilage: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          allocation_id: string
+          cash_collected?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          outlet_id?: string | null
+          status?: string
+          total_returned?: number
+          total_sold?: number
+          total_spoilage?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          allocation_id?: string
+          cash_collected?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          outlet_id?: string | null
+          status?: string
+          total_returned?: number
+          total_sold?: number
+          total_spoilage?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliations_allocation_id_fkey"
+            columns: ["allocation_id"]
+            isOneToOne: false
+            referencedRelation: "allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliations_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliations_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          sale_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          sale_id: string
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          sale_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          outlet_id: string | null
+          outstanding: number
+          payment_method: string
+          total_value: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          outlet_id?: string | null
+          outstanding?: number
+          payment_method?: string
+          total_value?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          outlet_id?: string | null
+          outstanding?: number
+          payment_method?: string
+          total_value?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlement_lines: {
+        Row: {
+          amount: number
+          amount_paid: number
+          created_at: string
+          credit_days: number
+          date: string
+          due_date: string
+          id: string
+          invoice_number: string
+          settlement_id: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          amount_paid?: number
+          created_at?: string
+          credit_days?: number
+          date: string
+          due_date: string
+          id?: string
+          invoice_number: string
+          settlement_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number
+          created_at?: string
+          credit_days?: number
+          date?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          settlement_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlement_lines_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlements: {
+        Row: {
+          created_at: string
+          discount: number
+          discount_rate: number
+          id: string
+          month: string
+          net_payable: number
+          notes: string | null
+          outlet_id: string | null
+          status: string
+          total_paid: number
+          total_receivable: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount?: number
+          discount_rate?: number
+          id?: string
+          month: string
+          net_payable?: number
+          notes?: string | null
+          outlet_id?: string | null
+          status?: string
+          total_paid?: number
+          total_receivable?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount?: number
+          discount_rate?: number
+          id?: string
+          month?: string
+          net_payable?: number
+          notes?: string | null
+          outlet_id?: string | null
+          status?: string
+          total_paid?: number
+          total_receivable?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlements_outlet_id_fkey"
+            columns: ["outlet_id"]
+            isOneToOne: false
+            referencedRelation: "outlets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
