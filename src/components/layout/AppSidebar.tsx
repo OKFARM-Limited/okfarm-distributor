@@ -93,6 +93,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
 
   return (
     <Sidebar collapsible="icon">
