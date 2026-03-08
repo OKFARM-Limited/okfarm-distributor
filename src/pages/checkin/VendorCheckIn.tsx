@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
 import { Clock, LogIn, LogOut, Search, UserCheck, UserX, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function VendorCheckIn() {
   const today = new Date().toISOString().split('T')[0];
@@ -16,6 +18,7 @@ export default function VendorCheckIn() {
   const { data: todayCheckIns = [], isLoading: cLoading } = useCheckIns(today);
   const createCheckIn = useCreateCheckIn();
   const updateCheckIn = useUpdateCheckIn();
+  const { viewerProps } = useViewerGuard();
 
   const activeVendors = allVendors.filter((v: any) => v.status === 'active');
   const checkedInIds = todayCheckIns.map((r: any) => r.vendor_id);
@@ -53,6 +56,7 @@ export default function VendorCheckIn() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="h-6 w-6" /> Vendor Check-In / Check-Out</h1>
 
       <div className="grid grid-cols-3 gap-3">
@@ -104,9 +108,9 @@ export default function VendorCheckIn() {
                     </TableCell>
                     <TableCell className="text-right">
                       {!isIn ? (
-                        <Button size="sm" onClick={() => handleCheckIn(v.id)} className="gap-1"><LogIn className="h-3 w-3" /> In</Button>
+                        <Button size="sm" onClick={() => handleCheckIn(v.id)} className="gap-1" {...viewerProps}><LogIn className="h-3 w-3" /> In</Button>
                       ) : !isOut ? (
-                        <Button size="sm" variant="outline" onClick={() => handleCheckOut(v.id)} className="gap-1"><LogOut className="h-3 w-3" /> Out</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleCheckOut(v.id)} className="gap-1" {...viewerProps}><LogOut className="h-3 w-3" /> Out</Button>
                       ) : (
                         <span className="text-xs text-muted-foreground">Done</span>
                       )}

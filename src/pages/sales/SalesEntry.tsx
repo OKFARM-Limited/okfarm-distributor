@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Download, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function SalesEntry() {
   const [vendorId, setVendorId] = useState('');
@@ -19,6 +21,7 @@ export default function SalesEntry() {
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [], isLoading: pLoading } = useProducts();
   const createSale = useCreateSale();
+  const { viewerProps } = useViewerGuard();
 
   const vendor = vendors.find((v: any) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
@@ -72,6 +75,7 @@ export default function SalesEntry() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Daily Sales Entry</h1>
@@ -127,7 +131,7 @@ export default function SalesEntry() {
                 <div><Label>Outstanding</Label><p className="text-xl font-bold text-destructive">₦{Math.max(0, totalValue - amountPaid).toLocaleString()}</p></div>
               </div>
 
-              <Button onClick={handleSubmit} disabled={totalValue === 0 || createSale.isPending} className="w-full sm:w-auto">
+              <Button onClick={handleSubmit} disabled={totalValue === 0 || createSale.isPending} className="w-full sm:w-auto" {...viewerProps}>
                 {createSale.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Record Sales
               </Button>

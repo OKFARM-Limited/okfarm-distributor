@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CheckCircle, ChevronRight, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function DailyAllocation() {
   const [step, setStep] = useState(0);
@@ -17,6 +19,7 @@ export default function DailyAllocation() {
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [], isLoading: pLoading } = useProducts();
   const createAllocation = useCreateAllocation();
+  const { viewerProps } = useViewerGuard();
 
   const vendor = vendors.find((v: any) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
@@ -50,6 +53,7 @@ export default function DailyAllocation() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div>
         <h1 className="text-2xl font-bold">Morning Stock Allocation</h1>
         {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}

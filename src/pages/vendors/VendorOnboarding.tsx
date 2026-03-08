@@ -13,6 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { UserPlus, Camera, ArrowLeft } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const territories = ['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
 const banks = ['GTBank', 'First Bank', 'UBA', 'Access Bank', 'Zenith Bank', 'Stanbic IBTC', 'Fidelity', 'Wema'];
@@ -23,6 +25,7 @@ export default function VendorOnboarding() {
   const navigate = useNavigate();
   const { allOutlets } = useOutletContext();
   const upsertVendor = useUpsertVendor();
+  const { viewerProps } = useViewerGuard();
   const [photoPreview, setPhotoPreview] = useState('');
   const [form, setForm] = useState({
     name: '', phone: '', email: '', date_of_birth: '', gender: 'male',
@@ -93,6 +96,7 @@ export default function VendorOnboarding() {
       <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
         <ArrowLeft className="h-4 w-4" /> Back to Vendors
       </Button>
+      <ViewerBanner />
       <div className="flex items-center gap-2">
         <UserPlus className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">Vendor Onboarding</h1>
@@ -241,7 +245,7 @@ export default function VendorOnboarding() {
 
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="outline" type="button" onClick={() => navigate('/vendors')}>Cancel</Button>
-          <Button type="submit" disabled={upsertVendor.isPending}>
+          <Button type="submit" disabled={upsertVendor.isPending} {...viewerProps}>
             {upsertVendor.isPending ? 'Registering...' : 'Register Vendor'}
           </Button>
         </div>

@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Smartphone, CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const providers = [
   { id: 'mtn', name: 'MTN MoMo', code: '*170#', logo: '📱' },
@@ -25,6 +27,7 @@ export default function MobileMoneyPayment() {
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [reference, setReference] = useState('');
+  const { viewerProps } = useViewerGuard();
 
   const { data: vendors = [] } = useVendors('all');
   const { data: sales = [] } = useSales('all');
@@ -77,6 +80,7 @@ export default function MobileMoneyPayment() {
 
   return (
     <div className="space-y-4 animate-fade-in max-w-lg mx-auto">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="h-6 w-6" /> Mobile Money Collection</h1>
 
       <div className="flex items-center gap-2 text-xs">
@@ -159,7 +163,7 @@ export default function MobileMoneyPayment() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep('details')}>Back</Button>
-              <Button className="flex-1" onClick={handleConfirm}>Confirm & Pay</Button>
+              <Button className="flex-1" onClick={handleConfirm} {...viewerProps}>Confirm & Pay</Button>
             </div>
           </CardContent>
         </Card>

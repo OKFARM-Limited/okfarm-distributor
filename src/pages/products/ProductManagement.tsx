@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Package, Loader2 } from 'lucide-react';
+import { ViewerBanner } from '@/components/ViewerGuard';
+import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 const CATEGORIES = ['Yogurt', 'Ice Cream', 'Popsicle', 'Juice', 'Milk'];
 const UNITS = ['pack', 'box', 'carton', 'piece', 'sachet'];
@@ -31,6 +33,7 @@ export default function ProductManagement() {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const { data: products = [], isLoading } = useProducts();
+  const { viewerProps } = useViewerGuard();
   const upsertProduct = useUpsertProduct();
   const deleteProduct = useDeleteProduct();
 
@@ -65,9 +68,10 @@ export default function ProductManagement() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2"><Package className="h-6 w-6" /> Product Management</h1>
-        <Button onClick={openNew} className="gap-1"><Plus className="h-4 w-4" /> Add Product</Button>
+        <Button onClick={openNew} className="gap-1" {...viewerProps}><Plus className="h-4 w-4" /> Add Product</Button>
       </div>
 
       <Card>
