@@ -1,7 +1,8 @@
 import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
-  Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp
+  Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
+  Building2, GraduationCap, Gift, Handshake
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
