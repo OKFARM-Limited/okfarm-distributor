@@ -35,6 +35,7 @@ export default function PayoutTracking() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      <ViewerBanner />
       <h1 className="text-2xl font-bold">Payout Tracking</h1>
 
       <Card>
