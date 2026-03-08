@@ -20,6 +20,7 @@ export default function DepotManagement() {
   const { data: allVendors = [] } = useVendors('all');
   const { data: allAssets = [] } = useAssets('all');
   const upsertDepot = useUpsertDepot();
+  const { viewerProps } = useViewerGuard();
   const [activeDepot, setActiveDepot] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newDepot, setNewDepot] = useState({ name: '', address: '', territory: '', manager: '', phone: '', fridge_capacity: '', outlet_id: '', depot_code: '' });
