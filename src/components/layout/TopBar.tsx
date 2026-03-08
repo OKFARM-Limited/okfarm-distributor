@@ -63,7 +63,7 @@ export function TopBar() {
       {!isAllOutlets && selectedOutlet && (
         <Badge variant="outline" className="hidden lg:flex items-center gap-1 text-xs border-primary/30 text-primary">
           <MapPin className="h-3 w-3" />
-          {selectedOutlet.shortCode}
+          {selectedOutlet.short_code}
         </Badge>
       )}
 
