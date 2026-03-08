@@ -11,6 +11,7 @@ import { useViewerGuard } from '@/hooks/useViewerGuard';
 export default function PayoutTracking() {
   const { data: commissions = [], isLoading } = useCommissions('all');
   const createPayout = useCreatePayout();
+  const { viewerProps } = useViewerGuard();
 
   const handleDisburse = (commission: any) => {
     createPayout.mutate(
