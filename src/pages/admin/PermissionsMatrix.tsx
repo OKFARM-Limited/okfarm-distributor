@@ -99,6 +99,7 @@ export default function PermissionsMatrix() {
         <Badge variant="destructive" className="text-sm px-3 py-1">Admin — Full system access</Badge>
         <Badge variant="default" className="text-sm px-3 py-1">Manager — Operations & analytics</Badge>
         <Badge variant="secondary" className="text-sm px-3 py-1">Assistant — Data entry & viewing</Badge>
+        <Badge variant="outline" className="text-sm px-3 py-1">Viewer — Read-only access</Badge>
       </div>
 
       {categories.map(category => (
