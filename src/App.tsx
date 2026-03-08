@@ -34,6 +34,10 @@ import DuesStatement from "./pages/dues/DuesStatement";
 import MobileMoneyPayment from "./pages/payments/MobileMoneyPayment";
 import NotificationCenter from "./pages/notifications/NotificationCenter";
 import ForecastReorder from "./pages/forecast/ForecastReorder";
+import MonthlySettlement from "./pages/settlement/MonthlySettlement";
+import IncentivePrograms from "./pages/incentives/IncentivePrograms";
+import FanAcademy from "./pages/training/FanAcademy";
+import DepotManagement from "./pages/depots/DepotManagement";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +81,10 @@ function AppRoutes() {
         <Route path="payouts" element={<AdminRoute><PayoutTracking /></AdminRoute>} />
         <Route path="orders" element={<AdminRoute><OrderPlacement /></AdminRoute>} />
         <Route path="audit" element={<AdminRoute><AuditTrail /></AdminRoute>} />
+        <Route path="settlement" element={<AdminRoute><MonthlySettlement /></AdminRoute>} />
+        <Route path="incentives" element={<IncentivePrograms />} />
+        <Route path="training" element={<FanAcademy />} />
+        <Route path="depots" element={<AdminRoute><DepotManagement /></AdminRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />

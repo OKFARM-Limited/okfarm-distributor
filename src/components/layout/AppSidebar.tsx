@@ -1,7 +1,8 @@
 import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
-  Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp
+  Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
+  Building2, GraduationCap, Gift, Handshake
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -56,6 +57,13 @@ const navGroups = [
     ],
   },
   {
+    label: 'Programs',
+    items: [
+      { title: 'Incentives', url: '/incentives', icon: Gift },
+      { title: 'Fan Academy', url: '/training', icon: GraduationCap },
+    ],
+  },
+  {
     label: 'Admin',
     adminOnly: true,
     items: [
@@ -63,6 +71,8 @@ const navGroups = [
       { title: 'Payouts', url: '/payouts', icon: Truck },
       { title: 'Orders', url: '/orders', icon: ShoppingCart },
       { title: 'Forecast', url: '/forecast', icon: TrendingUp },
+      { title: 'Settlement', url: '/settlement', icon: Handshake },
+      { title: 'Depots', url: '/depots', icon: Building2 },
       { title: 'Audit Trail', url: '/audit', icon: Shield },
     ],
   },
