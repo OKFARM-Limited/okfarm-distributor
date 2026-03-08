@@ -53,7 +53,7 @@ export function TopBar() {
       <div className="hidden md:flex flex-1 max-w-md">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={`Search${!isAllOutlets ? ` in ${selectedOutlet?.shortCode}` : ''}...`} className="pl-9 h-9 bg-muted/50" />
+          <Input placeholder={`Search${!isAllOutlets ? ` in ${selectedOutlet?.short_code}` : ''}...`} className="pl-9 h-9 bg-muted/50" />
         </div>
       </div>
 
