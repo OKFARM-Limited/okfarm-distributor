@@ -19,6 +19,7 @@ export default function InventoryInbound() {
   const { data: deliveries = [], isLoading: dLoading } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
   const updateDelivery = useUpdateDelivery();
+  const { viewerProps } = useViewerGuard();
 
   const totalStock = (stockLevels as any[]).reduce((s, l) => s + l.current_stock, 0);
   const lowStockItems = (stockLevels as any[]).filter(s => s.current_stock <= s.min_stock);
