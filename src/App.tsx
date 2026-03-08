@@ -41,6 +41,7 @@ import FanAcademy from "./pages/training/FanAcademy";
 import ProductManagement from "./pages/products/ProductManagement";
 import DepotManagement from "./pages/depots/DepotManagement";
 import OutletManagement from "./pages/outlets/OutletManagement";
+import RoleManagement from "./pages/admin/RoleManagement";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
