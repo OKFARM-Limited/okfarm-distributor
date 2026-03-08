@@ -92,7 +92,7 @@ function AppRoutes() {
         <Route path="commissions" element={<AdminRoute><CommissionCalculator /></AdminRoute>} />
         <Route path="payouts" element={<AdminRoute><PayoutTracking /></AdminRoute>} />
         <Route path="orders" element={<AdminRoute><OrderPlacement /></AdminRoute>} />
-        <Route path="audit" element={<AdminRoute><AuditTrail /></AdminRoute>} />
+        <Route path="audit" element={<AdminOnlyRoute><AuditTrail /></AdminOnlyRoute>} />
         <Route path="settlement" element={<AdminRoute><MonthlySettlement /></AdminRoute>} />
         <Route path="outlets" element={<AdminRoute><OutletManagement /></AdminRoute>} />
         <Route path="incentives" element={<IncentivePrograms />} />
