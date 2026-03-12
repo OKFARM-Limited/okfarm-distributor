@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useInboundDeliveries, useUpdateDelivery, useStockLevels } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,17 +10,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2 } from 'lucide-react';
+import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileText, ExternalLink } from 'lucide-react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<any>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
   const { selectedOutletId, isAllOutlets } = useOutletContext();
   const { data: deliveries = [], isLoading: dLoading } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
   const updateDelivery = useUpdateDelivery();
-  const { viewerProps } = useViewerGuard();
+  const { viewerProps, isViewer } = useViewerGuard();
 
   const totalStock = (stockLevels as any[]).reduce((s, l) => s + l.current_stock, 0);
   const lowStockItems = (stockLevels as any[]).filter(s => s.current_stock <= s.min_stock);
@@ -35,12 +39,72 @@ export default function InventoryInbound() {
     );
   };
 
+  const triggerUpload = (deliveryId: string) => {
+    setUploadTargetId(deliveryId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTargetId) return;
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({ title: 'File too large', description: 'Maximum file size is 10MB.', variant: 'destructive' });
+      return;
+    }
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: 'Invalid file type', description: 'Please upload a PDF or image file.', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(uploadTargetId);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${uploadTargetId}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('invoices')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(filePath);
+
+      await updateDelivery.mutateAsync({
+        id: uploadTargetId,
+        invoice_file_url: urlData.publicUrl,
+      });
+
+      toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached to the delivery.' });
+    } catch (err: any) {
+      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setUploading(null);
+      setUploadTargetId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   if (dLoading || sLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
       <ViewerBanner />
       <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Inventory Inbound</h1>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png,.webp"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card><CardContent className="pt-4 text-center"><Package className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{totalStock}</p><p className="text-xs text-muted-foreground">Total Units in Stock</p></CardContent></Card>
@@ -85,13 +149,29 @@ export default function InventoryInbound() {
                   {(deliveries as any[]).map(d => (
                     <TableRow key={d.id}>
                       <TableCell>{d.date}</TableCell>
-                      <TableCell className="text-muted-foreground">{d.invoice_number}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          {d.invoice_file_url && <FileText className="h-3 w-3 text-primary" />}
+                          {d.invoice_number}
+                        </div>
+                      </TableCell>
                       <TableCell>{d.supplier}</TableCell>
                       <TableCell>{d.delivery_items?.length || 0} SKUs</TableCell>
                       <TableCell>₦{Number(d.total_value).toLocaleString()}</TableCell>
                       <TableCell>{d.due_date}</TableCell>
                       <TableCell><Badge variant={d.status === 'received' ? 'default' : d.status === 'verified' ? 'secondary' : 'outline'}>{d.status}</Badge></TableCell>
                       <TableCell className="text-right space-x-1">
+                        {!isViewer && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => triggerUpload(d.id)}
+                            disabled={uploading === d.id}
+                            title={d.invoice_file_url ? 'Replace invoice' : 'Upload invoice'}
+                          >
+                            {uploading === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" onClick={() => setViewDelivery(d)}><Eye className="h-3 w-3" /></Button>
                         {d.status === 'pending' && <Button size="sm" onClick={() => markReceived(d.id)} {...viewerProps}>Receive</Button>}
                       </TableCell>
@@ -118,6 +198,30 @@ export default function InventoryInbound() {
                 <div><span className="text-muted-foreground">Credit Term:</span> {viewDelivery.credit_term_days} days</div>
                 <div><span className="text-muted-foreground">Due:</span> {viewDelivery.due_date}</div>
               </div>
+
+              {viewDelivery.invoice_file_url && (
+                <div className="border rounded-md p-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="font-medium">Invoice Attached</span>
+                    </div>
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={viewDelivery.invoice_file_url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3 mr-1" /> View
+                      </a>
+                    </Button>
+                  </div>
+                  {viewDelivery.invoice_file_url.match(/\.(jpg|jpeg|png|webp)$/i) && (
+                    <img
+                      src={viewDelivery.invoice_file_url}
+                      alt="Invoice"
+                      className="mt-2 rounded-md max-h-48 w-full object-contain"
+                    />
+                  )}
+                </div>
+              )}
+
               <Table>
                 <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
                 <TableBody>
