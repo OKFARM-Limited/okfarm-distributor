@@ -87,13 +87,52 @@ export default function InventoryInbound() {
         invoice_file_url: urlData.publicUrl,
       });
 
-      toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached to the delivery.' });
+      toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached. Verifying...' });
+
+      // Trigger AI verification
+      const delivery = (deliveries as any[]).find(d => d.id === uploadTargetId);
+      if (delivery) {
+        runVerification(urlData.publicUrl, delivery);
+      }
     } catch (err: any) {
       toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
     } finally {
       setUploading(null);
       setUploadTargetId(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const runVerification = async (invoiceUrl: string, delivery: any) => {
+    setVerificationResult(null);
+    setVerificationError(null);
+    setVerificationLoading(true);
+    setShowVerification(true);
+
+    try {
+      const deliveryData = {
+        invoice_number: delivery.invoice_number,
+        supplier: delivery.supplier,
+        total_value: Number(delivery.total_value),
+        items: (delivery.delivery_items || []).map((i: any) => ({
+          product_name: i.products?.name || 'Unknown',
+          quantity: i.quantity,
+          unit_price: Number(i.unit_price),
+        })),
+      };
+
+      const { data, error } = await supabase.functions.invoke('verify-invoice', {
+        body: { invoiceImageUrl: invoiceUrl, deliveryData },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setVerificationResult(data);
+    } catch (err: any) {
+      setVerificationError(err.message || 'Verification failed');
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
