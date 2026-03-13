@@ -97,7 +97,14 @@ export default function InventoryInbound() {
   return (
     <div className="space-y-4 animate-fade-in">
       <ViewerBanner />
-      <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Inventory Inbound</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Inventory Inbound</h1>
+        {!isViewer && (
+          <Button onClick={() => setShowNewDelivery(true)}>
+            <Plus className="h-4 w-4 mr-1" /> New Delivery
+          </Button>
+        )}
+      </div>
 
       {/* Hidden file input */}
       <input
