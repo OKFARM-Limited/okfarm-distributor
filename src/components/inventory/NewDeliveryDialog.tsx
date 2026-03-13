@@ -78,7 +78,7 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
           due_date: dueDate,
           total_value: totalValue,
           notes: notes || null,
-          outlet_id: selectedOutletId || null,
+          outlet_id: selectedOutletId && selectedOutletId !== 'all' ? selectedOutletId : null,
           status: 'pending',
         },
         items: validItems,
