@@ -248,6 +248,8 @@ export default function InventoryInbound() {
           )}
         </DialogContent>
       </Dialog>
+
+      <NewDeliveryDialog open={showNewDelivery} onOpenChange={setShowNewDelivery} />
     </div>
   );
 }
