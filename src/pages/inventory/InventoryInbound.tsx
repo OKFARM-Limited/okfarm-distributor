@@ -14,6 +14,7 @@ import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileT
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
+import InvoiceVerificationDialog from '@/components/inventory/InvoiceVerificationDialog';
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<any>(null);
@@ -21,6 +22,10 @@ export default function InventoryInbound() {
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
+  const [verificationResult, setVerificationResult] = useState<any>(null);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [showVerification, setShowVerification] = useState(false);
   const { selectedOutletId, isAllOutlets } = useOutletContext();
   const { data: deliveries = [], isLoading: dLoading } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
@@ -82,13 +87,52 @@ export default function InventoryInbound() {
         invoice_file_url: urlData.publicUrl,
       });
 
-      toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached to the delivery.' });
+      toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached. Verifying...' });
+
+      // Trigger AI verification
+      const delivery = (deliveries as any[]).find(d => d.id === uploadTargetId);
+      if (delivery) {
+        runVerification(urlData.publicUrl, delivery);
+      }
     } catch (err: any) {
       toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
     } finally {
       setUploading(null);
       setUploadTargetId(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const runVerification = async (invoiceUrl: string, delivery: any) => {
+    setVerificationResult(null);
+    setVerificationError(null);
+    setVerificationLoading(true);
+    setShowVerification(true);
+
+    try {
+      const deliveryData = {
+        invoice_number: delivery.invoice_number,
+        supplier: delivery.supplier,
+        total_value: Number(delivery.total_value),
+        items: (delivery.delivery_items || []).map((i: any) => ({
+          product_name: i.products?.name || 'Unknown',
+          quantity: i.quantity,
+          unit_price: Number(i.unit_price),
+        })),
+      };
+
+      const { data, error } = await supabase.functions.invoke('verify-invoice', {
+        body: { invoiceImageUrl: invoiceUrl, deliveryData },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setVerificationResult(data);
+    } catch (err: any) {
+      setVerificationError(err.message || 'Verification failed');
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
@@ -250,6 +294,18 @@ export default function InventoryInbound() {
       </Dialog>
 
       <NewDeliveryDialog open={showNewDelivery} onOpenChange={setShowNewDelivery} />
+
+      <InvoiceVerificationDialog
+        open={showVerification}
+        onOpenChange={setShowVerification}
+        result={verificationResult}
+        isLoading={verificationLoading}
+        error={verificationError}
+        onConfirm={() => {
+          setShowVerification(false);
+          toast({ title: '✅ Verification Confirmed', description: 'Invoice verification acknowledged.' });
+        }}
+      />
     </div>
   );
 }
