@@ -17,6 +17,7 @@ import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<any>(null);
+  const [showNewDelivery, setShowNewDelivery] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
