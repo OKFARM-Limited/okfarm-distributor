@@ -10,9 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileText, ExternalLink } from 'lucide-react';
+import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileText, ExternalLink, Plus } from 'lucide-react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<any>(null);
