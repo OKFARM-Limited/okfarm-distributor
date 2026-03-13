@@ -511,6 +511,23 @@ export function useUpdateDelivery() {
   });
 }
 
+export function useCreateDelivery() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ delivery, items }: { delivery: Record<string, any>; items: { product_id: string; quantity: number; unit_price: number }[] }) => {
+      const { data, error } = await supabase.from('inbound_deliveries').insert(delivery).select().single();
+      if (error) throw error;
+      if (items.length > 0) {
+        const itemRows = items.map(i => ({ ...i, delivery_id: data.id }));
+        const { error: itemErr } = await supabase.from('delivery_items').insert(itemRows);
+        if (itemErr) throw itemErr;
+      }
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['inbound_deliveries'] }),
+  });
+}
+
 // ===== STOCK LEVELS =====
 export function useStockLevels(outletId?: string | null) {
   return useQuery({
