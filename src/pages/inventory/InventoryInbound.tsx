@@ -294,6 +294,18 @@ export default function InventoryInbound() {
       </Dialog>
 
       <NewDeliveryDialog open={showNewDelivery} onOpenChange={setShowNewDelivery} />
+
+      <InvoiceVerificationDialog
+        open={showVerification}
+        onOpenChange={setShowVerification}
+        result={verificationResult}
+        isLoading={verificationLoading}
+        error={verificationError}
+        onConfirm={() => {
+          setShowVerification(false);
+          toast({ title: '✅ Verification Confirmed', description: 'Invoice verification acknowledged.' });
+        }}
+      />
     </div>
   );
 }
