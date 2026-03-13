@@ -14,6 +14,7 @@ import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileT
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
+import InvoiceVerificationDialog from '@/components/inventory/InvoiceVerificationDialog';
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<any>(null);
