@@ -114,7 +114,7 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="supplier">Supplier *</Label>
-            <Input id="supplier" value={supplier} onChange={e => setSupplier(e.target.value)} />
+            <Input id="supplier" value={supplier} onChange={e => setSupplier(e.target.value)} disabled className="bg-muted" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="date">Delivery Date</Label>
