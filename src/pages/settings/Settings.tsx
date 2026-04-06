@@ -11,6 +11,8 @@ import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
+import { useWebPush } from '@/hooks/useWebPush';
+import { Bell } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -18,6 +20,7 @@ export default function SettingsPage() {
   const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const { viewerProps } = useViewerGuard();
+  const { isSupported: pushSupported, isSubscribed: pushEnabled, permission: pushPermission, requestPermission, unsubscribe: unsubscribePush } = useWebPush();
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">
@@ -63,6 +66,30 @@ export default function SettingsPage() {
           </Select>
         </CardContent>
       </Card>
+
+      {pushSupported && (
+        <Card>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4" /> Push Notifications</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>{t('notifications')}</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {pushPermission === 'denied' ? 'Notifications blocked in browser settings' : 'Receive alerts for new stock, overdue payments, etc.'}
+                </p>
+              </div>
+              <Switch
+                checked={pushEnabled}
+                disabled={pushPermission === 'denied'}
+                onCheckedChange={(checked) => {
+                  if (checked) requestPermission();
+                  else unsubscribePush();
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">Offline Storage</CardTitle></CardHeader>
