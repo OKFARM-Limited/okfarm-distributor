@@ -1,5 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useNotifications, useUpdateNotification, useDeleteNotification } from '@/hooks/useSupabaseData';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
+import { useWebPush } from '@/hooks/useWebPush';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,8 +29,24 @@ export default function NotificationCenter() {
   const updateNotif = useUpdateNotification();
   const deleteNotif = useDeleteNotification();
   const { viewerProps } = useViewerGuard();
+  const { sendLocalNotification, isSubscribed: pushEnabled } = useWebPush();
+  const prevCountRef = useRef(0);
 
+  // Live updates
+  useRealtimeSubscription(['notifications']);
+
+  // Send push for new notifications
   const allNotifs = notifs as any[];
+  useEffect(() => {
+    if (pushEnabled && allNotifs.length > prevCountRef.current && prevCountRef.current > 0) {
+      const newest = allNotifs[0];
+      if (newest && !newest.read) {
+        sendLocalNotification(newest.title, { body: newest.message, tag: newest.id });
+      }
+    }
+    prevCountRef.current = allNotifs.length;
+  }, [allNotifs.length, pushEnabled, sendLocalNotification]);
+
   const unread = allNotifs.filter(n => !n.read);
   const highPriority = allNotifs.filter(n => n.priority === 'high');
 

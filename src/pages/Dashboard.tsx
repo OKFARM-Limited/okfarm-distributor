@@ -1,15 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useVendors, useSales, useOutlets } from '@/hooks/useSupabaseData';
-import { Users, TrendingUp, DollarSign, Package, AlertTriangle, MapPin, Building2, Loader2 } from 'lucide-react';
+import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
+import { Users, TrendingUp, DollarSign, Package, MapPin, Building2, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Dashboard() {
   const { selectedOutletId, isAllOutlets, selectedOutlet } = useOutletContext();
+  const { t } = useLanguage();
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: sales = [], isLoading: sLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
   const { data: outlets = [], isLoading: oLoading } = useOutlets();
+
+  // Live updates
+  useRealtimeSubscription(['sales', 'allocations', 'payments']);
 
   const isLoading = vLoading || sLoading || oLoading;
 
@@ -20,7 +26,6 @@ export default function Dashboard() {
   const todayCash = todaySales.reduce((s, r) => s + Number(r.amount_paid), 0);
   const totalOutstanding = todaySales.reduce((s, r) => s + Number(r.outstanding), 0);
 
-  // Weekly data
   const last7 = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - i);
     return d.toISOString().split('T')[0];
@@ -36,11 +41,10 @@ export default function Dashboard() {
   });
 
   const paymentBreakdown = [
-    { name: 'Cash', value: todayCash || 65, color: 'hsl(210, 80%, 45%)' },
-    { name: 'Outstanding', value: totalOutstanding || 10, color: 'hsl(38, 92%, 50%)' },
+    { name: t('cash'), value: todayCash || 65, color: 'hsl(210, 80%, 45%)' },
+    { name: t('outstanding'), value: totalOutstanding || 10, color: 'hsl(38, 92%, 50%)' },
   ];
 
-  // Top performers
   const vendorSalesMap: Record<string, number> = {};
   (sales as any[]).forEach(s => { vendorSalesMap[s.vendor_id] = (vendorSalesMap[s.vendor_id] || 0) + Number(s.total_value); });
   const topPerformers = (vendors as any[])
@@ -54,24 +58,24 @@ export default function Dashboard() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard')}</h1>
           <p className="text-muted-foreground flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5" />
-            {isAllOutlets ? 'Company-Wide Overview' : `${selectedOutlet?.name} Outlet`}
+            {isAllOutlets ? t('companyWideOverview') : `${selectedOutlet?.name} ${t('outlet')}`}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-sm text-muted-foreground">Active Vendors</p><p className="text-2xl font-bold">{activeVendors}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10"><TrendingUp className="h-5 w-5 text-secondary" /></div><div><p className="text-sm text-muted-foreground">Today's Sales</p><p className="text-2xl font-bold">₦{todayTotal.toLocaleString()}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-sm text-muted-foreground">Cash Collected</p><p className="text-2xl font-bold">₦{todayCash.toLocaleString()}</p></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><Package className="h-5 w-5 text-yellow-600" /></div><div><p className="text-sm text-muted-foreground">Outstanding</p><p className="text-2xl font-bold">₦{totalOutstanding.toLocaleString()}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-sm text-muted-foreground">{t('activeVendors')}</p><p className="text-2xl font-bold">{activeVendors}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10"><TrendingUp className="h-5 w-5 text-secondary" /></div><div><p className="text-sm text-muted-foreground">{t('todaySales')}</p><p className="text-2xl font-bold">₦{todayTotal.toLocaleString()}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10"><DollarSign className="h-5 w-5 text-green-600" /></div><div><p className="text-sm text-muted-foreground">{t('cashCollected')}</p><p className="text-2xl font-bold">₦{todayCash.toLocaleString()}</p></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><Package className="h-5 w-5 text-yellow-600" /></div><div><p className="text-sm text-muted-foreground">{t('outstanding')}</p><p className="text-2xl font-bold">₦{totalOutstanding.toLocaleString()}</p></div></div></CardContent></Card>
       </div>
 
       {isAllOutlets && outlets.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" /> Outlets Overview</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" /> {t('outletsOverview')}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {outlets.map((o: any) => {
@@ -81,8 +85,8 @@ export default function Dashboard() {
                   <div key={o.id} className="rounded-lg border p-3 space-y-2">
                     <p className="font-medium text-sm truncate">{o.name}</p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div><p className="text-muted-foreground">Vendors</p><p className="font-bold text-lg">{oVendors}</p></div>
-                      <div><p className="text-muted-foreground">Sales Today</p><p className="font-bold text-sm">₦{oSales.toLocaleString()}</p></div>
+                      <div><p className="text-muted-foreground">{t('vendorsCount')}</p><p className="font-bold text-lg">{oVendors}</p></div>
+                      <div><p className="text-muted-foreground">{t('salesToday')}</p><p className="font-bold text-sm">₦{oSales.toLocaleString()}</p></div>
                     </div>
                   </div>
                 );
@@ -94,7 +98,7 @@ export default function Dashboard() {
 
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="text-base">Weekly Sales Trend</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t('weeklySalesTrend')}</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={weeklyData}>
@@ -108,7 +112,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-base">Payment Breakdown</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t('paymentBreakdown')}</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
@@ -131,7 +135,7 @@ export default function Dashboard() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Top Performers{!isAllOutlets && selectedOutlet ? ` — ${selectedOutlet.name}` : ''}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('topPerformers')}{!isAllOutlets && selectedOutlet ? ` — ${selectedOutlet.name}` : ''}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {topPerformers.map((v, i) => (
@@ -144,7 +148,7 @@ export default function Dashboard() {
                 <Badge variant="secondary" className="text-xs">{v.territory}</Badge>
               </div>
             ))}
-            {topPerformers.length === 0 && <p className="text-sm text-muted-foreground col-span-5 text-center py-4">No sales data yet.</p>}
+            {topPerformers.length === 0 && <p className="text-sm text-muted-foreground col-span-5 text-center py-4">{t('noSalesDataYet')}</p>}
           </div>
         </CardContent>
       </Card>

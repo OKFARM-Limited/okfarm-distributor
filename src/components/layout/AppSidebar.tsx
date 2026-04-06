@@ -7,6 +7,7 @@ import {
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -16,74 +17,74 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const navGroups = [
   {
-    label: 'Overview',
+    labelKey: 'overview',
     items: [
-      { title: 'Dashboard', url: '/', icon: Home },
-      { title: 'Notifications', url: '/notifications', icon: Bell },
+      { titleKey: 'dashboard', url: '/', icon: Home },
+      { titleKey: 'notifications', url: '/notifications', icon: Bell },
     ],
   },
   {
-    label: 'Operations',
+    labelKey: 'operations',
     items: [
-      { title: 'Vendors', url: '/vendors', icon: Users },
-      { title: 'Check-In', url: '/checkin', icon: Clock },
-      { title: 'Assets', url: '/assets', icon: Package },
-      { title: 'Allocation', url: '/allocation', icon: ClipboardList },
-      { title: 'Reconciliation', url: '/reconciliation', icon: History },
-      { title: 'Allocation History', url: '/allocation/history', icon: ClipboardList },
+      { titleKey: 'vendors', url: '/vendors', icon: Users },
+      { titleKey: 'checkIn', url: '/checkin', icon: Clock },
+      { titleKey: 'assets', url: '/assets', icon: Package },
+      { titleKey: 'allocation', url: '/allocation', icon: ClipboardList },
+      { titleKey: 'reconciliation', url: '/reconciliation', icon: History },
+      { titleKey: 'allocationHistory', url: '/allocation/history', icon: ClipboardList },
     ],
   },
   {
-    label: 'Inventory',
+    labelKey: 'inventory',
     items: [
-      { title: 'Inbound Stock', url: '/inventory', icon: Warehouse },
-      { title: 'Scanner', url: '/scanner', icon: ScanLine },
+      { titleKey: 'inboundStock', url: '/inventory', icon: Warehouse },
+      { titleKey: 'scanner', url: '/scanner', icon: ScanLine },
     ],
   },
   {
-    label: 'Finance',
+    labelKey: 'finance',
     items: [
-      { title: 'Sales Entry', url: '/sales', icon: DollarSign },
-      { title: 'Payments', url: '/payments', icon: CreditCard },
-      { title: 'Mobile Money', url: '/mobile-money', icon: Smartphone },
-      { title: 'Dues Statement', url: '/dues', icon: FileText },
+      { titleKey: 'salesEntry', url: '/sales', icon: DollarSign },
+      { titleKey: 'payments', url: '/payments', icon: CreditCard },
+      { titleKey: 'mobileMoney', url: '/mobile-money', icon: Smartphone },
+      { titleKey: 'duesStatement', url: '/dues', icon: FileText },
     ],
   },
   {
-    label: 'Analytics',
+    labelKey: 'analytics',
     items: [
-      { title: 'Performance', url: '/performance', icon: BarChart3 },
-      { title: 'Vendor Map', url: '/map', icon: Map },
+      { titleKey: 'performance', url: '/performance', icon: BarChart3 },
+      { titleKey: 'vendorMap', url: '/map', icon: Map },
     ],
   },
   {
-    label: 'Programs',
+    labelKey: 'programs',
     items: [
-      { title: 'Incentives', url: '/incentives', icon: Gift },
-      { title: 'Fan Academy', url: '/training', icon: GraduationCap },
+      { titleKey: 'incentives', url: '/incentives', icon: Gift },
+      { titleKey: 'fanAcademy', url: '/training', icon: GraduationCap },
     ],
   },
   {
-    label: 'Admin',
+    labelKey: 'admin',
     adminOrManager: true,
     items: [
-      { title: 'Outlets', url: '/outlets', icon: Store },
-      { title: 'Products', url: '/products', icon: Package },
-      { title: 'Commissions', url: '/commissions', icon: Award },
-      { title: 'Payouts', url: '/payouts', icon: Truck },
-      { title: 'Orders', url: '/orders', icon: ShoppingCart },
-      { title: 'Forecast', url: '/forecast', icon: TrendingUp },
-      { title: 'Settlement', url: '/settlement', icon: Handshake },
-      { title: 'Depots', url: '/depots', icon: Building2 },
-      { title: 'Audit Trail', url: '/audit', icon: Shield },
-      { title: 'User Roles', url: '/roles', icon: UserCog },
-      { title: 'Permissions', url: '/permissions', icon: Grid3X3 },
+      { titleKey: 'outlets', url: '/outlets', icon: Store },
+      { titleKey: 'products', url: '/products', icon: Package },
+      { titleKey: 'commissions', url: '/commissions', icon: Award },
+      { titleKey: 'payouts', url: '/payouts', icon: Truck },
+      { titleKey: 'orders', url: '/orders', icon: ShoppingCart },
+      { titleKey: 'forecast', url: '/forecast', icon: TrendingUp },
+      { titleKey: 'settlement', url: '/settlement', icon: Handshake },
+      { titleKey: 'depots', url: '/depots', icon: Building2 },
+      { titleKey: 'auditTrail', url: '/audit', icon: Shield },
+      { titleKey: 'userRoles', url: '/roles', icon: UserCog },
+      { titleKey: 'permissions', url: '/permissions', icon: Grid3X3 },
     ],
   },
   {
-    label: 'System',
+    labelKey: 'system',
     items: [
-      { title: 'Settings', url: '/settings', icon: Settings },
+      { titleKey: 'settings', url: '/settings', icon: Settings },
     ],
   },
 ];
@@ -93,6 +94,7 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
 
@@ -120,8 +122,8 @@ export function AppSidebar() {
         {navGroups.map(group => {
           if ((group as any).adminOrManager && !isAdmin && !isManager) return null;
           return (
-            <SidebarGroup key={group.label}>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroup key={group.labelKey}>
+              <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.items.map(item => (
@@ -132,7 +134,7 @@ export function AppSidebar() {
                       >
                         <NavLink to={item.url} end={item.url === '/'} className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                           <item.icon className="h-4 w-4" />
-                          {!collapsed && <span>{item.title}</span>}
+                          {!collapsed && <span>{t(item.titleKey)}</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
