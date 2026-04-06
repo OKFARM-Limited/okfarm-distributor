@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { FileText, Download, CheckCircle, Clock, AlertTriangle, Loader2, Plus } from 'lucide-react';
+import { FileText, Download, CheckCircle, Clock, AlertTriangle, Loader2, Plus, FileDown } from 'lucide-react';
+import { generatePDFReport } from '@/lib/generatePDF';
 import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
@@ -88,8 +89,32 @@ export default function MonthlySettlement() {
           <p className="text-muted-foreground">{latest ? `${latest.month} — ${latest.outlets?.name || 'All Outlets'}` : 'No settlement data yet'}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => toast({ title: 'Exported', description: 'Settlement report downloaded.' })}>
-            <Download className="h-4 w-4 mr-2" />Export
+          <Button variant="outline" onClick={() => {
+            if (!latest) return;
+            generatePDFReport({
+              title: 'Monthly Settlement Report',
+              subtitle: `${latest.month} — ${latest.outlets?.name || 'All Outlets'}`,
+              filename: `settlement-${latest.month}.pdf`,
+              columns: [
+                { header: 'Invoice', key: 'invoice_number' },
+                { header: 'Date', key: 'date' },
+                { header: 'Amount', key: 'amount', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Credit', key: 'credit_days', align: 'center', format: (v: number) => `${v}d` },
+                { header: 'Due Date', key: 'due_date' },
+                { header: 'Paid', key: 'amount_paid', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Balance', key: 'balance', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Status', key: 'status' },
+              ],
+              data: lines.map((l: any) => ({ ...l, balance: Number(l.amount) - Number(l.amount_paid) })),
+              summaryRows: [
+                { label: 'Total Receivable', value: `₦${totalReceivable.toLocaleString()}` },
+                { label: 'Total Paid', value: `₦${totalPaid.toLocaleString()}` },
+                { label: `Discount (${discountRate}%)`, value: `-₦${discount.toLocaleString()}` },
+                { label: 'Net Payable', value: `₦${netPayable.toLocaleString()}` },
+              ],
+            });
+          }}>
+            <FileDown className="h-4 w-4 mr-2" />Export PDF
           </Button>
           <Button onClick={() => setDialogOpen(true)} className="gap-1" {...viewerProps}><Plus className="h-4 w-4" /> New Settlement</Button>
         </div>

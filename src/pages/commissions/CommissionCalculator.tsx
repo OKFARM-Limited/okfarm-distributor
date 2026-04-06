@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Info, Trophy, TrendingUp, Calendar, Zap, MapPin, Loader2, Calculator } from 'lucide-react';
+import { Info, Trophy, TrendingUp, Calendar, Zap, MapPin, Loader2, Calculator, FileDown } from 'lucide-react';
+import { generatePDFReport } from '@/lib/generatePDF';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 
@@ -60,6 +61,30 @@ export default function CommissionCalculator() {
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-1" onClick={() => {
+            generatePDFReport({
+              title: 'Commission Report',
+              subtitle: `Generated for ${isAllOutlets ? 'All Outlets' : getOutletName(selectedOutletId)}`,
+              filename: `commissions-${new Date().toISOString().split('T')[0]}.pdf`,
+              columns: [
+                { header: 'Vendor', key: 'vendor' },
+                { header: 'Month', key: 'month' },
+                { header: 'Tier', key: 'tier' },
+                { header: 'Total Sales', key: 'total_sales', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Days Active', key: 'days_active', align: 'center' },
+                { header: 'Consistency', key: 'consistency_rate', align: 'center', format: (v: number) => `${v}%` },
+                { header: 'Commission', key: 'total_commission', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Status', key: 'status' },
+              ],
+              data: filtered.map(c => ({ ...c, vendor: c.vendors?.name || '—', total_sales: c.total_sales, total_commission: c.total_commission })),
+              summaryRows: [
+                { label: 'Total Pending', value: `₦${totalPending.toLocaleString()}` },
+                { label: 'Total Disbursed', value: `₦${totalDisbursed.toLocaleString()}` },
+              ],
+            });
+          }}>
+            <FileDown className="h-4 w-4" /> Export PDF
+          </Button>
           <Button onClick={() => setCalcDialog(true)} className="gap-1" {...viewerProps}>
             <Calculator className="h-4 w-4" /> Auto-Calculate
           </Button>
