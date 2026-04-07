@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CheckCircle, ChevronRight, MapPin, Loader2 } from 'lucide-react';
+import { CheckCircle, ChevronRight, MapPin, Loader2, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
+import { generatePDFReport } from '@/lib/generatePDF';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 
 export default function DailyAllocation() {
@@ -51,12 +52,35 @@ export default function DailyAllocation() {
 
   if (vLoading || pLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
+  const handleExportPDF = () => {
+    const items = products.filter(p => quantities[p.id] > 0);
+    if (items.length === 0) { toast({ title: 'Nothing to export', description: 'Set quantities first.' }); return; }
+    const date = new Date().toISOString().split('T')[0];
+    generatePDFReport({
+      title: `Stock Allocation — ${vendor?.name || 'Unknown'}`,
+      subtitle: `Date: ${date} | Outlet: ${getOutletName(vendor?.outlet_id || null)}`,
+      filename: `allocation_${vendor?.name?.replace(/\s/g, '_')}_${date}.pdf`,
+      columns: [
+        { header: 'Product', key: 'product' },
+        { header: 'Unit Price (₦)', key: 'price', align: 'right', format: (v: number) => `₦${v.toLocaleString()}` },
+        { header: 'Quantity', key: 'qty', align: 'right' },
+        { header: 'Value (₦)', key: 'value', align: 'right', format: (v: number) => `₦${v.toLocaleString()}` },
+      ],
+      data: items.map(p => ({ product: p.name, price: Number(p.unit_price), qty: quantities[p.id], value: (quantities[p.id] || 0) * Number(p.unit_price) })),
+      summaryRows: [{ label: 'Total Value', value: `₦${totalValue.toLocaleString()}` }],
+    });
+    toast({ title: 'PDF Exported', description: 'Allocation PDF downloaded.' });
+  };
+
   return (
     <div className="space-y-4 animate-fade-in">
       <ViewerBanner />
-      <div>
-        <h1 className="text-2xl font-bold">Morning Stock Allocation</h1>
-        {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Morning Stock Allocation</h1>
+          {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+        </div>
+        {step === 2 && <Button variant="outline" onClick={handleExportPDF}><Download className="h-4 w-4 mr-1" /> Export PDF</Button>}
       </div>
 
       <div className="flex items-center gap-2 text-sm">
