@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Download, MapPin, Loader2 } from 'lucide-react';
+import { Download, FileText, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { generatePDFReport } from '@/lib/generatePDF';
 
 export default function SalesEntry() {
   const [vendorId, setVendorId] = useState('');
@@ -71,6 +72,30 @@ export default function SalesEntry() {
     toast({ title: 'Sales Log Exported', description: 'CSV file downloaded.' });
   };
 
+  const handleExportPDF = () => {
+    if (!vendorId || totalValue === 0) { toast({ title: 'Nothing to export', description: 'Record sales first.' }); return; }
+    const date = new Date().toISOString().split('T')[0];
+    const items = products.filter(p => quantities[p.id] > 0);
+    generatePDFReport({
+      title: `Daily Sales — ${vendor?.name || 'Unknown'}`,
+      subtitle: `Date: ${date} | Outlet: ${getOutletName(vendor?.outlet_id || null)} | Payment: ${paymentMethod.replace('_', ' ')}`,
+      filename: `sales_${vendor?.name?.replace(/\s/g, '_')}_${date}.pdf`,
+      columns: [
+        { header: 'Product', key: 'product' },
+        { header: 'Unit Price (₦)', key: 'price', align: 'right', format: (v: number) => `₦${v.toLocaleString()}` },
+        { header: 'Qty Sold', key: 'qty', align: 'right' },
+        { header: 'Value (₦)', key: 'value', align: 'right', format: (v: number) => `₦${v.toLocaleString()}` },
+      ],
+      data: items.map(p => ({ product: p.name, price: Number(p.unit_price), qty: quantities[p.id], value: (quantities[p.id] || 0) * Number(p.unit_price) })),
+      summaryRows: [
+        { label: 'Total Value', value: `₦${totalValue.toLocaleString()}` },
+        { label: 'Amount Paid', value: `₦${amountPaid.toLocaleString()}` },
+        { label: 'Outstanding', value: `₦${Math.max(0, totalValue - amountPaid).toLocaleString()}` },
+      ],
+    });
+    toast({ title: 'PDF Exported', description: 'Sales PDF downloaded.' });
+  };
+
   if (vLoading || pLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
@@ -81,9 +106,14 @@ export default function SalesEntry() {
           <h1 className="text-2xl font-bold">Daily Sales Entry</h1>
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
-        <Button variant="outline" onClick={handleExportCSV} disabled={!vendorId || totalValue === 0}>
-          <Download className="h-4 w-4 mr-1" /> Export Sales Log
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPDF} disabled={!vendorId || totalValue === 0}>
+            <FileText className="h-4 w-4 mr-1" /> Export PDF
+          </Button>
+          <Button variant="outline" onClick={handleExportCSV} disabled={!vendorId || totalValue === 0}>
+            <Download className="h-4 w-4 mr-1" /> Export CSV
+          </Button>
+        </div>
       </div>
 
       <Card>
