@@ -443,7 +443,7 @@ export function useUpdateOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
-      const { data, error } = await supabase.from('orders').update(updates).eq('id', id).select().single();
+      const { data, error } = await supabase.from('orders').update(updates as TablesUpdate<'orders'>).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
@@ -503,7 +503,7 @@ export function useUpdateDelivery() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
-      const { data, error } = await supabase.from('inbound_deliveries').update(updates).eq('id', id).select().single();
+      const { data, error } = await supabase.from('inbound_deliveries').update(updates as TablesUpdate<'inbound_deliveries'>).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
@@ -560,7 +560,7 @@ export function useUpdateNotification() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
-      const { data, error } = await supabase.from('notifications').update(updates).eq('id', id).select().single();
+      const { data, error } = await supabase.from('notifications').update(updates as TablesUpdate<'notifications'>).eq('id', id).select().single();
       if (error) throw error;
       return data;
     },
