@@ -1,12 +1,14 @@
 import { useOutletContext } from '@/contexts/OutletContext';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useSales } from '@/hooks/useSupabaseData';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { MapPin, Loader2 } from 'lucide-react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/PaginationControls';
 
 export default function PaymentTracking() {
   const [dateFilter, setDateFilter] = useState('');
@@ -14,8 +16,10 @@ export default function PaymentTracking() {
   const { data: sales = [], isLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
 
   const outstanding = (sales as any[]).filter(s => Number(s.outstanding) > 0);
-  const filtered = dateFilter ? outstanding.filter(s => s.date?.includes(dateFilter)) : outstanding.slice(0, 30);
+  const filtered = dateFilter ? outstanding.filter(s => s.date?.includes(dateFilter)) : outstanding;
   const totalDues = filtered.reduce((s, r) => s + Number(r.outstanding), 0);
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage, resetPage } = usePagination(filtered, 20);
+  useEffect(() => { resetPage(); }, [dateFilter]);
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -48,7 +52,7 @@ export default function PaymentTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((s: any) => (
+              {paginatedItems.map((s: any) => (
                 <TableRow key={s.id}>
                   <TableCell>{s.date}</TableCell>
                   <TableCell className="font-medium">{s.vendors?.name}</TableCell>
@@ -66,6 +70,7 @@ export default function PaymentTracking() {
           </Table>
         </CardContent>
       </Card>
+      <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={goToPage} hasNextPage={hasNextPage} hasPrevPage={hasPrevPage} />
     </div>
   );
 }

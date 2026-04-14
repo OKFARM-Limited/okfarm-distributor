@@ -7,11 +7,14 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/PaginationControls';
 
 export default function PayoutTracking() {
   const { data: commissions = [], isLoading } = useCommissions('all');
   const createPayout = useCreatePayout();
   const { viewerProps } = useViewerGuard();
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(commissions as any[], 20);
 
   const handleDisburse = (commission: any) => {
     createPayout.mutate(
@@ -51,7 +54,7 @@ export default function PayoutTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(commissions as any[]).map(c => (
+              {paginatedItems.map((c: any) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.vendors?.name}</TableCell>
                   <TableCell>{c.month}</TableCell>
@@ -67,13 +70,14 @@ export default function PayoutTracking() {
                   </TableCell>
                 </TableRow>
               ))}
-              {(commissions as any[]).length === 0 && (
+              {paginatedItems.length === 0 && (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No commissions yet.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+      <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={goToPage} hasNextPage={hasNextPage} hasPrevPage={hasPrevPage} />
     </div>
   );
 }

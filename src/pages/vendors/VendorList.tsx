@@ -12,8 +12,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUpsertVendor } from '@/hooks/useSupabaseData';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/PaginationControls';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 
@@ -35,6 +37,10 @@ export default function VendorList() {
     const matchStatus = statusFilter === 'all' || v.status === statusFilter;
     return matchSearch && matchTerritory && matchStatus;
   });
+
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage, resetPage } = usePagination(filtered, 18);
+
+  useEffect(() => { resetPage(); }, [search, territory, statusFilter]);
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
@@ -70,7 +76,7 @@ export default function VendorList() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filtered.map((v: any) => (
+        {paginatedItems.map((v: any) => (
           <Card key={v.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/vendors/${v.id}`)}>
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
@@ -104,6 +110,8 @@ export default function VendorList() {
           </Card>
         ))}
       </div>
+
+      <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={goToPage} hasNextPage={hasNextPage} hasPrevPage={hasPrevPage} />
 
       <Dialog open={!!editVendor} onOpenChange={open => !open && setEditVendor(null)}>
         <DialogContent>
