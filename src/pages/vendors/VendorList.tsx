@@ -111,6 +111,8 @@ export default function VendorList() {
         ))}
       </div>
 
+      <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} onPageChange={goToPage} hasNextPage={hasNextPage} hasPrevPage={hasPrevPage} />
+
       <Dialog open={!!editVendor} onOpenChange={open => !open && setEditVendor(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Quick Edit Vendor</DialogTitle></DialogHeader>
