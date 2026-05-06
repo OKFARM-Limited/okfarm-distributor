@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useOutlet } from '@/contexts/OutletContext';
+import { useOutletContext } from '@/contexts/OutletContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -24,7 +24,7 @@ type DiffRow = {
 };
 
 export default function StockRecalc() {
-  const { selectedOutletId } = useOutlet() as any;
+  const { selectedOutletId, isAllOutlets } = useOutletContext();
   const [rows, setRows] = useState<DiffRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -33,7 +33,7 @@ export default function StockRecalc() {
   const run = async (apply: boolean) => {
     apply ? setApplying(true) : setLoading(true);
     const { data, error } = await supabase.rpc('recalculate_stock', {
-      p_outlet_id: selectedOutletId || null,
+      p_outlet_id: isAllOutlets ? null : selectedOutletId,
       p_apply: apply,
     });
     apply ? setApplying(false) : setLoading(false);
