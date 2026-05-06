@@ -43,6 +43,7 @@ import DepotManagement from "./pages/depots/DepotManagement";
 import OutletManagement from "./pages/outlets/OutletManagement";
 import RoleManagement from "./pages/admin/RoleManagement";
 import PermissionsMatrix from "./pages/admin/PermissionsMatrix";
+import StockRecalc from "./pages/admin/StockRecalc";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -102,6 +103,7 @@ function AppRoutes() {
         <Route path="products" element={<AdminRoute><ProductManagement /></AdminRoute>} />
         <Route path="roles" element={<AdminOnlyRoute><RoleManagement /></AdminOnlyRoute>} />
         <Route path="permissions" element={<AdminOnlyRoute><PermissionsMatrix /></AdminOnlyRoute>} />
+        <Route path="stock-recalc" element={<AdminOnlyRoute><StockRecalc /></AdminOnlyRoute>} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
