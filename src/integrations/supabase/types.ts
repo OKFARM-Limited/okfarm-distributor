@@ -1567,6 +1567,19 @@ export type Database = {
         Returns: boolean
       }
       notify_overdue_deliveries: { Args: never; Returns: undefined }
+      recalculate_stock: {
+        Args: { p_apply?: boolean; p_outlet_id?: string }
+        Returns: {
+          applied: boolean
+          current_stock: number
+          expected_stock: number
+          outlet_id: string
+          outlet_name: string
+          product_id: string
+          product_name: string
+          variance: number
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "assistant" | "manager" | "viewer"
