@@ -107,6 +107,27 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           asset_code: string
@@ -1567,19 +1588,37 @@ export type Database = {
         Returns: boolean
       }
       notify_overdue_deliveries: { Args: never; Returns: undefined }
-      recalculate_stock: {
-        Args: { p_apply?: boolean; p_outlet_id?: string }
-        Returns: {
-          applied: boolean
-          current_stock: number
-          expected_stock: number
-          outlet_id: string
-          outlet_name: string
-          product_id: string
-          product_name: string
-          variance: number
-        }[]
-      }
+      recalculate_stock:
+        | {
+            Args: { p_apply?: boolean; p_outlet_id?: string }
+            Returns: {
+              applied: boolean
+              current_stock: number
+              expected_stock: number
+              outlet_id: string
+              outlet_name: string
+              product_id: string
+              product_name: string
+              variance: number
+            }[]
+          }
+        | {
+            Args: {
+              p_apply?: boolean
+              p_outlet_id?: string
+              p_threshold?: number
+            }
+            Returns: {
+              applied: boolean
+              current_stock: number
+              expected_stock: number
+              outlet_id: string
+              outlet_name: string
+              product_id: string
+              product_name: string
+              variance: number
+            }[]
+          }
     }
     Enums: {
       app_role: "admin" | "assistant" | "manager" | "viewer"

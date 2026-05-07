@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, RefreshCw, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Loader2, RefreshCw, AlertTriangle, CheckCircle2, Save, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 
 type DiffRow = {
@@ -29,22 +31,53 @@ export default function StockRecalc() {
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [lastRunAt, setLastRunAt] = useState<Date | null>(null);
+  const [threshold, setThreshold] = useState<number>(10);
+  const [savingThreshold, setSavingThreshold] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('app_settings' as any)
+        .select('value')
+        .eq('key', 'stock_recalc_threshold')
+        .maybeSingle();
+      const v = (data as any)?.value;
+      if (v != null) setThreshold(Number(v));
+    })();
+  }, []);
+
+  const saveThreshold = async () => {
+    if (!Number.isFinite(threshold) || threshold < 0) {
+      toast.error('Threshold must be a non-negative number');
+      return;
+    }
+    setSavingThreshold(true);
+    const { error } = await supabase
+      .from('app_settings' as any)
+      .upsert({ key: 'stock_recalc_threshold', value: threshold, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    setSavingThreshold(false);
+    if (error) toast.error(error.message);
+    else toast.success('Threshold saved');
+  };
 
   const run = async (apply: boolean) => {
     apply ? setApplying(true) : setLoading(true);
     const { data, error } = await supabase.rpc('recalculate_stock', {
       p_outlet_id: isAllOutlets ? null : selectedOutletId,
       p_apply: apply,
-    });
+      p_threshold: threshold,
+    } as any);
     apply ? setApplying(false) : setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setRows((data as DiffRow[]) || []);
+    const result = (data as DiffRow[]) || [];
+    setRows(result);
     setLastRunAt(new Date());
-    if (apply) toast.success(`Applied ${data?.length || 0} corrections`);
-    else toast.success(`Found ${data?.length || 0} mismatches`);
+    const flagged = result.filter((r) => Math.abs(r.variance) >= threshold).length;
+    if (apply) toast.success(`Applied ${result.length} corrections`);
+    else toast.success(`Found ${result.length} mismatches${flagged ? ` (${flagged} ≥ threshold, admins notified)` : ''}`);
   };
 
   return (
@@ -87,6 +120,34 @@ export default function StockRecalc() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Bell className="h-4 w-4" /> Variance Alert Threshold
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="threshold">Notify admins when |variance| ≥</Label>
+            <Input
+              id="threshold"
+              type="number"
+              min={0}
+              className="w-32"
+              value={threshold}
+              onChange={(e) => setThreshold(Number(e.target.value))}
+            />
+          </div>
+          <Button onClick={saveThreshold} disabled={savingThreshold} variant="secondary">
+            {savingThreshold ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Each Run Diff that finds mismatches at or above this threshold creates a high-priority notification per affected product.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {rows === null ? 'No diff yet' :
               rows.length === 0
@@ -112,19 +173,25 @@ export default function StockRecalc() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r) => (
-                    <TableRow key={`${r.product_id}-${r.outlet_id}`}>
-                      <TableCell>{r.product_name || r.product_id.slice(0, 8)}</TableCell>
-                      <TableCell>{r.outlet_name || '—'}</TableCell>
-                      <TableCell className="text-right">{r.current_stock}</TableCell>
-                      <TableCell className="text-right">{r.expected_stock}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={r.variance === 0 ? 'secondary' : r.variance > 0 ? 'default' : 'destructive'}>
-                          {r.variance > 0 ? '+' : ''}{r.variance}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {rows.map((r) => {
+                    const flagged = Math.abs(r.variance) >= threshold;
+                    return (
+                      <TableRow key={`${r.product_id}-${r.outlet_id}`}>
+                        <TableCell>
+                          {r.product_name || r.product_id.slice(0, 8)}
+                          {flagged && <Badge variant="destructive" className="ml-2 text-[10px]">alert</Badge>}
+                        </TableCell>
+                        <TableCell>{r.outlet_name || '—'}</TableCell>
+                        <TableCell className="text-right">{r.current_stock}</TableCell>
+                        <TableCell className="text-right">{r.expected_stock}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={r.variance === 0 ? 'secondary' : r.variance > 0 ? 'default' : 'destructive'}>
+                            {r.variance > 0 ? '+' : ''}{r.variance}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
