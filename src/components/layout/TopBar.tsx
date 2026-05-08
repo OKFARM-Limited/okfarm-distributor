@@ -2,7 +2,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { Bell, Moon, Sun, Search, Wifi, WifiOff, LogOut, MapPin } from 'lucide-react';
+import { Bell, Moon, Sun, Search, LogOut, MapPin } from 'lucide-react';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -68,9 +69,7 @@ export function TopBar() {
       )}
 
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-9 w-9" title={isOnline ? 'Online — Synced' : 'Offline'}>
-          {isOnline ? <Wifi className="h-4 w-4 text-success" /> : <WifiOff className="h-4 w-4 text-destructive" />}
-        </Button>
+        <OfflineIndicator />
 
         <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={handleNotification}>
           <Bell className="h-4 w-4" />
