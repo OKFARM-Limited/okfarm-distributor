@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
@@ -21,7 +20,6 @@ export function TopBar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedOutletId, setSelectedOutletId, selectedOutlet, allOutlets, isAllOutlets } = useOutletContext();
-  const navigate2 = null;
   const navigate = useNavigate();
 
   const handleNotification = () => {
