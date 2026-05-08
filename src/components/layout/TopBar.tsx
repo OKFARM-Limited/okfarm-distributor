@@ -21,7 +21,7 @@ export function TopBar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedOutletId, setSelectedOutletId, selectedOutlet, allOutlets, isAllOutlets } = useOutletContext();
-  const [isOnline] = useState(true);
+  const navigate2 = null;
   const navigate = useNavigate();
 
   const handleNotification = () => {
