@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from '@/hooks/use-toast';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
+import { PhotoCapture } from '@/components/PhotoCapture';
 
 interface NewDeliveryDialogProps {
   open: boolean;
@@ -33,6 +34,7 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
   const [creditDays, setCreditDays] = useState(30);
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<LineItem[]>([]);
+  const [proofPhoto, setProofPhoto] = useState<string | null>(null);
 
   const addItem = () => {
     setItems([...items, { product_id: '', quantity: 0, unit_price: 0 }]);
@@ -80,7 +82,8 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
           notes: notes || null,
           outlet_id: selectedOutletId && selectedOutletId !== 'all' ? selectedOutletId : null,
           status: 'pending',
-        },
+          proof_photo_url: proofPhoto,
+        } as any,
         items: validItems,
       });
       toast({ title: '✅ Delivery Created', description: `Invoice ${invoiceNumber} recorded.` });
@@ -185,6 +188,11 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
           {items.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">No items added yet. Click "Add Item" to add delivery line items.</p>
           )}
+        </div>
+
+        <div className="space-y-2 mt-2 border-t pt-3">
+          <Label className="text-base font-semibold">Proof of Delivery Photo</Label>
+          <PhotoCapture folder="deliveries" value={proofPhoto} onChange={setProofPhoto} label="Capture POD photo" />
         </div>
 
         <div className="flex items-center justify-between text-sm border-t pt-3 mt-2">
