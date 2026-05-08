@@ -11,11 +11,13 @@ import { AlertTriangle, MapPin, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { PhotoCapture } from '@/components/PhotoCapture';
 
 export default function Reconciliation() {
   const [vendorId, setVendorId] = useState('');
   const [returns, setReturns] = useState<Record<string, number>>({});
   const [spoilage, setSpoilage] = useState<Record<string, number>>({});
+  const [proofPhoto, setProofPhoto] = useState<string | null>(null);
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { viewerProps } = useViewerGuard();
 
@@ -59,12 +61,13 @@ export default function Reconciliation() {
         total_sold: totalSold,
         cash_collected: cashCollected,
         status: 'completed',
+        proof_photo_url: proofPhoto,
         items,
-      },
+      } as any,
       {
         onSuccess: () => {
           toast({ title: 'Reconciliation Saved', description: `Evening reconciliation for ${vendor?.name} completed.` });
-          setVendorId(''); setReturns({}); setSpoilage({});
+          setVendorId(''); setReturns({}); setSpoilage({}); setProofPhoto(null);
         },
         onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
@@ -117,6 +120,10 @@ export default function Reconciliation() {
                 })}
               </TableBody>
             </Table>
+            <div className="mt-4 pt-3 border-t space-y-2">
+              <p className="text-sm font-medium">Proof of Reconciliation Photo</p>
+              <PhotoCapture folder="reconciliations" value={proofPhoto} onChange={setProofPhoto} label="Capture proof photo" />
+            </div>
             <div className="flex justify-end mt-4">
               <Button onClick={handleReconcile} disabled={createReconciliation.isPending} {...viewerProps}>
                 {createReconciliation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
