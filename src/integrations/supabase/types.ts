@@ -499,6 +499,39 @@ export type Database = {
           },
         ]
       }
+      import_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_type: string
+          errors: Json | null
+          failed_rows: number
+          id: string
+          inserted_rows: number
+          total_rows: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_type: string
+          errors?: Json | null
+          failed_rows?: number
+          id?: string
+          inserted_rows?: number
+          total_rows?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_type?: string
+          errors?: Json | null
+          failed_rows?: number
+          id?: string
+          inserted_rows?: number
+          total_rows?: number
+        }
+        Relationships: []
+      }
       inbound_deliveries: {
         Row: {
           created_at: string
@@ -510,6 +543,7 @@ export type Database = {
           invoice_number: string
           notes: string | null
           outlet_id: string | null
+          proof_photo_url: string | null
           received_by: string | null
           status: string
           supplier: string
@@ -526,6 +560,7 @@ export type Database = {
           invoice_number: string
           notes?: string | null
           outlet_id?: string | null
+          proof_photo_url?: string | null
           received_by?: string | null
           status?: string
           supplier?: string
@@ -542,6 +577,7 @@ export type Database = {
           invoice_number?: string
           notes?: string | null
           outlet_id?: string | null
+          proof_photo_url?: string | null
           received_by?: string | null
           status?: string
           supplier?: string
@@ -591,6 +627,54 @@ export type Database = {
           reward?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          cat_payment: boolean
+          cat_sales: boolean
+          cat_stock: boolean
+          cat_system: boolean
+          channel_email: boolean
+          channel_in_app: boolean
+          channel_push: boolean
+          created_at: string
+          daily_digest: boolean
+          email_address: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cat_payment?: boolean
+          cat_sales?: boolean
+          cat_stock?: boolean
+          cat_system?: boolean
+          channel_email?: boolean
+          channel_in_app?: boolean
+          channel_push?: boolean
+          created_at?: string
+          daily_digest?: boolean
+          email_address?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cat_payment?: boolean
+          cat_sales?: boolean
+          cat_stock?: boolean
+          cat_system?: boolean
+          channel_email?: boolean
+          channel_in_app?: boolean
+          channel_push?: boolean
+          created_at?: string
+          daily_digest?: boolean
+          email_address?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1003,6 +1087,7 @@ export type Database = {
           id: string
           notes: string | null
           outlet_id: string | null
+          proof_photo_url: string | null
           status: string
           total_returned: number
           total_sold: number
@@ -1018,6 +1103,7 @@ export type Database = {
           id?: string
           notes?: string | null
           outlet_id?: string | null
+          proof_photo_url?: string | null
           status?: string
           total_returned?: number
           total_sold?: number
@@ -1033,6 +1119,7 @@ export type Database = {
           id?: string
           notes?: string | null
           outlet_id?: string | null
+          proof_photo_url?: string | null
           status?: string
           total_returned?: number
           total_sold?: number
@@ -1452,6 +1539,7 @@ export type Database = {
       vendors: {
         Row: {
           address: string | null
+          auth_user_id: string | null
           bank_account: string | null
           bank_name: string | null
           biometrics_enabled: boolean | null
@@ -1489,6 +1577,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          auth_user_id?: string | null
           bank_account?: string | null
           bank_name?: string | null
           biometrics_enabled?: boolean | null
@@ -1526,6 +1615,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          auth_user_id?: string | null
           bank_account?: string | null
           bank_name?: string | null
           biometrics_enabled?: boolean | null

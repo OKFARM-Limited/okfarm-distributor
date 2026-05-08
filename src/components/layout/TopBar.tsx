@@ -2,7 +2,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { Bell, Moon, Sun, Search, Wifi, WifiOff, LogOut, MapPin } from 'lucide-react';
+import { Bell, Moon, Sun, Search, LogOut, MapPin } from 'lucide-react';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,7 +13,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
@@ -20,7 +20,6 @@ export function TopBar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { selectedOutletId, setSelectedOutletId, selectedOutlet, allOutlets, isAllOutlets } = useOutletContext();
-  const [isOnline] = useState(true);
   const navigate = useNavigate();
 
   const handleNotification = () => {
@@ -68,9 +67,7 @@ export function TopBar() {
       )}
 
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="h-9 w-9" title={isOnline ? 'Online — Synced' : 'Offline'}>
-          {isOnline ? <Wifi className="h-4 w-4 text-success" /> : <WifiOff className="h-4 w-4 text-destructive" />}
-        </Button>
+        <OfflineIndicator />
 
         <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={handleNotification}>
           <Bell className="h-4 w-4" />

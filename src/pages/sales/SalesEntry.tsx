@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { generatePDFReport } from '@/lib/generatePDF';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 export default function SalesEntry() {
   const [vendorId, setVendorId] = useState('');
@@ -23,33 +24,57 @@ export default function SalesEntry() {
   const { data: products = [], isLoading: pLoading } = useProducts();
   const createSale = useCreateSale();
   const { viewerProps } = useViewerGuard();
+  const { isOnline, queueOrExecute } = useOfflineQueue();
 
   const vendor = vendors.find((v: any) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const items = products.filter(p => quantities[p.id] > 0).map(p => ({
       product_id: p.id,
       quantity: quantities[p.id],
       unit_price: Number(p.unit_price),
     }));
+    const payload = {
+      vendor_id: vendorId,
+      outlet_id: vendor?.outlet_id || null,
+      date: new Date().toISOString().split('T')[0],
+      total_value: totalValue,
+      amount_paid: amountPaid,
+      outstanding: Math.max(0, totalValue - amountPaid),
+      payment_method: paymentMethod,
+      items,
+    };
+
+    if (!isOnline) {
+      const result = await queueOrExecute({ kind: 'sale', payload });
+      toast({
+        title: result === 'queued' ? '📥 Saved offline' : 'Sales Recorded',
+        description: result === 'queued'
+          ? `₦${totalValue.toLocaleString()} queued — will sync when online.`
+          : `₦${totalValue.toLocaleString()} for ${vendor?.name}`,
+      });
+      setVendorId(''); setQuantities({}); setAmountPaid(0);
+      return;
+    }
+
     createSale.mutate(
-      {
-        vendor_id: vendorId,
-        outlet_id: vendor?.outlet_id || null,
-        date: new Date().toISOString().split('T')[0],
-        total_value: totalValue,
-        amount_paid: amountPaid,
-        outstanding: Math.max(0, totalValue - amountPaid),
-        payment_method: paymentMethod,
-        items,
-      },
+      payload,
       {
         onSuccess: () => {
           toast({ title: 'Sales Recorded', description: `₦${totalValue.toLocaleString()} for ${vendor?.name}` });
           setVendorId(''); setQuantities({}); setAmountPaid(0);
         },
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: async (err: any) => {
+          // Network failure → fall back to offline queue
+          const result = await queueOrExecute({ kind: 'sale', payload });
+          if (result === 'queued') {
+            toast({ title: '📥 Saved offline', description: `Will sync when online.` });
+            setVendorId(''); setQuantities({}); setAmountPaid(0);
+          } else {
+            toast({ title: 'Error', description: err.message, variant: 'destructive' });
+          }
+        },
       }
     );
   };

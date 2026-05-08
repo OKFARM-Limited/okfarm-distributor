@@ -2,7 +2,7 @@ import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
   Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
-  Building2, GraduationCap, Gift, Handshake, Store, UserCog, Grid3X3, RefreshCw
+  Building2, GraduationCap, Gift, Handshake, Store, UserCog, Grid3X3, RefreshCw, Upload, User as UserIcon, BellRing
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -21,6 +21,7 @@ const navGroups = [
     items: [
       { titleKey: 'dashboard', url: '/', icon: Home },
       { titleKey: 'notifications', url: '/notifications', icon: Bell },
+      { titleKey: 'My Portal', url: '/my-portal', icon: UserIcon },
     ],
   },
   {
@@ -80,11 +81,13 @@ const navGroups = [
       { titleKey: 'userRoles', url: '/roles', icon: UserCog },
       { titleKey: 'permissions', url: '/permissions', icon: Grid3X3 },
       { titleKey: 'stockRecalc', url: '/stock-recalc', icon: RefreshCw },
+      { titleKey: 'Bulk Import', url: '/bulk-import', icon: Upload },
     ],
   },
   {
     labelKey: 'system',
     items: [
+      { titleKey: 'Notification Preferences', url: '/settings/notifications', icon: BellRing },
       { titleKey: 'settings', url: '/settings', icon: Settings },
     ],
   },

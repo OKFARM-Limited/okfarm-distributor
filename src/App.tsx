@@ -44,6 +44,9 @@ import OutletManagement from "./pages/outlets/OutletManagement";
 import RoleManagement from "./pages/admin/RoleManagement";
 import PermissionsMatrix from "./pages/admin/PermissionsMatrix";
 import StockRecalc from "./pages/admin/StockRecalc";
+import BulkImport from "./pages/admin/BulkImport";
+import VendorPortal from "./pages/vendor/VendorPortal";
+import NotificationPreferences from "./pages/settings/NotificationPreferences";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -104,6 +107,9 @@ function AppRoutes() {
         <Route path="roles" element={<AdminOnlyRoute><RoleManagement /></AdminOnlyRoute>} />
         <Route path="permissions" element={<AdminOnlyRoute><PermissionsMatrix /></AdminOnlyRoute>} />
         <Route path="stock-recalc" element={<AdminOnlyRoute><StockRecalc /></AdminOnlyRoute>} />
+        <Route path="bulk-import" element={<AdminOnlyRoute><BulkImport /></AdminOnlyRoute>} />
+        <Route path="my-portal" element={<VendorPortal />} />
+        <Route path="settings/notifications" element={<NotificationPreferences />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
