@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { VendorAuthLink } from '@/components/VendorAuthLink';
 
 export default function VendorDetail() {
   const { id } = useParams();
@@ -105,6 +106,13 @@ export default function VendorDetail() {
           )}
         </CardContent>
       </Card>
+
+      <VendorAuthLink
+        vendorId={vendor.id}
+        vendorName={vendor.name}
+        authUserId={(vendor as any).auth_user_id ?? null}
+        vendorEmail={vendor.email ?? null}
+      />
 
       {/* Deactivate/Reactivate Confirmation Dialog */}
       <Dialog open={confirmDialog} onOpenChange={setConfirmDialog}>
