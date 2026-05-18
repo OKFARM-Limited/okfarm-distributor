@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { VendorAuthLink } from '@/components/VendorAuthLink';
 
 export default function VendorDetail() {
   const { id } = useParams();
