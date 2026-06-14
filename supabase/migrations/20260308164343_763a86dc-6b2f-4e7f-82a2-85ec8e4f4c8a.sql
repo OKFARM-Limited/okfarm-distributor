@@ -1,2 +1,2 @@
--- Step 1: Add 'manager' to the app_role enum
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'manager';
+-- No-op: 'manager' role is defined in the initial enum (migration 1)
+SELECT 1;

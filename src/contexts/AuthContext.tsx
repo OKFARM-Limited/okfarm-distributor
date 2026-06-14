@@ -17,7 +17,6 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, name: string, role: UserRole) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -93,18 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return !error;
   }, []);
 
-  const signup = useCallback(async (email: string, password: string, name: string, role: UserRole): Promise<boolean> => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { display_name: name } },
-    });
-    if (error || !data.user) return false;
-    
-    // Assign role (use service role via RPC or insert directly since auto-confirm is on)
-    await supabase.from('user_roles').insert({ user_id: data.user.id, role });
-    return true;
-  }, []);
+
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -112,7 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

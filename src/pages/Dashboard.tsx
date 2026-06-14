@@ -47,8 +47,8 @@ export default function Dashboard() {
   const weeklyData = salesTrend.slice(-7);
 
   const paymentBreakdown = [
-    { name: t('cash'), value: todayCash || 65, color: 'hsl(210, 80%, 45%)' },
-    { name: t('outstanding'), value: totalOutstanding || 10, color: 'hsl(38, 92%, 50%)' },
+    { name: t('cash'), value: todayCash, color: 'hsl(210, 80%, 45%)' },
+    { name: t('outstanding'), value: totalOutstanding, color: 'hsl(38, 92%, 50%)' },
   ];
 
   // Top performers

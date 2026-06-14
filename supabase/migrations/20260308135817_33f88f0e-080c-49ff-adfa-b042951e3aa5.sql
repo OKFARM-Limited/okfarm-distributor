@@ -13,7 +13,7 @@ END;
 $$ LANGUAGE plpgsql SET search_path = public;
 
 -- 2. User roles enum and table
-CREATE TYPE public.app_role AS ENUM ('admin', 'assistant');
+CREATE TYPE public.app_role AS ENUM ('admin', 'manager', 'assistant', 'viewer');
 
 CREATE TABLE public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

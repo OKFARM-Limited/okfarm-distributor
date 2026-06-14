@@ -12,7 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-import { UserPlus, Camera, ArrowLeft } from 'lucide-react';
+import { UserPlus, Camera, ArrowLeft, Loader2 } from 'lucide-react';
+import { processAndUploadImage } from '@/lib/imageUtils';
+import { supabase } from '@/integrations/supabase/client';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 
@@ -27,6 +29,7 @@ export default function VendorOnboarding() {
   const upsertVendor = useUpsertVendor();
   const { viewerProps } = useViewerGuard();
   const [photoPreview, setPhotoPreview] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [form, setForm] = useState({
     name: '', phone: '', email: '', date_of_birth: '', gender: 'male',
     national_id: '', address: '', territory: 'Ikeja', outlet_id: allOutlets[0]?.id || '',
@@ -43,6 +46,7 @@ export default function VendorOnboarding() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
@@ -51,12 +55,25 @@ export default function VendorOnboarding() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.national_id) {
-      toast({ title: 'Validation Error', description: 'Name, Phone, and National ID are required.', variant: 'destructive' });
+    if (!form.name || !form.phone) {
+      toast({ title: 'Validation Error', description: 'Name and Phone are required.', variant: 'destructive' });
       return;
     }
     try {
-      const vendor_code = `VND-${Date.now().toString().slice(-6)}`;
+      // Generate sequential vendor code via server-side RPC
+      const { data: vendor_code, error: codeErr } = await supabase.rpc('generate_vendor_code');
+      if (codeErr || !vendor_code) throw new Error(codeErr?.message || 'Failed to generate vendor code');
+
+      // Convert photo to WebP and upload to Supabase Storage
+      let photo_url = `https://api.dicebear.com/7.x/avataaars/svg?seed=${form.name.replace(' ', '')}`;
+      if (photoFile) {
+        try {
+          photo_url = await processAndUploadImage(photoFile, 'vendor-photos', vendor_code);
+        } catch (uploadErr: any) {
+          console.warn('Photo upload failed, using fallback avatar:', uploadErr.message);
+        }
+      }
+
       await upsertVendor.mutateAsync({
         vendor_code,
         name: form.name,
@@ -67,7 +84,7 @@ export default function VendorOnboarding() {
         biometrics_enabled: form.biometrics_enabled,
         date_of_birth: form.date_of_birth || null,
         gender: form.gender as 'male' | 'female' | 'other',
-        national_id: form.national_id,
+        national_id: form.national_id || null,
         address: form.address || null,
         next_of_kin: form.next_of_kin || null,
         next_of_kin_phone: form.next_of_kin_phone || null,
@@ -82,7 +99,7 @@ export default function VendorOnboarding() {
         uniform_size: form.uniform_size || null,
         health_status: form.health_status || null,
         notes: form.notes || null,
-        photo_url: photoPreview || `https://api.dicebear.com/7.x/avataaars/svg?seed=${form.name.replace(' ', '')}`,
+        photo_url,
       });
       toast({ title: '✅ Vendor Registered', description: `${form.name} has been successfully onboarded.` });
       navigate('/vendors');
@@ -158,7 +175,7 @@ export default function VendorOnboarding() {
               <CardHeader><CardTitle className="text-base">Identity & Emergency Contact</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>National ID (NIN) *</Label><Input value={form.national_id} onChange={e => update('national_id', e.target.value)} placeholder="NIN-XXXXXXXXXXX" required /></div>
+                  <div className="space-y-2"><Label>National ID (NIN/BVN)</Label><Input value={form.national_id} onChange={e => update('national_id', e.target.value)} placeholder="NIN-XXXXXXXXXXX (optional)" /></div>
                   <div className="space-y-2">
                     <Label>Biometrics</Label>
                     <div className="flex items-center gap-2 pt-2"><Switch checked={form.biometrics_enabled} onCheckedChange={v => update('biometrics_enabled', v)} /><span className="text-sm text-muted-foreground">{form.biometrics_enabled ? 'Enabled' : 'Disabled'}</span></div>
