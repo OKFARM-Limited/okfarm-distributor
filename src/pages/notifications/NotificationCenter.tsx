@@ -56,7 +56,7 @@ export default function NotificationCenter() {
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
-  const renderNotif = (n: any) => {
+  const renderNotif = (n) => {
     const Icon = typeIcons[n.type] || Bell;
     return (
       <div key={n.id} className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${n.read ? 'bg-background' : 'bg-primary/5 border-primary/20'}`}>

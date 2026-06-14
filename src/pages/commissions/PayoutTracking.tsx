@@ -16,7 +16,7 @@ export default function PayoutTracking() {
   const { viewerProps } = useViewerGuard();
   const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(commissions as any[], 20);
 
-  const handleDisburse = (commission: any) => {
+  const handleDisburse = (commission: Record<string, unknown>) => {
     createPayout.mutate(
       {
         commission_id: commission.id,
@@ -29,7 +29,7 @@ export default function PayoutTracking() {
       },
       {
         onSuccess: () => toast({ title: 'Payout Disbursed', description: `₦${Number(commission.total_commission).toLocaleString()} sent to ${commission.vendors?.name}` }),
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
@@ -54,7 +54,7 @@ export default function PayoutTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedItems.map((c: any) => (
+              {paginatedItems.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.vendors?.name}</TableCell>
                   <TableCell>{c.month}</TableCell>

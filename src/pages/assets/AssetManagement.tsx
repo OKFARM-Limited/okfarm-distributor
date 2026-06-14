@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const iconMap: Record<string, any> = { push_cart: Package, bicycle: Bike, tricycle: Truck };
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = { push_cart: Package, bicycle: Bike, tricycle: Truck };
 
 export default function AssetManagement() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
@@ -23,7 +23,7 @@ export default function AssetManagement() {
   const { data: vendors = [] } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const updateAsset = useUpdateAsset();
   const { viewerProps } = useViewerGuard();
-  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [selectedAsset, setSelectedAsset] = useState<typeof assets[number] | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleType, setScheduleType] = useState<'routine' | 'repair' | 'inspection'>('routine');
@@ -37,14 +37,14 @@ export default function AssetManagement() {
         status: vendorId === 'unassign' ? 'available' : 'assigned',
       });
       toast({ title: vendorId === 'unassign' ? 'Asset unassigned' : 'Asset assigned' });
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Error', description: (err as Error).message, variant: 'destructive' });
     }
   };
 
   const handleScheduleMaintenance = async (assetId: string) => {
     if (!scheduleDate) return;
-    const asset = assets.find((a: any) => a.id === assetId);
+    const asset = assets.find((a) => a.id === assetId);
     const history = Array.isArray(asset?.maintenance_history) ? asset.maintenance_history : [];
     const newRecord = {
       id: `MNT-${Date.now()}`,
@@ -61,22 +61,22 @@ export default function AssetManagement() {
       });
       toast({ title: 'Maintenance Scheduled' });
       setScheduleOpen(false); setScheduleDate(''); setScheduleDesc('');
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Error', description: (err as Error).message, variant: 'destructive' });
     }
   };
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const upcomingMaintenance = assets
-    .filter((a: any) => a.next_maintenance_date && new Date(a.next_maintenance_date) <= new Date(Date.now() + 7 * 86400000))
-    .sort((a: any, b: any) => new Date(a.next_maintenance_date).getTime() - new Date(b.next_maintenance_date).getTime());
+    .filter((a) => a.next_maintenance_date && new Date(a.next_maintenance_date) <= new Date(Date.now() + 7 * 86400000))
+    .sort((a, b) => new Date(a.next_maintenance_date!).getTime() - new Date(b.next_maintenance_date!).getTime());
 
   const stats = {
     total: assets.length,
-    available: assets.filter((a: any) => a.status === 'available').length,
-    assigned: assets.filter((a: any) => a.status === 'assigned').length,
-    maintenance: assets.filter((a: any) => a.status === 'maintenance').length,
+    available: assets.filter((a) => a.status === 'available').length,
+    assigned: assets.filter((a) => a.status === 'assigned').length,
+    maintenance: assets.filter((a) => a.status === 'maintenance').length,
   };
 
   return (
@@ -103,7 +103,7 @@ export default function AssetManagement() {
           <CalendarClock className="h-5 w-5 text-warning shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-sm">Upcoming Maintenance (next 7 days)</p>
-            <p className="text-xs text-muted-foreground mt-1">{upcomingMaintenance.map((a: any) => `${a.name} (${a.next_maintenance_date})`).join(' • ')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{upcomingMaintenance.map((a) => `${a.name} (${a.next_maintenance_date})`).join(' • ')}</p>
           </div>
         </div>
       )}
@@ -126,7 +126,7 @@ export default function AssetManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets.map((a: any) => {
+              {assets.map((a) => {
                 const Icon = iconMap[a.type] || Package;
                 const isOverdue = a.next_maintenance_date && new Date(a.next_maintenance_date) <= new Date();
                 return (
@@ -149,7 +149,7 @@ export default function AssetManagement() {
                           <SelectTrigger className="w-28 h-8 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="unassign">Unassign</SelectItem>
-                            {vendors.filter((v: any) => v.status === 'active').map((v: any) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                            {vendors.filter((v) => v.status === 'active').map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <Dialog open={scheduleOpen && selectedAsset?.id === a.id} onOpenChange={open => { setScheduleOpen(open); if (open) setSelectedAsset(a); }}>

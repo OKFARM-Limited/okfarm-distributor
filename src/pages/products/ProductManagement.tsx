@@ -38,7 +38,7 @@ export default function ProductManagement() {
   const deleteProduct = useDeleteProduct();
 
   const openNew = () => { setForm(emptyForm); setDialogOpen(true); };
-  const openEdit = (p: any) => {
+  const openEdit = (p) => {
     setForm({ id: p.id, name: p.name, sku: p.sku, category: p.category, unit: p.unit, unit_price: Number(p.unit_price), barcode: p.barcode || '' });
     setDialogOpen(true);
   };
@@ -48,11 +48,11 @@ export default function ProductManagement() {
       toast({ title: 'Error', description: 'Name and SKU are required', variant: 'destructive' });
       return;
     }
-    const payload: any = { name: form.name, sku: form.sku, category: form.category, unit: form.unit, unit_price: form.unit_price, barcode: form.barcode || null };
+    const payload: Record<string, unknown> = { name: form.name, sku: form.sku, category: form.category, unit: form.unit, unit_price: form.unit_price, barcode: form.barcode || null };
     if (form.id) payload.id = form.id;
     upsertProduct.mutate(payload, {
       onSuccess: () => { toast({ title: '✅ Saved', description: `${form.name} saved.` }); setDialogOpen(false); },
-      onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
     });
   };
 
@@ -60,7 +60,7 @@ export default function ProductManagement() {
     if (!deleteId) return;
     deleteProduct.mutate(deleteId, {
       onSuccess: () => { toast({ title: '🗑️ Deleted', description: 'Product removed.' }); setDeleteId(null); },
-      onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
     });
   };
 

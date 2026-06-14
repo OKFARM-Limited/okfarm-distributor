@@ -83,7 +83,7 @@ export default function DuesStatement() {
                   <TableRow><TableHead>Date</TableHead><TableHead>Total Value</TableHead><TableHead>Paid</TableHead><TableHead>Outstanding</TableHead><TableHead>Method</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vendorSales.map((s: any) => (
+                  {vendorSales.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell>{s.date}</TableCell>
                       <TableCell>₦{Number(s.total_value).toLocaleString()}</TableCell>

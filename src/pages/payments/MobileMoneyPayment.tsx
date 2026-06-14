@@ -66,7 +66,7 @@ export default function MobileMoneyPayment() {
           setStep('success');
           toast({ title: '✅ Payment Successful', description: `₦${Number(amount).toLocaleString()} collected via ${selectedProvider?.name}` });
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
           setStep('confirm');
           toast({ title: 'Error', description: err.message, variant: 'destructive' });
         },

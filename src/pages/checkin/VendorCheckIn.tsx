@@ -20,34 +20,34 @@ export default function VendorCheckIn() {
   const updateCheckIn = useUpdateCheckIn();
   const { viewerProps } = useViewerGuard();
 
-  const activeVendors = allVendors.filter((v: any) => v.status === 'active');
-  const checkedInIds = todayCheckIns.map((r: any) => r.vendor_id);
-  const checkedOutIds = todayCheckIns.filter((r: any) => r.check_out_time).map((r: any) => r.vendor_id);
+  const activeVendors = allVendors.filter((v) => v.status === 'active');
+  const checkedInIds = todayCheckIns.map((r) => r.vendor_id);
+  const checkedOutIds = todayCheckIns.filter((r) => r.check_out_time).map((r) => r.vendor_id);
 
-  const filtered = activeVendors.filter((v: any) =>
+  const filtered = activeVendors.filter((v) =>
     v.name.toLowerCase().includes(search.toLowerCase()) || v.vendor_code.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleCheckIn = (vendorId: string) => {
-    const vendor = allVendors.find((v: any) => v.id === vendorId);
+    const vendor = allVendors.find((v) => v.id === vendorId);
     createCheckIn.mutate(
       { vendor_id: vendorId, outlet_id: vendor?.outlet_id || null, date: today, check_in_time: new Date().toISOString() },
       {
         onSuccess: () => toast({ title: '✅ Checked In', description: `${vendor?.name} checked in` }),
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
 
   const handleCheckOut = (vendorId: string) => {
-    const record = todayCheckIns.find((r: any) => r.vendor_id === vendorId && !r.check_out_time);
+    const record = todayCheckIns.find((r) => r.vendor_id === vendorId && !r.check_out_time);
     if (!record) return;
-    const vendor = allVendors.find((v: any) => v.id === vendorId);
+    const vendor = allVendors.find((v) => v.id === vendorId);
     updateCheckIn.mutate(
       { id: record.id, check_out_time: new Date().toISOString() },
       {
         onSuccess: () => toast({ title: '👋 Checked Out', description: `${vendor?.name} checked out` }),
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
@@ -84,8 +84,8 @@ export default function VendorCheckIn() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((v: any) => {
-                const record = todayCheckIns.find((r: any) => r.vendor_id === v.id);
+              {filtered.map((v) => {
+                const record = todayCheckIns.find((r) => r.vendor_id === v.id);
                 const isIn = checkedInIds.includes(v.id);
                 const isOut = checkedOutIds.includes(v.id);
                 const inTime = record?.check_in_time ? new Date(record.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';

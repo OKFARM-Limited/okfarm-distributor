@@ -19,8 +19,38 @@ import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { useAppSetting } from '@/hooks/useAppSetting';
 
-const DEFAULT_TERRITORIES = ['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
-const DEFAULT_BANKS = ['GTBank', 'First Bank', 'UBA', 'Access Bank', 'Zenith Bank', 'Stanbic IBTC', 'Fidelity', 'Wema'];
+const DEFAULT_TERRITORIES = [
+  // Lagos LGAs
+  'Agege', 'Ajeromi-Ifelodun', 'Alimosho', 'Amuwo-Odofin', 'Apapa',
+  'Badagry', 'Epe', 'Eti-Osa', 'Ibeju-Lekki', 'Ifako-Ijaiye',
+  'Ikeja', 'Ikorodu', 'Kosofe', 'Lagos Island', 'Lagos Mainland',
+  'Mushin', 'Ojo', 'Oshodi-Isolo', 'Shomolu', 'Surulere',
+  // Nigerian States + FCT
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi',
+  'Bayelsa', 'Benue', 'Borno', 'Cross River', 'Delta',
+  'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT-Abuja',
+  'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano',
+  'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Nasarawa',
+  'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo',
+  'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara',
+];
+const DEFAULT_BANKS = [
+  // Commercial Banks
+  'Access Bank', 'Citibank Nigeria', 'Ecobank Nigeria', 'Fidelity Bank',
+  'First Bank of Nigeria', 'First City Monument Bank (FCMB)', 'Globus Bank',
+  'Guaranty Trust Bank (GTBank)', 'Heritage Bank', 'Jaiz Bank',
+  'Keystone Bank', 'Lotus Bank', 'Optimus Bank', 'Parallex Bank',
+  'Polaris Bank', 'Premium Trust Bank', 'Providus Bank',
+  'Stanbic IBTC Bank', 'Standard Chartered Bank', 'Sterling Bank',
+  'SunTrust Bank', 'TAJBank', 'Titan Trust Bank', 'Union Bank',
+  'United Bank for Africa (UBA)', 'Unity Bank', 'VFD Microfinance Bank',
+  'Wema Bank', 'Zenith Bank',
+  // Mobile Money & Fintech
+  'OPay', 'PalmPay', 'Moniepoint', 'Kuda Bank', 'Carbon',
+  'FairMoney', 'Paga', 'MTN MoMo PSB', '9PSB (9 Payment Service Bank)',
+  'HOPE PSB', 'Sparkle', 'Rubies Bank', 'Eyowo',
+  'Paystack Titan', 'Flutterwave', 'TeamApt (Moniepoint)',
+];
 const eduLevels = ['None', 'Primary', 'Secondary', 'OND', 'HND', 'BSc', 'MSc'];
 const uniformSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -44,7 +74,7 @@ export default function VendorOnboarding() {
     health_status: 'Fit', biometrics_enabled: false, notes: '',
   });
 
-  const update = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
+  const update = (key: string, value: string | boolean | null) => setForm(f => ({ ...f, [key]: value }));
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,7 +102,7 @@ export default function VendorOnboarding() {
       if (photoFile) {
         try {
           photo_url = await processAndUploadImage(photoFile, 'vendor-photos', vendor_code);
-        } catch (uploadErr: any) {
+        } catch (uploadErr: unknown) {
           console.warn('Photo upload failed, using fallback avatar:', uploadErr.message);
         }
       }
@@ -106,7 +136,7 @@ export default function VendorOnboarding() {
       });
       toast({ title: '✅ Vendor Registered', description: `${form.name} has been successfully onboarded.` });
       navigate('/vendors');
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
   };

@@ -114,8 +114,8 @@ export default function FanAcademy() {
                 </TableHeader>
                 <TableBody>
                   {vendorTraining.map(({ vendor, progress: vp, completionRate }) => {
-                    const completed = vp.filter((p: any) => p.status === 'completed').length;
-                    const inProgress = vp.filter((p: any) => p.status === 'in_progress').length;
+                    const completed = vp.filter((p) => p.status === 'completed').length;
+                    const inProgress = vp.filter((p) => p.status === 'in_progress').length;
                     return (
                       <TableRow key={vendor.id}>
                         <TableCell className="font-medium">{vendor.name}</TableCell>

@@ -83,6 +83,25 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ].filter(Boolean),
+  build: {
+    chunkSizeWarningLimit: 650,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-charts': ['recharts'],
+          'vendor-maps': ['leaflet', 'react-leaflet'],
+          'vendor-pdf': ['jspdf', 'jspdf-autotable', 'html2canvas'],
+          'vendor-ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-popover',
+          ],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

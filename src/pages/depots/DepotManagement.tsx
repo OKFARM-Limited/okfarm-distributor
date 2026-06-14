@@ -40,14 +40,14 @@ export default function DepotManagement() {
       setDialogOpen(false);
       setNewDepot({ name: '', address: '', territory: '', manager: '', phone: '', fridge_capacity: '', outlet_id: '', depot_code: '' });
       toast({ title: 'Depot Added', description: `${newDepot.name} has been registered.` });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
   };
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
-  const active = depots.find((d: any) => d.id === activeDepot) || depots[0];
+  const active = depots.find((d) => d.id === activeDepot) || depots[0];
 
   return (
     <div className="space-y-6">
@@ -62,7 +62,7 @@ export default function DepotManagement() {
             <Select value={activeDepot || depots[0]?.id} onValueChange={setActiveDepot}>
               <SelectTrigger className="w-[200px]"><SelectValue placeholder="Active Depot" /></SelectTrigger>
               <SelectContent>
-                {depots.filter((d: any) => d.status === 'active').map((d: any) => (
+                {depots.filter((d) => d.status === 'active').map((d) => (
                   <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -97,10 +97,10 @@ export default function DepotManagement() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Building2 className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Active Depots</p><p className="text-xl font-bold">{depots.filter((d: any) => d.status === 'active').length}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-4 flex items-center gap-3"><Building2 className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Active Depots</p><p className="text-xl font-bold">{depots.filter((d) => d.status === 'active').length}</p></div></CardContent></Card>
         <Card><CardContent className="pt-4 flex items-center gap-3"><Users className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Total Vendors</p><p className="text-xl font-bold">{totalVendors}</p></div></CardContent></Card>
         <Card><CardContent className="pt-4 flex items-center gap-3"><Package className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Total Assets</p><p className="text-xl font-bold">{totalAssets}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><MapPin className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Territories</p><p className="text-xl font-bold">{new Set(depots.map((d: any) => d.territory).filter(Boolean)).size}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-4 flex items-center gap-3"><MapPin className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Territories</p><p className="text-xl font-bold">{new Set(depots.map((d) => d.territory).filter(Boolean)).size}</p></div></CardContent></Card>
       </div>
 
       {active && (
@@ -133,7 +133,7 @@ export default function DepotManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {depots.map((d: any) => (
+              {depots.map((d) => (
                 <TableRow key={d.id} className={d.id === (activeDepot || depots[0]?.id) ? 'bg-primary/5' : ''}>
                   <TableCell>
                     <div><span className="font-medium text-foreground">{d.name}</span><p className="text-xs text-muted-foreground">{d.address}</p></div>

@@ -28,7 +28,7 @@ export default function VendorDetail() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!vendor) return <div className="p-8 text-center text-muted-foreground">Vendor not found</div>;
 
-  const vendorAssets = allAssets.filter((a: any) => a.assigned_to === vendor.id);
+  const vendorAssets = allAssets.filter((a) => a.assigned_to === vendor.id);
   const isActive = vendor.status === 'active';
 
   const handleToggleStatus = () => {
@@ -40,7 +40,7 @@ export default function VendorDetail() {
           toast({ title: isActive ? '🚫 Vendor Deactivated' : '✅ Vendor Reactivated', description: `${vendor.name} is now ${newStatus}.` });
           setConfirmDialog(false);
         },
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
@@ -97,7 +97,7 @@ export default function VendorDetail() {
         <CardContent>
           {vendorAssets.length === 0 ? <p className="text-sm text-muted-foreground">No assets assigned</p> : (
             <div className="flex flex-wrap gap-2">
-              {vendorAssets.map((a: any) => (
+              {vendorAssets.map((a) => (
                 <Badge key={a.id} variant="outline" className="px-3 py-1.5">
                   {a.name} ({a.type.replace('_', ' ')}) — {a.condition}
                 </Badge>

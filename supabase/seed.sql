@@ -331,3 +331,14 @@ INSERT INTO public.forecasts (product_id, outlet_id, avg_daily_sales, current_st
   ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', 30, 180, 6, 150, 30000),
   ('b0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000003', 55, 350, 6, 200, 20000),
   ('b0000000-0000-0000-0000-000000000007', 'a0000000-0000-0000-0000-000000000003', 12, 60, 5, 80, 24000);
+
+-- =============================================
+-- 22. APP SETTINGS
+-- =============================================
+INSERT INTO public.app_settings (key, value) VALUES
+  ('territories', '["Agege","Ajeromi-Ifelodun","Alimosho","Amuwo-Odofin","Apapa","Badagry","Epe","Eti-Osa","Ibeju-Lekki","Ifako-Ijaiye","Ikeja","Ikorodu","Kosofe","Lagos Island","Lagos Mainland","Mushin","Ojo","Oshodi-Isolo","Shomolu","Surulere","Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT-Abuja","Gombe","Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"]'),
+  ('banks', '["Access Bank","Citibank Nigeria","Ecobank Nigeria","Fidelity Bank","First Bank of Nigeria","First City Monument Bank (FCMB)","Globus Bank","Guaranty Trust Bank (GTBank)","Heritage Bank","Jaiz Bank","Keystone Bank","Lotus Bank","Optimus Bank","Parallex Bank","Polaris Bank","Premium Trust Bank","Providus Bank","Stanbic IBTC Bank","Standard Chartered Bank","Sterling Bank","SunTrust Bank","TAJBank","Titan Trust Bank","Union Bank","United Bank for Africa (UBA)","Unity Bank","VFD Microfinance Bank","Wema Bank","Zenith Bank","OPay","PalmPay","Moniepoint","Kuda Bank","Carbon","FairMoney","Paga","MTN MoMo PSB","9PSB (9 Payment Service Bank)","HOPE PSB","Sparkle","Rubies Bank","Eyowo","Paystack Titan","Flutterwave","TeamApt (Moniepoint)"]'),
+  ('commission_rate', '"0.01"'),
+  ('currency', '"NGN"'),
+  ('currency_symbol', '"₦"')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

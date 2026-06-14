@@ -41,7 +41,7 @@ export default function InventoryInbound() {
       { id, status: 'received', received_by: 'Depot Manager' },
       {
         onSuccess: () => toast({ title: '✅ Delivery Received', description: 'Delivery marked as received.' }),
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
@@ -94,7 +94,7 @@ export default function InventoryInbound() {
       if (delivery) {
         runVerification(urlData.publicUrl, delivery);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
     } finally {
       setUploading(null);
@@ -103,7 +103,7 @@ export default function InventoryInbound() {
     }
   };
 
-  const runVerification = async (invoiceUrl: string, delivery: any) => {
+  const runVerification = async (invoiceUrl: string, delivery: Record<string, unknown>) => {
     setVerificationResult(null);
     setVerificationError(null);
     setVerificationLoading(true);
@@ -114,7 +114,7 @@ export default function InventoryInbound() {
         invoice_number: delivery.invoice_number,
         supplier: delivery.supplier,
         total_value: Number(delivery.total_value),
-        items: (delivery.delivery_items || []).map((i: any) => ({
+        items: (delivery.delivery_items || []).map((i) => ({
           product_name: i.products?.name || 'Unknown',
           quantity: i.quantity,
           unit_price: Number(i.unit_price),
@@ -129,7 +129,7 @@ export default function InventoryInbound() {
       if (data?.error) throw new Error(data.error);
 
       setVerificationResult(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setVerificationError(err.message || 'Verification failed');
     } finally {
       setVerificationLoading(false);
@@ -174,7 +174,7 @@ export default function InventoryInbound() {
             <CardHeader><CardTitle className="text-base">Net Stock Position</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {(stockLevels as any[]).length === 0 && <p className="text-center text-muted-foreground py-8">No stock data yet. Stock levels will appear here once populated.</p>}
-              {(stockLevels as any[]).map((s: any) => {
+              {(stockLevels as any[]).map((s) => {
                 const pct = Math.min((s.current_stock / s.max_stock) * 100, 100);
                 const isLow = s.current_stock <= s.min_stock;
                 return (
@@ -278,7 +278,7 @@ export default function InventoryInbound() {
               <Table>
                 <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
                 <TableBody>
-                  {(viewDelivery.delivery_items || []).map((i: any) => (
+                  {(viewDelivery.delivery_items || []).map((i) => (
                     <TableRow key={i.id}>
                       <TableCell>{i.products?.name}</TableCell>
                       <TableCell>{i.quantity}</TableCell>

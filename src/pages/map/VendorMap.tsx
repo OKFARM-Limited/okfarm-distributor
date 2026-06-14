@@ -55,7 +55,7 @@ export default function VendorMap() {
           const route = loc.route_data;
           if (Array.isArray(route) && route.length > 1) {
             const polyline = L.polyline(
-              route.map((p: any) => [p.lat, p.lng] as [number, number]),
+              route.map((p) => [p.lat, p.lng] as [number, number]),
               { color: colors[i % colors.length], weight: 3, opacity: 0.7, dashArray: animating ? '10, 10' : undefined }
             ).addTo(mapInstance.current);
             routeLayers.current.push(polyline);
@@ -98,7 +98,7 @@ export default function VendorMap() {
         <p className="text-sm text-muted-foreground text-center">No vendor GPS coordinates found. Update vendor records with latitude/longitude to see them on the map.</p>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {(vendorLocations as any[]).slice(0, 10).map((l: any) => (
+          {(vendorLocations as any[]).slice(0, 10).map((l) => (
             <Badge key={l.id} variant="outline">{l.name} — {l.territory || 'N/A'}</Badge>
           ))}
         </div>

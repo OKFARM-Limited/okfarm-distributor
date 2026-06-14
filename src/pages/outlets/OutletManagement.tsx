@@ -36,7 +36,7 @@ export default function OutletManagement() {
       }
       setDialogOpen(false); setEditOutlet(null);
       setForm({ name: '', short_code: '', address: '', manager: '', phone: '', description: '' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
   };
@@ -91,8 +91,8 @@ export default function OutletManagement() {
             </TableHeader>
             <TableBody>
               {outlets.map(o => {
-                const vendorCount = allVendors.filter((v: any) => v.outlet_id === o.id).length;
-                const assetCount = allAssets.filter((a: any) => a.outlet_id === o.id).length;
+                const vendorCount = allVendors.filter((v) => v.outlet_id === o.id).length;
+                const assetCount = allAssets.filter((a) => a.outlet_id === o.id).length;
                 return (
                   <TableRow key={o.id}>
                     <TableCell className="font-medium">{o.name}</TableCell>

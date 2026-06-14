@@ -18,20 +18,23 @@ import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/PaginationControls';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { useAppSetting } from '@/hooks/useAppSetting';
 
-const territories = ['All', 'Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
+const DEFAULT_TERRITORIES = ['Ikeja', 'Lekki', 'Surulere', 'Alimosho', 'Ikorodu'];
 
 export default function VendorList() {
   const [search, setSearch] = useState('');
   const [territory, setTerritory] = useState('All');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [editVendor, setEditVendor] = useState<any>(null);
+  const [editVendor, setEditVendor] = useState<typeof vendors[number] | null>(null);
   const navigate = useNavigate();
   const { viewerProps } = useViewerGuard();
+  const { data: settingsTerritories = DEFAULT_TERRITORIES } = useAppSetting<string[]>('territories', DEFAULT_TERRITORIES);
+  const territories = ['All', ...settingsTerritories];
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: vendors = [], isLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
 
-  const filtered = vendors.filter((v: any) => {
+  const filtered = vendors.filter((v) => {
     const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.vendor_code.toLowerCase().includes(search.toLowerCase());
     const matchTerritory = territory === 'All' || v.territory === territory;
     const matchStatus = statusFilter === 'all' || v.status === statusFilter;
@@ -76,7 +79,7 @@ export default function VendorList() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {paginatedItems.map((v: any) => (
+        {paginatedItems.map((v) => (
           <Card key={v.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/vendors/${v.id}`)}>
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
@@ -123,9 +126,10 @@ export default function VendorList() {
   );
 }
 
-function QuickEditForm({ vendor, onDone }: { vendor: any; onDone: () => void }) {
+function QuickEditForm({ vendor, onDone }: { vendor: Record<string, unknown>; onDone: () => void }) {
   const { allOutlets } = useOutletContext();
   const upsertVendor = useUpsertVendor();
+  const { data: editTerritories = DEFAULT_TERRITORIES } = useAppSetting<string[]>('territories', DEFAULT_TERRITORIES);
   const [name, setName] = useState(vendor.name);
   const [phone, setPhone] = useState(vendor.phone || '');
   const [terr, setTerr] = useState(vendor.territory || '');
@@ -138,8 +142,8 @@ function QuickEditForm({ vendor, onDone }: { vendor: any; onDone: () => void }) 
       await upsertVendor.mutateAsync({ id: vendor.id, name, phone, territory: terr, outlet_id: outletId, biometrics_enabled: bio });
       toast({ title: 'Vendor saved', description: 'Vendor has been updated.' });
       onDone();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Error', description: (err as Error).message, variant: 'destructive' });
     }
   };
 
@@ -151,7 +155,7 @@ function QuickEditForm({ vendor, onDone }: { vendor: any; onDone: () => void }) 
         <Label>Territory</Label>
         <Select value={terr} onValueChange={setTerr}>
           <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          <SelectContent>{editTerritories.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
         </Select>
       </div>
       <div className="space-y-2">

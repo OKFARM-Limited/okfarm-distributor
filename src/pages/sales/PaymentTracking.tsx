@@ -52,7 +52,7 @@ export default function PaymentTracking() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedItems.map((s: any) => (
+              {paginatedItems.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell>{s.date}</TableCell>
                   <TableCell className="font-medium">{s.vendors?.name}</TableCell>

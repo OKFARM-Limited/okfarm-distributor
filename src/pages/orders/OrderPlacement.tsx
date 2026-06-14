@@ -46,14 +46,14 @@ export default function OrderPlacement() {
       notes, items,
     }, {
       onSuccess: () => { toast({ title: '✅ Order Placed', description: `Total: ₦${totalValue.toLocaleString()}` }); setQuantities({}); setNotes(''); },
-      onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
     });
   };
 
   const handleStatusUpdate = (orderId: string, newStatus: string) => {
     updateOrder.mutate({ id: orderId, status: newStatus }, {
       onSuccess: () => toast({ title: '✅ Updated', description: `Order status changed to ${newStatus}` }),
-      onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
     });
   };
 

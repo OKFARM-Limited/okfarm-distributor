@@ -61,7 +61,7 @@ export default function MonthlySettlement() {
       lines,
     } as any, {
       onSuccess: () => { toast({ title: '✅ Created', description: 'Settlement created.' }); setDialogOpen(false); },
-      onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
     });
   };
 
@@ -75,7 +75,7 @@ export default function MonthlySettlement() {
   const discount = Number(latest?.discount || 0);
   const discountRate = Number(latest?.discount_rate || 0);
   const netPayable = Number(latest?.net_payable || 0);
-  const overdueCount = lines.filter((l: any) => l.status === 'overdue').length;
+  const overdueCount = lines.filter((l) => l.status === 'overdue').length;
 
   const statusIcon: Record<string, React.ReactNode> = { paid: <CheckCircle className="h-4 w-4 text-green-500" />, due: <Clock className="h-4 w-4 text-yellow-500" />, overdue: <AlertTriangle className="h-4 w-4 text-red-500" />, partial: <Clock className="h-4 w-4 text-orange-500" /> };
   const statusVariant: Record<string, 'default' | 'secondary' | 'destructive'> = { paid: 'default', due: 'secondary', overdue: 'destructive', partial: 'secondary' };
@@ -105,7 +105,7 @@ export default function MonthlySettlement() {
                 { header: 'Balance', key: 'balance', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
                 { header: 'Status', key: 'status' },
               ],
-              data: lines.map((l: any) => ({ ...l, balance: Number(l.amount) - Number(l.amount_paid) })),
+              data: lines.map((l) => ({ ...l, balance: Number(l.amount) - Number(l.amount_paid) })),
               summaryRows: [
                 { label: 'Total Receivable', value: `₦${totalReceivable.toLocaleString()}` },
                 { label: 'Total Paid', value: `₦${totalPaid.toLocaleString()}` },
@@ -147,7 +147,7 @@ export default function MonthlySettlement() {
                   <TableRow><TableHead>Invoice</TableHead><TableHead>Date</TableHead><TableHead>Amount</TableHead><TableHead>Credit</TableHead><TableHead>Due</TableHead><TableHead>Paid</TableHead><TableHead>Balance</TableHead><TableHead>Status</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {lines.map((l: any) => (
+                  {lines.map((l) => (
                     <TableRow key={l.id}>
                       <TableCell className="font-mono text-xs">{l.invoice_number}</TableCell>
                       <TableCell className="text-sm">{l.date}</TableCell>

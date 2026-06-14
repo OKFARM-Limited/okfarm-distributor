@@ -49,7 +49,7 @@ export default function BarcodeScanner() {
         () => {} // ignore errors during scanning
       );
       setCameraActive(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ title: 'Camera Error', description: err?.message || 'Could not access camera. Try manual mode.', variant: 'destructive' });
       setMode('manual');
     }

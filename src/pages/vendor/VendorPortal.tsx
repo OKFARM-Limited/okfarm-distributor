@@ -7,11 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, DollarSign, Award, Calendar, TrendingUp } from 'lucide-react';
 
 interface VendorData {
-  vendor: any;
-  sales: any[];
-  allocations: any[];
-  commissions: any[];
-  checkIns: any[];
+  vendor: Record<string, unknown>;
+  sales: Record<string, unknown>[];
+  allocations: Record<string, unknown>[];
+  commissions: Record<string, unknown>[];
+  checkIns: Record<string, unknown>[];
 }
 
 export default function VendorPortal() {

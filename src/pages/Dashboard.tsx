@@ -96,7 +96,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              {lowStockItems.map((s: any) => (
+              {lowStockItems.map((s) => (
                 <div key={s.id} className="flex items-center justify-between rounded-lg border border-destructive/20 bg-background px-3 py-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{s.products?.name || 'Unknown'}</p>

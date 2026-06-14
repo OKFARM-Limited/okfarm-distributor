@@ -45,7 +45,7 @@ export default function CommissionCalculator() {
       { month: calcMonth, outletId: isAllOutlets ? undefined : selectedOutletId },
       {
         onSuccess: () => { toast({ title: '✅ Calculated', description: `Commissions for ${calcMonth} computed from sales data.` }); setCalcDialog(false); },
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };

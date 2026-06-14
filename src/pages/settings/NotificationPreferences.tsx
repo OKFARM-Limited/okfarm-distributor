@@ -53,7 +53,7 @@ export default function NotificationPreferences() {
     })();
   }, [user?.id, user?.email]);
 
-  const update = (k: keyof Prefs, v: any) => setPrefs(p => ({ ...p, [k]: v }));
+  const update = (k: keyof Prefs, v: boolean | string) => setPrefs(p => ({ ...p, [k]: v }));
 
   const save = async () => {
     if (!user?.id) return;
@@ -68,7 +68,7 @@ export default function NotificationPreferences() {
 
   if (loading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
-  const Row = ({ label, k, icon: Icon, desc }: { label: string; k: keyof Prefs; icon?: any; desc?: string }) => (
+  const Row = ({ label, k, icon: Icon, desc }: { label: string; k: keyof Prefs; icon?: React.ComponentType<{ className?: string }>; desc?: string }) => (
     <div className="flex items-center justify-between py-2">
       <div className="space-y-0.5">
         <Label className="flex items-center gap-2">{Icon && <Icon className="h-4 w-4" />} {label}</Label>
