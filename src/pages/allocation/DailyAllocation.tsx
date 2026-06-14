@@ -22,7 +22,7 @@ export default function DailyAllocation() {
   const createAllocation = useCreateAllocation();
   const { viewerProps } = useViewerGuard();
 
-  const vendor = vendors.find((v: any) => v.id === vendorId);
+  const vendor = vendors.find((v) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
   const handleConfirm = () => {
@@ -45,7 +45,7 @@ export default function DailyAllocation() {
           toast({ title: 'Allocation Confirmed', description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` });
           setStep(0); setVendorId(''); setQuantities({});
         },
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
@@ -102,7 +102,7 @@ export default function DailyAllocation() {
             <Select value={vendorId} onValueChange={setVendorId}>
               <SelectTrigger><SelectValue placeholder="Choose a vendor..." /></SelectTrigger>
               <SelectContent>
-                {vendors.filter((v: any) => v.status === 'active').map((v: any) => <SelectItem key={v.id} value={v.id}>{v.name} ({v.territory})</SelectItem>)}
+                {vendors.filter((v) => v.status === 'active').map((v) => <SelectItem key={v.id} value={v.id}>{v.name} ({v.territory})</SelectItem>)}
               </SelectContent>
             </Select>
             <Button onClick={() => setStep(1)} disabled={!vendorId}>Next <ChevronRight className="h-4 w-4" /></Button>

@@ -60,14 +60,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let mounted = true;
+
+    // Auth state listener is the SINGLE source of truth for user state.
+    // It fires for INITIAL_SESSION (on load), SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       if (session?.user) {
-        // Use setTimeout to avoid deadlock with Supabase client
+        // setTimeout avoids a known Supabase client deadlock when making
+        // DB calls (fetchUserRole/fetchProfile) inside the auth callback.
         setTimeout(async () => {
+          if (!mounted) return;
           const appUser = await buildUser(session.user);
-          setUser(appUser);
-          setIsLoading(false);
+          if (mounted) {
+            setUser(appUser);
+            setIsLoading(false);
+          }
         }, 0);
       } else {
         setUser(null);
@@ -75,16 +83,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // THEN check current session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const appUser = await buildUser(session.user);
-        setUser(appUser);
-      }
-      setIsLoading(false);
-    });
+    // Fallback: if the auth listener hasn't fired within 3s, stop the loading spinner.
+    // This handles edge cases where onAuthStateChange may not fire (e.g., no session at all).
+    const timeout = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 3000);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {

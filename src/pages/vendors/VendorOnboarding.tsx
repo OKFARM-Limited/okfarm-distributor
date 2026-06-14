@@ -17,9 +17,10 @@ import { processAndUploadImage } from '@/lib/imageUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { useAppSetting } from '@/hooks/useAppSetting';
 
-const territories = ['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
-const banks = ['GTBank', 'First Bank', 'UBA', 'Access Bank', 'Zenith Bank', 'Stanbic IBTC', 'Fidelity', 'Wema'];
+const DEFAULT_TERRITORIES = ['Ikeja', 'Lekki', 'Victoria Island', 'Surulere', 'Yaba', 'Mushin', 'Oshodi', 'Ikorodu', 'Ajah', 'Festac'];
+const DEFAULT_BANKS = ['GTBank', 'First Bank', 'UBA', 'Access Bank', 'Zenith Bank', 'Stanbic IBTC', 'Fidelity', 'Wema'];
 const eduLevels = ['None', 'Primary', 'Secondary', 'OND', 'HND', 'BSc', 'MSc'];
 const uniformSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
@@ -28,6 +29,8 @@ export default function VendorOnboarding() {
   const { allOutlets } = useOutletContext();
   const upsertVendor = useUpsertVendor();
   const { viewerProps } = useViewerGuard();
+  const { data: territories = DEFAULT_TERRITORIES } = useAppSetting<string[]>('territories', DEFAULT_TERRITORIES);
+  const { data: banks = DEFAULT_BANKS } = useAppSetting<string[]>('banks', DEFAULT_BANKS);
   const [photoPreview, setPhotoPreview] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [form, setForm] = useState({

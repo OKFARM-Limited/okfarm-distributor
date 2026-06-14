@@ -25,13 +25,14 @@ export default function Reconciliation() {
   const { data: allocations = [], isLoading: aLoading } = useAllocations(isAllOutlets ? 'all' : selectedOutletId);
   const createReconciliation = useCreateReconciliation();
 
-  const vendor = vendors.find((v: any) => v.id === vendorId);
+  const vendor = vendors.find((v) => v.id === vendorId);
   const today = new Date().toISOString().split('T')[0];
-  const todayAlloc = allocations.find((a: any) => a.vendor_id === vendorId && a.status === 'confirmed' && a.date === today);
+  const todayAlloc = allocations.find((a) => a.vendor_id === vendorId && a.status === 'confirmed' && a.date === today);
 
   const handleReconcile = () => {
     if (!todayAlloc) return;
-    const items = (todayAlloc as any).allocation_items?.map((item: any) => {
+    type AllocItem = { product_id: string; quantity: number; unit_price: number };
+    const items = ((todayAlloc as Record<string, unknown>).allocation_items as AllocItem[] | undefined)?.map((item) => {
       const ret = returns[item.product_id] || 0;
       const sp = spoilage[item.product_id] || 0;
       const sold = item.quantity - ret - sp;
@@ -45,10 +46,10 @@ export default function Reconciliation() {
       };
     }) || [];
 
-    const totalSold = items.reduce((s: number, i: any) => s + i.sold_qty, 0);
-    const totalReturned = items.reduce((s: number, i: any) => s + i.returned_qty, 0);
-    const totalSpoilage = items.reduce((s: number, i: any) => s + i.spoilage_qty, 0);
-    const cashCollected = items.reduce((s: number, i: any) => s + (i.sold_qty * i.unit_price), 0);
+    const totalSold = items.reduce((s, i) => s + i.sold_qty, 0);
+    const totalReturned = items.reduce((s, i) => s + i.returned_qty, 0);
+    const totalSpoilage = items.reduce((s, i) => s + i.spoilage_qty, 0);
+    const cashCollected = items.reduce((s, i) => s + (i.sold_qty * i.unit_price), 0);
 
     createReconciliation.mutate(
       {
@@ -69,7 +70,7 @@ export default function Reconciliation() {
           toast({ title: 'Reconciliation Saved', description: `Evening reconciliation for ${vendor?.name} completed.` });
           setVendorId(''); setReturns({}); setSpoilage({}); setProofPhoto(null);
         },
-        onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       }
     );
   };
@@ -90,7 +91,7 @@ export default function Reconciliation() {
           <Select value={vendorId} onValueChange={v => { setVendorId(v); setReturns({}); setSpoilage({}); }}>
             <SelectTrigger className="max-w-md"><SelectValue placeholder="Choose vendor..." /></SelectTrigger>
             <SelectContent>
-              {vendors.filter((v: any) => v.status === 'active').map((v: any) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+              {vendors.filter((v) => v.status === 'active').map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </CardContent>
@@ -103,7 +104,7 @@ export default function Reconciliation() {
             <Table>
               <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>Allocated</TableHead><TableHead>Returned</TableHead><TableHead>Spoilage</TableHead><TableHead>Sold</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
               <TableBody>
-                {(todayAlloc as any).allocation_items?.map((item: any) => {
+                {((todayAlloc as Record<string, unknown>).allocation_items as Array<{ id: string; product_id: string; quantity: number; unit_price: number; products?: { name: string } }> | undefined)?.map((item) => {
                   const ret = returns[item.product_id] || 0;
                   const sp = spoilage[item.product_id] || 0;
                   const sold = item.quantity - ret - sp;

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,47 +8,56 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { OutletProvider } from "./contexts/OutletContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppLayout } from "./components/layout/AppLayout";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import VendorList from "./pages/vendors/VendorList";
-import VendorDetail from "./pages/vendors/VendorDetail";
-import VendorOnboarding from "./pages/vendors/VendorOnboarding";
-import AssetManagement from "./pages/assets/AssetManagement";
-import DailyAllocation from "./pages/allocation/DailyAllocation";
-import Reconciliation from "./pages/allocation/Reconciliation";
-import AllocationHistory from "./pages/allocation/AllocationHistory";
-import SalesEntry from "./pages/sales/SalesEntry";
-import PaymentTracking from "./pages/sales/PaymentTracking";
-import PerformanceDashboard from "./pages/performance/PerformanceDashboard";
-import VendorPerformance from "./pages/performance/VendorPerformance";
-import CommissionCalculator from "./pages/commissions/CommissionCalculator";
-import PayoutTracking from "./pages/commissions/PayoutTracking";
-import OrderPlacement from "./pages/orders/OrderPlacement";
-import VendorMap from "./pages/map/VendorMap";
-import AuditTrail from "./pages/audit/AuditTrail";
-import SettingsPage from "./pages/settings/Settings";
-import NotFound from "./pages/NotFound";
-import VendorCheckIn from "./pages/checkin/VendorCheckIn";
-import InventoryInbound from "./pages/inventory/InventoryInbound";
-import BarcodeScanner from "./pages/inventory/BarcodeScanner";
-import DuesStatement from "./pages/dues/DuesStatement";
-import MobileMoneyPayment from "./pages/payments/MobileMoneyPayment";
-import NotificationCenter from "./pages/notifications/NotificationCenter";
-import ForecastReorder from "./pages/forecast/ForecastReorder";
-import MonthlySettlement from "./pages/settlement/MonthlySettlement";
-import IncentivePrograms from "./pages/incentives/IncentivePrograms";
-import FanAcademy from "./pages/training/FanAcademy";
-import ProductManagement from "./pages/products/ProductManagement";
-import DepotManagement from "./pages/depots/DepotManagement";
-import OutletManagement from "./pages/outlets/OutletManagement";
-import RoleManagement from "./pages/admin/RoleManagement";
-import PermissionsMatrix from "./pages/admin/PermissionsMatrix";
-import StockRecalc from "./pages/admin/StockRecalc";
-import BulkImport from "./pages/admin/BulkImport";
-import VendorPortal from "./pages/vendor/VendorPortal";
-import NotificationPreferences from "./pages/settings/NotificationPreferences";
 import { Loader2 } from "lucide-react";
+
+// Route-based code splitting — lazy-load all pages except Login (auth critical path)
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const VendorList = lazy(() => import("./pages/vendors/VendorList"));
+const VendorDetail = lazy(() => import("./pages/vendors/VendorDetail"));
+const VendorOnboarding = lazy(() => import("./pages/vendors/VendorOnboarding"));
+const AssetManagement = lazy(() => import("./pages/assets/AssetManagement"));
+const DailyAllocation = lazy(() => import("./pages/allocation/DailyAllocation"));
+const Reconciliation = lazy(() => import("./pages/allocation/Reconciliation"));
+const AllocationHistory = lazy(() => import("./pages/allocation/AllocationHistory"));
+const SalesEntry = lazy(() => import("./pages/sales/SalesEntry"));
+const PaymentTracking = lazy(() => import("./pages/sales/PaymentTracking"));
+const PerformanceDashboard = lazy(() => import("./pages/performance/PerformanceDashboard"));
+const VendorPerformance = lazy(() => import("./pages/performance/VendorPerformance"));
+const CommissionCalculator = lazy(() => import("./pages/commissions/CommissionCalculator"));
+const PayoutTracking = lazy(() => import("./pages/commissions/PayoutTracking"));
+const OrderPlacement = lazy(() => import("./pages/orders/OrderPlacement"));
+const VendorMap = lazy(() => import("./pages/map/VendorMap"));
+const AuditTrail = lazy(() => import("./pages/audit/AuditTrail"));
+const SettingsPage = lazy(() => import("./pages/settings/Settings"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const VendorCheckIn = lazy(() => import("./pages/checkin/VendorCheckIn"));
+const InventoryInbound = lazy(() => import("./pages/inventory/InventoryInbound"));
+const BarcodeScanner = lazy(() => import("./pages/inventory/BarcodeScanner"));
+const DuesStatement = lazy(() => import("./pages/dues/DuesStatement"));
+const MobileMoneyPayment = lazy(() => import("./pages/payments/MobileMoneyPayment"));
+const NotificationCenter = lazy(() => import("./pages/notifications/NotificationCenter"));
+const ForecastReorder = lazy(() => import("./pages/forecast/ForecastReorder"));
+const MonthlySettlement = lazy(() => import("./pages/settlement/MonthlySettlement"));
+const IncentivePrograms = lazy(() => import("./pages/incentives/IncentivePrograms"));
+const FanAcademy = lazy(() => import("./pages/training/FanAcademy"));
+const ProductManagement = lazy(() => import("./pages/products/ProductManagement"));
+const DepotManagement = lazy(() => import("./pages/depots/DepotManagement"));
+const OutletManagement = lazy(() => import("./pages/outlets/OutletManagement"));
+const RoleManagement = lazy(() => import("./pages/admin/RoleManagement"));
+const PermissionsMatrix = lazy(() => import("./pages/admin/PermissionsMatrix"));
+const StockRecalc = lazy(() => import("./pages/admin/StockRecalc"));
+const BulkImport = lazy(() => import("./pages/admin/BulkImport"));
+const VendorPortal = lazy(() => import("./pages/vendor/VendorPortal"));
+const NotificationPreferences = lazy(() => import("./pages/settings/NotificationPreferences"));
+
+const LazyFallback = () => (
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -72,6 +82,7 @@ function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
+    <Suspense fallback={<LazyFallback />}>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -114,6 +125,7 @@ function AppRoutes() {
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 }
 
@@ -127,7 +139,9 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <AppRoutes />
+                <ErrorBoundary>
+                  <AppRoutes />
+                </ErrorBoundary>
               </BrowserRouter>
             </TooltipProvider>
           </OutletProvider>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useVendors, useProducts, useCreateSale } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,8 +26,9 @@ export default function SalesEntry() {
   const createSale = useCreateSale();
   const { viewerProps } = useViewerGuard();
   const { isOnline, queueOrExecute } = useOfflineQueue();
+  const { t } = useLanguage();
 
-  const vendor = vendors.find((v: any) => v.id === vendorId);
+  const vendor = vendors.find((v) => v.id === vendorId);
   const totalValue = products.reduce((s, p) => s + (quantities[p.id] || 0) * Number(p.unit_price), 0);
 
   const handleSubmit = async () => {
@@ -65,7 +67,7 @@ export default function SalesEntry() {
           toast({ title: 'Sales Recorded', description: `₦${totalValue.toLocaleString()} for ${vendor?.name}` });
           setVendorId(''); setQuantities({}); setAmountPaid(0);
         },
-        onError: async (err: any) => {
+        onError: async () => {
           // Network failure → fall back to offline queue
           const result = await queueOrExecute({ kind: 'sale', payload });
           if (result === 'queued') {
@@ -128,15 +130,15 @@ export default function SalesEntry() {
       <ViewerBanner />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Daily Sales Entry</h1>
+          <h1 className="text-2xl font-bold">{t('recordSales')}</h1>
           {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportPDF} disabled={!vendorId || totalValue === 0}>
-            <FileText className="h-4 w-4 mr-1" /> Export PDF
+            <FileText className="h-4 w-4 mr-1" /> {t('exportPDF')}
           </Button>
           <Button variant="outline" onClick={handleExportCSV} disabled={!vendorId || totalValue === 0}>
-            <Download className="h-4 w-4 mr-1" /> Export CSV
+            <Download className="h-4 w-4 mr-1" /> {t('exportCSV')}
           </Button>
         </div>
       </div>
@@ -145,14 +147,14 @@ export default function SalesEntry() {
         <CardContent className="pt-6 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Vendor</Label>
+              <Label>{t('vendor')}</Label>
               <Select value={vendorId} onValueChange={setVendorId}>
-                <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                <SelectContent>{vendors.filter((v: any) => v.status === 'active').map((v: any) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger><SelectValue placeholder={t('selectVendor')} /></SelectTrigger>
+                <SelectContent>{vendors.filter((v) => v.status === 'active').map((v) => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Payment Method</Label>
+              <Label>{t('paymentMethod')}</Label>
               <Select value={paymentMethod} onValueChange={v => setPaymentMethod(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -167,7 +169,7 @@ export default function SalesEntry() {
           {vendorId && (
             <>
               <Table>
-                <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>Price</TableHead><TableHead>Qty Sold</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>{t('name')}</TableHead><TableHead>{t('price')}</TableHead><TableHead>{t('quantity')}</TableHead><TableHead className="text-right">{t('totalValue')}</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {products.map(p => (
                     <TableRow key={p.id}>
@@ -181,14 +183,14 @@ export default function SalesEntry() {
               </Table>
 
               <div className="grid sm:grid-cols-3 gap-4 pt-4 border-t">
-                <div><Label>Total Value</Label><p className="text-xl font-bold">₦{totalValue.toLocaleString()}</p></div>
-                <div className="space-y-2"><Label>Amount Paid</Label><Input type="number" value={amountPaid || ''} onChange={e => setAmountPaid(parseInt(e.target.value) || 0)} /></div>
-                <div><Label>Outstanding</Label><p className="text-xl font-bold text-destructive">₦{Math.max(0, totalValue - amountPaid).toLocaleString()}</p></div>
+                <div><Label>{t('totalValue')}</Label><p className="text-xl font-bold">₦{totalValue.toLocaleString()}</p></div>
+                <div className="space-y-2"><Label>{t('amountPaid')}</Label><Input type="number" value={amountPaid || ''} onChange={e => setAmountPaid(parseInt(e.target.value) || 0)} /></div>
+                <div><Label>{t('outstanding')}</Label><p className="text-xl font-bold text-destructive">₦{Math.max(0, totalValue - amountPaid).toLocaleString()}</p></div>
               </div>
 
               <Button onClick={handleSubmit} disabled={totalValue === 0 || createSale.isPending} className="w-full sm:w-auto" {...viewerProps}>
                 {createSale.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                Record Sales
+                {t('recordSales')}
               </Button>
             </>
           )}

@@ -1,14 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
 const DB_NAME = 'okfarm_offline';
 const STORE = 'queue';
 const VERSION = 1;
 
 export type QueueOp =
-  | { kind: 'sale'; payload: any }
-  | { kind: 'allocation'; payload: any };
+  | { kind: 'sale'; payload: TablesInsert<'sales'> & { items: { product_id: string; quantity: number; unit_price: number }[] } }
+  | { kind: 'allocation'; payload: TablesInsert<'allocations'> & { items: { product_id: string; quantity: number; unit_price: number }[] } };
 
 interface QueueItem {
   id?: number;
@@ -63,22 +64,29 @@ async function updateItem(item: QueueItem) {
 async function executeOp(op: QueueOp): Promise<void> {
   if (op.kind === 'sale') {
     const { items, ...sale } = op.payload;
-    const { data, error } = await supabase.from('sales').insert(sale).select().single();
+    const { error } = await supabase.rpc('create_sale_with_items', {
+      p_vendor_id: sale.vendor_id,
+      p_outlet_id: sale.outlet_id ?? null,
+      p_date: sale.date || new Date().toISOString().split('T')[0],
+      p_total_value: sale.total_value ?? 0,
+      p_amount_paid: sale.amount_paid ?? 0,
+      p_outstanding: sale.outstanding ?? 0,
+      p_payment_method: sale.payment_method || 'cash',
+      p_items: items || [],
+    });
     if (error) throw error;
-    if (items?.length) {
-      const rows = items.map((i: any) => ({ ...i, sale_id: data.id }));
-      const { error: e2 } = await supabase.from('sale_items').insert(rows);
-      if (e2) throw e2;
-    }
   } else if (op.kind === 'allocation') {
     const { items, ...alloc } = op.payload;
-    const { data, error } = await supabase.from('allocations').insert(alloc).select().single();
+    const { error } = await supabase.rpc('create_allocation_with_items', {
+      p_vendor_id: alloc.vendor_id,
+      p_outlet_id: alloc.outlet_id ?? null,
+      p_date: alloc.date || new Date().toISOString().split('T')[0],
+      p_total_value: alloc.total_value ?? 0,
+      p_status: alloc.status || 'pending',
+      p_notes: alloc.notes ?? null,
+      p_items: items || [],
+    });
     if (error) throw error;
-    if (items?.length) {
-      const rows = items.map((i: any) => ({ ...i, allocation_id: data.id }));
-      const { error: e2 } = await supabase.from('allocation_items').insert(rows);
-      if (e2) throw e2;
-    }
   }
 }
 
@@ -90,9 +98,9 @@ export async function flushQueue(): Promise<{ ok: number; failed: number }> {
       await executeOp(item.op);
       await removeItem(item.id!);
       ok++;
-    } catch (e: any) {
+    } catch (e: unknown) {
       item.attempts += 1;
-      item.last_error = e?.message || String(e);
+      item.last_error = e instanceof Error ? e.message : String(e);
       await updateItem(item);
       failed++;
     }

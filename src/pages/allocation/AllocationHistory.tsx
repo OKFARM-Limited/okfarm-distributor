@@ -15,7 +15,7 @@ export default function AllocationHistory() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: allocations = [], isLoading } = useAllocations(isAllOutlets ? 'all' : selectedOutletId);
 
-  const filtered = allocations.filter((a: any) => {
+  const filtered = allocations.filter((a) => {
     const matchDate = !dateFilter || a.date?.includes(dateFilter);
     const matchVendor = !vendorFilter || a.vendors?.name?.toLowerCase().includes(vendorFilter.toLowerCase());
     return matchDate && matchVendor;
@@ -49,7 +49,7 @@ export default function AllocationHistory() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedItems.map((a: any) => (
+              {paginatedItems.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell>{a.date}</TableCell>
                   <TableCell className="font-medium">{a.vendors?.name}</TableCell>

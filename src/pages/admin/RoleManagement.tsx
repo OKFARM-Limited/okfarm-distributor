@@ -78,7 +78,7 @@ export default function RoleManagement() {
       queryClient.invalidateQueries({ queryKey: ['admin-user-roles'] });
       toast({ title: 'Role Updated', description: 'User role has been updated successfully.' });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({ title: 'Error', description: err.message || 'Failed to update role.', variant: 'destructive' });
     },
   });
@@ -101,7 +101,7 @@ export default function RoleManagement() {
       setNewName('');
       setNewRole('assistant');
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast({ title: 'Error Creating User', description: err.message, variant: 'destructive' });
     },
   });
