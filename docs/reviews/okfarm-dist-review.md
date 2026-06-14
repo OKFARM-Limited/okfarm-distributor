@@ -5,7 +5,7 @@
 **Auditor:** AI Code Review  
 **Codebase:** `OKFARM-Limited/okfarm-distributor`  
 **Supabase Project:** `vvwnszvdbmdfhpatjnvz.supabase.co`  
-**Commit State:** Post Phase 7 hardening — RLS write policies, E2E tests, bundle optimization, type cleanup
+**Commit State:** Post Phase 7 hardening + territories/banks expansion — RLS write policies, E2E tests, bundle optimization, type cleanup, full Nigeria coverage
 
 ---
 
@@ -42,7 +42,7 @@ The app is designed for a **multi-outlet** distributor organization, where an ad
 | Contexts | 4 (Auth, Theme, Language, Outlet) |
 | Unit test cases | 23 |
 | E2E test cases | 38 |
-| Migrations | 25 |
+| Migrations | 26 |
 | Edge Functions | 6 |
 | RLS Policies | 159 |
 | DB Functions | 42 |
