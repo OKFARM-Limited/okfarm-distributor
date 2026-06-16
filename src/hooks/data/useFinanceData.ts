@@ -1,8 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 // ===== PAYMENTS =====
+type PaymentRow = Tables<'payments'>;
+
+export interface DbPayment extends PaymentRow {
+  vendors: { name: string; vendor_code: string; mobile_money_number: string | null } | null;
+  outlets: { name: string } | null;
+}
+
 export function usePayments(outletId?: string | null) {
   return useQuery({
     queryKey: ['payments', outletId],
@@ -11,7 +18,7 @@ export function usePayments(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbPayment[];
     },
   });
 }
@@ -29,6 +36,13 @@ export function useCreatePayment() {
 }
 
 // ===== COMMISSIONS =====
+type CommissionRow = Tables<'commissions'>;
+
+export interface DbCommission extends CommissionRow {
+  vendors: { name: string; vendor_code: string } | null;
+  outlets: { name: string; short_code: string } | null;
+}
+
 export function useCommissions(outletId?: string | null) {
   return useQuery({
     queryKey: ['commissions', outletId],
@@ -37,19 +51,29 @@ export function useCommissions(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbCommission[];
     },
   });
 }
 
 // ===== PAYOUTS =====
+type PayoutRow = Tables<'payouts'>;
+
+export interface DbPayout extends PayoutRow {
+  commissions: {
+    month: string;
+    total_commission: number;
+    vendors: { name: string; vendor_code: string } | null;
+  } | null;
+}
+
 export function usePayouts() {
   return useQuery({
     queryKey: ['payouts'],
     queryFn: async () => {
       const { data, error } = await supabase.from('payouts').select('*, commissions(month, total_commission, vendors(name, vendor_code))').order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return data as DbPayout[];
     },
   });
 }
@@ -76,6 +100,14 @@ export function useCreatePayout() {
 }
 
 // ===== SETTLEMENTS =====
+type SettlementRow = Tables<'settlements'>;
+type SettlementLineRow = Tables<'settlement_lines'>;
+
+export interface DbSettlement extends SettlementRow {
+  outlets: { name: string } | null;
+  settlement_lines: SettlementLineRow[];
+}
+
 export function useSettlements(outletId?: string | null) {
   return useQuery({
     queryKey: ['settlements', outletId],
@@ -84,7 +116,7 @@ export function useSettlements(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbSettlement[];
     },
   });
 }

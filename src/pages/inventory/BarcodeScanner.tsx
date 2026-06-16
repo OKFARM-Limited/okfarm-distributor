@@ -12,7 +12,7 @@ export default function BarcodeScanner() {
   const [barcodeInput, setBarcodeInput] = useState('');
   const [scannedItems, setScannedItems] = useState<{ productId: string; productName: string; barcode: string; quantity: number; time: string }[]>([]);
   const [cameraActive, setCameraActive] = useState(false);
-  const scannerRef = useRef<any>(null);
+  const scannerRef = useRef<import('html5-qrcode').Html5Qrcode | null>(null);
   const scannerDivRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: products = [], isLoading } = useProducts();
@@ -50,7 +50,7 @@ export default function BarcodeScanner() {
       );
       setCameraActive(true);
     } catch (err: unknown) {
-      toast({ title: 'Camera Error', description: err?.message || 'Could not access camera. Try manual mode.', variant: 'destructive' });
+      toast({ title: 'Camera Error', description: (err as Error)?.message || 'Could not access camera. Try manual mode.', variant: 'destructive' });
       setMode('manual');
     }
   };
@@ -59,7 +59,7 @@ export default function BarcodeScanner() {
     if (scannerRef.current) {
       try {
         await scannerRef.current.stop();
-      } catch {}
+      } catch { /* scanner may already be stopped */ }
       scannerRef.current = null;
     }
     setCameraActive(false);

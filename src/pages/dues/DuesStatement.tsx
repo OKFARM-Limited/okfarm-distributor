@@ -17,9 +17,9 @@ export default function DuesStatement() {
   const { data: sales = [], isLoading: sLoading } = useSales('all');
   const { data: allocations = [], isLoading: aLoading } = useAllocations('all');
 
-  const vendor = (vendors as any[]).find(v => v.id === selectedVendor);
-  const vendorSales = (sales as any[]).filter(s => s.vendor_id === selectedVendor).slice(0, 30);
-  const vendorAllocs = (allocations as any[]).filter(a => a.vendor_id === selectedVendor).slice(0, 30);
+  const vendor = vendors.find(v => v.id === selectedVendor);
+  const vendorSales = sales.filter(s => s.vendor_id === selectedVendor).slice(0, 30);
+  const vendorAllocs = allocations.filter(a => a.vendor_id === selectedVendor).slice(0, 30);
 
   const totalAllocated = vendorAllocs.reduce((s, a) => s + Number(a.total_value), 0);
   const totalSold = vendorSales.reduce((s, r) => s + Number(r.total_value), 0);
@@ -62,7 +62,7 @@ export default function DuesStatement() {
       <Select value={selectedVendor} onValueChange={setSelectedVendor}>
         <SelectTrigger className="w-full sm:w-80"><SelectValue placeholder="Select vendor" /></SelectTrigger>
         <SelectContent>
-          {(vendors as any[]).map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.vendor_code})</SelectItem>)}
+          {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.vendor_code})</SelectItem>)}
         </SelectContent>
       </Select>
 

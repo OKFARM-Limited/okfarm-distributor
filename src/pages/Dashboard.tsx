@@ -21,9 +21,9 @@ export default function Dashboard() {
 
   const isLoading = vLoading || sLoading || oLoading || stLoading;
 
-  const activeVendors = (vendors as any[]).filter(v => v.status === 'active').length;
+  const activeVendors = vendors.filter(v => v.status === 'active').length;
   const todayStr = new Date().toISOString().split('T')[0];
-  const todaySales = (sales as any[]).filter(s => s.date === todayStr);
+  const todaySales = sales.filter(s => s.date === todayStr);
   const todayTotal = todaySales.reduce((s, r) => s + Number(r.total_value), 0);
   const todayCash = todaySales.reduce((s, r) => s + Number(r.amount_paid), 0);
   const totalOutstanding = todaySales.reduce((s, r) => s + Number(r.outstanding), 0);
@@ -35,7 +35,7 @@ export default function Dashboard() {
   }).reverse();
 
   const salesTrend = last14.map(date => {
-    const daySales = (sales as any[]).filter(s => s.date === date);
+    const daySales = sales.filter(s => s.date === date);
     return {
       date: new Date(date).toLocaleDateString('en', { day: '2-digit', month: 'short' }),
       sales: daySales.reduce((s, r) => s + Number(r.total_value), 0),
@@ -53,14 +53,14 @@ export default function Dashboard() {
 
   // Top performers
   const vendorSalesMap: Record<string, number> = {};
-  (sales as any[]).forEach(s => { vendorSalesMap[s.vendor_id] = (vendorSalesMap[s.vendor_id] || 0) + Number(s.total_value); });
-  const topPerformers = (vendors as any[])
+  sales.forEach(s => { vendorSalesMap[s.vendor_id] = (vendorSalesMap[s.vendor_id] || 0) + Number(s.total_value); });
+  const topPerformers = vendors
     .map(v => ({ ...v, totalSales: vendorSalesMap[v.id] || Number(v.total_sales) || 0 }))
     .sort((a, b) => b.totalSales - a.totalSales)
     .slice(0, 5);
 
   // Stock alerts — items at or below minimum stock
-  const lowStockItems = (stockLevels as any[])
+  const lowStockItems = stockLevels
     .filter(s => s.current_stock <= s.min_stock)
     .sort((a, b) => a.current_stock - b.current_stock)
     .slice(0, 8);
@@ -117,9 +117,9 @@ export default function Dashboard() {
           <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" /> {t('outletsOverview')}</CardTitle></CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {outlets.map((o: any) => {
-                const oVendors = (vendors as any[]).filter(v => v.outlet_id === o.id && v.status === 'active').length;
-                const oSales = (sales as any[]).filter(s => s.outlet_id === o.id && s.date === todayStr).reduce((s, r) => s + Number(r.total_value), 0);
+              {outlets.map((o) => {
+                const oVendors = vendors.filter(v => v.outlet_id === o.id && v.status === 'active').length;
+                const oSales = sales.filter(s => s.outlet_id === o.id && s.date === todayStr).reduce((s, r) => s + Number(r.total_value), 0);
                 return (
                   <div key={o.id} className="rounded-lg border p-3 space-y-2">
                     <p className="font-medium text-sm truncate">{o.name}</p>

@@ -12,30 +12,30 @@ export {
   type DbVendor, useVendors, useVendor, useUpsertVendor,
   type DbAsset, useAssets, useUpdateAsset,
   type DbDepot, useDepots, useUpsertDepot,
-  useVendorLocations,
+  type DbVendorLocation, useVendorLocations,
 } from './data/useVendorData';
 export {
-  useAllocations, useCreateAllocation,
-  useSales, useCreateSale,
-  useCheckIns, useCreateCheckIn, useUpdateCheckIn,
-  useReconciliations, useCreateReconciliation,
+  type DbAllocation, type DbAllocationItem, useAllocations, useCreateAllocation,
+  type DbSale, type DbSaleItem, useSales, useCreateSale,
+  type DbCheckIn, useCheckIns, useCreateCheckIn, useUpdateCheckIn,
+  type DbReconciliation, type DbReconciliationItem, useReconciliations, useCreateReconciliation,
 } from './data/useSalesData';
 export {
-  usePayments, useCreatePayment,
-  useCommissions,
-  usePayouts, useCreatePayout,
-  useSettlements, useCreateSettlement,
+  type DbPayment, usePayments, useCreatePayment,
+  type DbCommission, useCommissions,
+  type DbPayout, usePayouts, useCreatePayout,
+  type DbSettlement, useSettlements, useCreateSettlement,
   useCalculateCommissions,
 } from './data/useFinanceData';
 export {
-  useOrders, useCreateOrder, useUpdateOrder,
-  useInboundDeliveries, useUpdateDelivery, useCreateDelivery,
-  useStockLevels,
+  type DbOrder, type DbOrderItem, useOrders, useCreateOrder, useUpdateOrder,
+  type DbDelivery, type DbDeliveryItem, useInboundDeliveries, useUpdateDelivery, useCreateDelivery,
+  type DbStockLevel, useStockLevels,
 } from './data/useInventoryData';
 export {
-  useNotifications, useUpdateNotification, useDeleteNotification,
-  useAuditLogs,
-  useIncentivePrograms,
-  useTrainingModules, useVendorTrainingProgress,
-  useForecasts,
+  type DbNotification, useNotifications, useUpdateNotification, useDeleteNotification,
+  type DbAuditLog, useAuditLogs,
+  type DbIncentiveProgram, type DbVendorIncentive, useIncentivePrograms,
+  type DbTrainingModule, type DbVendorTrainingProgress, useTrainingModules, useVendorTrainingProgress,
+  type DbForecast, useForecasts,
 } from './data/useSystemData';

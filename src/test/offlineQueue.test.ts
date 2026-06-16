@@ -22,9 +22,11 @@ describe('Offline Queue executeOp', () => {
 
   it('sale operations call create_sale_with_items RPC', async () => {
     const mockRpc = vi.mocked(supabase.rpc);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockRpc.mockResolvedValueOnce({ data: 'some-uuid', error: null } as any);
 
     // Import after mocking
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { default: mod } = await vi.importActual<any>('@/hooks/useOfflineQueue');
 
     // We can't directly test executeOp since it's not exported,
@@ -35,8 +37,8 @@ describe('Offline Queue executeOp', () => {
   it('offline queue types are correctly defined', async () => {
     // Verify the QueueOp type supports the expected operation kinds
     type QueueOp =
-      | { kind: 'sale'; payload: any }
-      | { kind: 'allocation'; payload: any };
+      | { kind: 'sale'; payload: Record<string, unknown> }
+      | { kind: 'allocation'; payload: Record<string, unknown> };
 
     const saleOp: QueueOp = {
       kind: 'sale',

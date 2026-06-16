@@ -18,7 +18,7 @@ export default function PerformanceDashboard() {
 
   const isLoading = vLoading || sLoading || cLoading;
 
-  const activeVendors = (vendors as any[]).filter(v => v.status === 'active');
+  const activeVendors = vendors.filter(v => v.status === 'active');
   const activeCount = activeVendors.length;
 
   const today = new Date().toISOString().split('T')[0];
@@ -27,12 +27,12 @@ export default function PerformanceDashboard() {
     return d.toISOString().split('T')[0];
   });
 
-  const todayCheckIns = (checkIns as any[]).filter(c => c.date === today);
+  const todayCheckIns = checkIns.filter(c => c.date === today);
   const todayAttendanceRate = activeCount ? Math.round((todayCheckIns.length / activeCount) * 100) : 0;
 
   // Attendance trend
   const attendanceTrend = [...last7Days].reverse().map(date => {
-    const count = (checkIns as any[]).filter(c => c.date === date).length;
+    const count = checkIns.filter(c => c.date === date).length;
     return {
       date: new Date(date).toLocaleDateString('en', { day: '2-digit', month: 'short' }),
       present: count, absent: Math.max(0, activeCount - count),
@@ -42,7 +42,7 @@ export default function PerformanceDashboard() {
 
   // Sales by date for trend
   const salesByDate: Record<string, number> = {};
-  (sales as any[]).forEach(s => {
+  sales.forEach(s => {
     salesByDate[s.date] = (salesByDate[s.date] || 0) + Number(s.total_value);
   });
   const last14Days = Array.from({ length: 14 }, (_, i) => {
@@ -57,7 +57,7 @@ export default function PerformanceDashboard() {
 
   // Top performers by total sales
   const vendorSalesMap: Record<string, number> = {};
-  (sales as any[]).forEach(s => {
+  sales.forEach(s => {
     vendorSalesMap[s.vendor_id] = (vendorSalesMap[s.vendor_id] || 0) + Number(s.total_value);
   });
   const topPerformers = activeVendors

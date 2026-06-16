@@ -10,8 +10,8 @@ import 'leaflet/dist/leaflet.css';
 
 export default function VendorMap() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
-  const routeLayers = useRef<any[]>([]);
+  const mapInstance = useRef<import('leaflet').Map | null>(null);
+  const routeLayers = useRef<import('leaflet').Polyline[]>([]);
   const [showRoutes, setShowRoutes] = useState(false);
   const [animating, setAnimating] = useState(false);
   const { data: vendorLocations = [], isLoading } = useVendorLocations();
@@ -31,7 +31,7 @@ export default function VendorMap() {
         iconSize: [12, 12],
       });
 
-      (vendorLocations as any[]).forEach(loc => {
+      vendorLocations.forEach(loc => {
         L.marker([Number(loc.latitude), Number(loc.longitude)], { icon }).addTo(map)
           .bindPopup(`<b>${loc.name}</b><br/>${loc.territory || ''}`);
       });
@@ -51,7 +51,7 @@ export default function VendorMap() {
       routeLayers.current = [];
       if (showRoutes) {
         const colors = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#dc2626', '#0891b2', '#ca8a04', '#be185d'];
-        (vendorLocations as any[]).forEach((loc, i) => {
+        vendorLocations.forEach((loc, i) => {
           const route = loc.route_data;
           if (Array.isArray(route) && route.length > 1) {
             const polyline = L.polyline(
@@ -94,11 +94,11 @@ export default function VendorMap() {
           <div ref={mapRef} className="h-[500px] w-full rounded-lg" />
         </CardContent>
       </Card>
-      {(vendorLocations as any[]).length === 0 ? (
+      {vendorLocations.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center">No vendor GPS coordinates found. Update vendor records with latitude/longitude to see them on the map.</p>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {(vendorLocations as any[]).slice(0, 10).map((l) => (
+          {vendorLocations.slice(0, 10).map((l) => (
             <Badge key={l.id} variant="outline">{l.name} — {l.territory || 'N/A'}</Badge>
           ))}
         </div>

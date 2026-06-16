@@ -1,8 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { TablesInsert } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 
 // ===== ALLOCATIONS =====
+type AllocationRow = Tables<'allocations'>;
+
+export interface DbAllocationItem {
+  id: string;
+  allocation_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  created_at: string;
+  products: { name: string; sku: string } | null;
+}
+
+export interface DbAllocation extends AllocationRow {
+  vendors: { name: string; vendor_code: string; territory: string | null } | null;
+  outlets: { name: string; short_code: string } | null;
+  allocation_items: DbAllocationItem[];
+}
+
 export function useAllocations(outletId?: string | null) {
   return useQuery({
     queryKey: ['allocations', outletId],
@@ -11,7 +29,7 @@ export function useAllocations(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbAllocation[];
     },
   });
 }
@@ -37,6 +55,24 @@ export function useCreateAllocation() {
 }
 
 // ===== SALES =====
+type SaleRow = Tables<'sales'>;
+
+export interface DbSaleItem {
+  id: string;
+  sale_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  created_at: string;
+  products: { name: string; sku: string } | null;
+}
+
+export interface DbSale extends SaleRow {
+  vendors: { name: string; vendor_code: string } | null;
+  outlets: { name: string; short_code: string } | null;
+  sale_items: DbSaleItem[];
+}
+
 export function useSales(outletId?: string | null) {
   return useQuery({
     queryKey: ['sales', outletId],
@@ -45,7 +81,7 @@ export function useSales(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbSale[];
     },
   });
 }
@@ -72,6 +108,12 @@ export function useCreateSale() {
 }
 
 // ===== CHECK-INS =====
+type CheckInRow = Tables<'check_ins'>;
+
+export interface DbCheckIn extends CheckInRow {
+  vendors: { name: string; vendor_code: string; territory: string | null; photo_url: string | null; status: string } | null;
+}
+
 export function useCheckIns(date?: string) {
   return useQuery({
     queryKey: ['check_ins', date],
@@ -80,7 +122,7 @@ export function useCheckIns(date?: string) {
       if (date) query = query.eq('date', date);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbCheckIn[];
     },
   });
 }
@@ -110,6 +152,27 @@ export function useUpdateCheckIn() {
 }
 
 // ===== RECONCILIATIONS =====
+type ReconciliationRow = Tables<'reconciliations'>;
+
+export interface DbReconciliationItem {
+  id: string;
+  reconciliation_id: string;
+  product_id: string;
+  allocated_qty: number;
+  returned_qty: number;
+  spoilage_qty: number;
+  sold_qty: number;
+  unit_price: number;
+  created_at: string;
+  products: { name: string } | null;
+}
+
+export interface DbReconciliation extends ReconciliationRow {
+  vendors: { name: string } | null;
+  outlets: { name: string } | null;
+  reconciliation_items: DbReconciliationItem[];
+}
+
 export function useReconciliations(outletId?: string | null) {
   return useQuery({
     queryKey: ['reconciliations', outletId],
@@ -118,7 +181,7 @@ export function useReconciliations(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbReconciliation[];
     },
   });
 }

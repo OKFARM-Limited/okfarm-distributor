@@ -34,7 +34,7 @@ export default function CommissionCalculator() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const filtered = commissions as any[];
+  const filtered = commissions;
   const totalPending = filtered.filter(c => c.status === 'pending').reduce((s, c) => s + Number(c.total_commission), 0);
   const totalDisbursed = filtered.filter(c => c.status === 'disbursed').reduce((s, c) => s + Number(c.total_commission), 0);
   const avgConsistency = filtered.length ? Math.round(filtered.reduce((s, c) => s + Number(c.consistency_rate), 0) / filtered.length) : 0;

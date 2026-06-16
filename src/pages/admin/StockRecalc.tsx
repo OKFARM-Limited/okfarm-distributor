@@ -37,11 +37,11 @@ export default function StockRecalc() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from('app_settings' as any)
+        .from('app_settings')
         .select('value')
         .eq('key', 'stock_recalc_threshold')
         .maybeSingle();
-      const v = (data as any)?.value;
+      const v = data?.value;
       if (v != null) setThreshold(Number(v));
     })();
   }, []);
@@ -53,21 +53,21 @@ export default function StockRecalc() {
     }
     setSavingThreshold(true);
     const { error } = await supabase
-      .from('app_settings' as any)
-      .upsert({ key: 'stock_recalc_threshold', value: threshold, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      .from('app_settings')
+      .upsert({ key: 'stock_recalc_threshold', value: threshold as unknown as import('@/integrations/supabase/types').Json, updated_at: new Date().toISOString() }, { onConflict: 'key' });
     setSavingThreshold(false);
     if (error) toast.error(error.message);
     else toast.success('Threshold saved');
   };
 
   const run = async (apply: boolean) => {
-    apply ? setApplying(true) : setLoading(true);
+    if (apply) { setApplying(true); } else { setLoading(true); }
     const { data, error } = await supabase.rpc('recalculate_stock', {
       p_outlet_id: isAllOutlets ? null : selectedOutletId,
       p_apply: apply,
       p_threshold: threshold,
-    } as any);
-    apply ? setApplying(false) : setLoading(false);
+    });
+    if (apply) { setApplying(false); } else { setLoading(false); }
     if (error) {
       toast.error(error.message);
       return;

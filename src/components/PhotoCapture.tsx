@@ -26,8 +26,8 @@ export function PhotoCapture({ bucket = 'vendor-photos', folder, value, onChange
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange(data.publicUrl);
       toast({ title: 'Photo uploaded' });
-    } catch (e: any) {
-      toast({ title: 'Upload failed', description: e.message, variant: 'destructive' });
+    } catch (e: unknown) {
+      toast({ title: 'Upload failed', description: (e as Error).message, variant: 'destructive' });
     } finally {
       setUploading(false);
     }

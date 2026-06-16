@@ -155,7 +155,7 @@ export default function SalesEntry() {
             </div>
             <div className="space-y-2">
               <Label>{t('paymentMethod')}</Label>
-              <Select value={paymentMethod} onValueChange={v => setPaymentMethod(v as any)}>
+              <Select value={paymentMethod} onValueChange={v => setPaymentMethod(v as typeof paymentMethod)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cash">Cash</SelectItem>

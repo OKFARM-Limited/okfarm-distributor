@@ -34,7 +34,7 @@ export default function MonthlySettlement() {
       return;
     }
     // Auto-generate lines from deliveries for that month & outlet
-    const monthDeliveries = (deliveries as any[]).filter(
+    const monthDeliveries = deliveries.filter(
       d => d.outlet_id === newOutlet && d.date?.startsWith(newMonth.substring(0, 7))
     );
     const totalReceivable = monthDeliveries.reduce((s, d) => s + Number(d.total_value), 0);
@@ -59,7 +59,7 @@ export default function MonthlySettlement() {
       net_payable: totalReceivable - discount,
       status: 'open',
       lines,
-    } as any, {
+    }, {
       onSuccess: () => { toast({ title: '✅ Created', description: 'Settlement created.' }); setDialogOpen(false); },
       onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
     });
@@ -67,7 +67,7 @@ export default function MonthlySettlement() {
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
-  const latest = (settlements as any[])[0];
+  const latest = settlements[0];
   const lines = latest?.settlement_lines || [];
   const totalReceivable = Number(latest?.total_receivable || 0);
   const totalPaid = Number(latest?.total_paid || 0);
@@ -185,7 +185,7 @@ export default function MonthlySettlement() {
               <Select value={newOutlet} onValueChange={setNewOutlet}>
                 <SelectTrigger><SelectValue placeholder="Select outlet" /></SelectTrigger>
                 <SelectContent>
-                  {(outlets as any[]).map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
+                  {outlets.map(o => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

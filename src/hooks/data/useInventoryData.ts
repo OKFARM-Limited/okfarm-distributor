@@ -1,8 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import type { TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 // ===== ORDERS =====
+type OrderRow = Tables<'orders'>;
+
+export interface DbOrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  created_at: string;
+  products: { name: string; sku: string; category: string } | null;
+}
+
+export interface DbOrder extends OrderRow {
+  outlets: { name: string } | null;
+  order_items: DbOrderItem[];
+}
+
 export function useOrders(outletId?: string | null) {
   return useQuery({
     queryKey: ['orders', outletId],
@@ -11,7 +28,7 @@ export function useOrders(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbOrder[];
     },
   });
 }
@@ -49,6 +66,23 @@ export function useUpdateOrder() {
 }
 
 // ===== INBOUND DELIVERIES =====
+type DeliveryRow = Tables<'inbound_deliveries'>;
+
+export interface DbDeliveryItem {
+  id: string;
+  delivery_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  created_at: string;
+  products: { name: string; sku: string } | null;
+}
+
+export interface DbDelivery extends DeliveryRow {
+  outlets: { name: string } | null;
+  delivery_items: DbDeliveryItem[];
+}
+
 export function useInboundDeliveries(outletId?: string | null) {
   return useQuery({
     queryKey: ['inbound_deliveries', outletId],
@@ -57,7 +91,7 @@ export function useInboundDeliveries(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbDelivery[];
     },
   });
 }
@@ -99,6 +133,13 @@ export function useCreateDelivery() {
 }
 
 // ===== STOCK LEVELS =====
+type StockLevelRow = Tables<'stock_levels'>;
+
+export interface DbStockLevel extends StockLevelRow {
+  products: { name: string; sku: string; unit: string } | null;
+  outlets: { name: string } | null;
+}
+
 export function useStockLevels(outletId?: string | null) {
   return useQuery({
     queryKey: ['stock_levels', outletId],
@@ -107,7 +148,7 @@ export function useStockLevels(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbStockLevel[];
     },
   });
 }

@@ -83,10 +83,12 @@ export default function BulkImport() {
     const chunkSize = 50;
     for (let i = 0; i < rows.length; i += chunkSize) {
       const chunk = rows.slice(i, i + chunkSize).map(transform);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- entity is a runtime table name
       const { error } = await supabase.from(entity).insert(chunk as any);
       if (error) {
         // fall back to per-row to identify failing ones
         for (let j = 0; j < chunk.length; j++) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- entity is a runtime table name
           const { error: rowErr } = await supabase.from(entity).insert(chunk[j] as any);
           if (rowErr) errors.push({ row: i + j + 2, error: rowErr.message });
           else ok++;

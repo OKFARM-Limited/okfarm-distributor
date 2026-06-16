@@ -14,9 +14,9 @@ export default function VendorPerformance() {
   const { data: sales = [], isLoading: sLoading } = useSales('all');
   const { data: assets = [], isLoading: aLoading } = useAssets('all');
 
-  const vendor = (vendors as any[]).find(v => v.id === vendorId);
-  const vendorSales = (sales as any[]).filter(s => s.vendor_id === vendorId).slice(0, 30).reverse();
-  const vendorAssets = (assets as any[]).filter(a => a.assigned_to === vendorId);
+  const vendor = vendors.find(v => v.id === vendorId);
+  const vendorSales = sales.filter(s => s.vendor_id === vendorId).slice(0, 30).reverse();
+  const vendorAssets = assets.filter(a => a.assigned_to === vendorId);
 
   const chartData = vendorSales.map(s => ({
     date: new Date(s.date).toLocaleDateString('en', { day: '2-digit', month: 'short' }),

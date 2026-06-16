@@ -7,7 +7,7 @@ export interface PDFColumn {
   key: string;
   width?: number;
   align?: 'left' | 'right' | 'center';
-  format?: (value: any) => string;
+  format?: (value: unknown) => string;
 }
 
 export interface PDFReportOptions {
@@ -15,14 +15,14 @@ export interface PDFReportOptions {
   subtitle?: string;
   filename: string;
   columns: PDFColumn[];
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   summaryRows?: { label: string; value: string }[];
   orientation?: 'portrait' | 'landscape';
 }
 
 export async function generatePDFReport(options: PDFReportOptions) {
   const { default: jsPDF } = await import('jspdf');
-  // @ts-ignore
+  // @ts-expect-error -- jspdf-autotable has no type declarations
   const { default: autoTable } = await import('jspdf-autotable');
   
   const doc = new jsPDF({
@@ -85,12 +85,13 @@ export async function generatePDFReport(options: PDFReportOptions) {
       if (col.align) acc[i] = { halign: col.align };
       if (col.width) acc[i] = { ...acc[i], cellWidth: col.width };
       return acc;
-    }, {} as Record<number, any>),
+    }, {} as Record<number, { halign?: string; cellWidth?: number }>),
   });
 
   // Summary rows at bottom
   if (options.summaryRows && options.summaryRows.length > 0) {
-    // @ts-ignore
+    // @ts-expect-error -- lastAutoTable added by jspdf-autotable plugin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalY = (doc as any).lastAutoTable?.finalY || startY + 20;
     let y = finalY + 10;
     

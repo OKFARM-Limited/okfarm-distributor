@@ -3,7 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 // ===== VENDORS =====
-export type DbVendor = Tables<'vendors'>;
+/** Base vendor row from the `vendors` table */
+type VendorRow = Tables<'vendors'>;
+
+/** Vendor row enriched with joined outlet info from .select('*, outlets(name, short_code)') */
+export interface DbVendor extends VendorRow {
+  outlets: { name: string; short_code: string } | null;
+}
 
 export function useVendors(outletId?: string | null) {
   return useQuery({
@@ -15,7 +21,7 @@ export function useVendors(outletId?: string | null) {
       }
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbVendor[];
     },
   });
 }
@@ -27,7 +33,7 @@ export function useVendor(id: string | undefined) {
       if (!id) return null;
       const { data, error } = await supabase.from('vendors').select('*, outlets(name, short_code)').eq('id', id).single();
       if (error) throw error;
-      return data;
+      return data as DbVendor;
     },
     enabled: !!id,
   });
@@ -52,7 +58,14 @@ export function useUpsertVendor() {
 }
 
 // ===== ASSETS =====
-export type DbAsset = Tables<'assets'>;
+/** Base asset row from the `assets` table */
+type AssetRow = Tables<'assets'>;
+
+/** Asset row enriched with joined vendor/outlet info */
+export interface DbAsset extends AssetRow {
+  vendors: { name: string; vendor_code: string } | null;
+  outlets: { name: string; short_code: string } | null;
+}
 
 export function useAssets(outletId?: string | null) {
   return useQuery({
@@ -62,7 +75,7 @@ export function useAssets(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbAsset[];
     },
   });
 }
@@ -80,7 +93,13 @@ export function useUpdateAsset() {
 }
 
 // ===== DEPOTS =====
-export type DbDepot = Tables<'depots'>;
+/** Base depot row from the `depots` table */
+type DepotRow = Tables<'depots'>;
+
+/** Depot row enriched with joined outlet info */
+export interface DbDepot extends DepotRow {
+  outlets: { name: string; short_code: string } | null;
+}
 
 export function useDepots(outletId?: string | null) {
   return useQuery({
@@ -90,7 +109,7 @@ export function useDepots(outletId?: string | null) {
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as DbDepot[];
     },
   });
 }
@@ -114,13 +133,25 @@ export function useUpsertDepot() {
 }
 
 // ===== VENDOR LOCATIONS =====
+/** Vendor location row — a projection of the vendors table with geo data */
+export interface DbVendorLocation {
+  id: string;
+  name: string;
+  vendor_code: string;
+  territory: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  route_data: unknown;
+  outlets: { name: string } | null;
+}
+
 export function useVendorLocations() {
   return useQuery({
     queryKey: ['vendor_locations'],
     queryFn: async () => {
       const { data, error } = await supabase.from('vendors').select('id, name, vendor_code, territory, latitude, longitude, route_data, outlets(name)').not('latitude', 'is', null).not('longitude', 'is', null);
       if (error) throw error;
-      return data;
+      return data as DbVendorLocation[];
     },
   });
 }

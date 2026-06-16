@@ -12,7 +12,7 @@ interface VerificationResult {
     line_items: { product_name: string; quantity: number; unit_price: number }[];
     total_value: number;
   };
-  mismatches: { field: string; booked: any; extracted: any }[];
+  mismatches: { field: string; booked: string | number; extracted: string | number }[];
   itemMismatches: {
     product: string;
     booked_qty: number | null;

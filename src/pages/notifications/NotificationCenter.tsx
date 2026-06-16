@@ -12,7 +12,9 @@ import { useNavigate } from 'react-router-dom';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 
-const typeIcons: Record<string, any> = {
+import type { LucideIcon } from 'lucide-react';
+
+const typeIcons: Record<string, LucideIcon> = {
   low_stock: Package, expiry: AlertTriangle, pending_return: Clock,
   attendance: Clock, payment: CreditCard, maintenance: Wrench, info: Bell,
 };
@@ -36,7 +38,7 @@ export default function NotificationCenter() {
   useRealtimeSubscription(['notifications']);
 
   // Send push for new notifications
-  const allNotifs = notifs as any[];
+  const allNotifs = notifs;
   useEffect(() => {
     if (pushEnabled && allNotifs.length > prevCountRef.current && prevCountRef.current > 0) {
       const newest = allNotifs[0];

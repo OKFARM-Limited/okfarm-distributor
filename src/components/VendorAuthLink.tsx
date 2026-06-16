@@ -35,7 +35,7 @@ export function VendorAuthLink({ vendorId, vendorName, authUserId, vendorEmail }
 
   if (user?.role !== 'admin') return null;
 
-  const call = async (body: any) => {
+  const call = async (body: Record<string, string>) => {
     setBusy(true);
     const { data, error } = await supabase.functions.invoke('admin-link-vendor', { body });
     setBusy(false);
@@ -101,7 +101,7 @@ export function VendorAuthLink({ vendorId, vendorName, authUserId, vendorEmail }
             <DialogTitle>Link Vendor to Portal Account</DialogTitle>
             <DialogDescription>Connect {vendorName} to a login account so they can access the vendor portal.</DialogDescription>
           </DialogHeader>
-          <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="link">Link Existing User</TabsTrigger>
               <TabsTrigger value="create">Create New</TabsTrigger>

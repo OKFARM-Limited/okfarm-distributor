@@ -33,8 +33,8 @@ export default function MobileMoneyPayment() {
   const { data: sales = [] } = useSales('all');
   const createPayment = useCreatePayment();
 
-  const vendor = (vendors as any[]).find(v => v.id === selectedVendor);
-  const vendorOutstanding = (sales as any[]).filter(s => s.vendor_id === selectedVendor).reduce((s, r) => s + Number(r.outstanding), 0);
+  const vendor = vendors.find(v => v.id === selectedVendor);
+  const vendorOutstanding = sales.filter(s => s.vendor_id === selectedVendor).reduce((s, r) => s + Number(r.outstanding), 0);
   const selectedProvider = providers.find(p => p.id === provider);
 
   const handleProceed = () => {
@@ -101,9 +101,9 @@ export default function MobileMoneyPayment() {
         <Card>
           <CardHeader><CardTitle className="text-base">Select Vendor</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <Select value={selectedVendor} onValueChange={v => { setSelectedVendor(v); const vd = (vendors as any[]).find(x => x.id === v); setPhoneNumber(vd?.mobile_money_number || ''); }}>
+            <Select value={selectedVendor} onValueChange={v => { setSelectedVendor(v); const vd = vendors.find(x => x.id === v); setPhoneNumber(vd?.mobile_money_number || ''); }}>
               <SelectTrigger><SelectValue placeholder="Choose vendor..." /></SelectTrigger>
-              <SelectContent>{(vendors as any[]).filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.vendor_code})</SelectItem>)}</SelectContent>
+              <SelectContent>{vendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.vendor_code})</SelectItem>)}</SelectContent>
             </Select>
             {vendor && (
               <div className="rounded-lg border p-3 space-y-1">

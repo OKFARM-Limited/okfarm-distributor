@@ -15,7 +15,15 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const navGroups = [
+import type { LucideIcon } from 'lucide-react';
+
+interface NavGroup {
+  labelKey: string;
+  adminOrManager?: boolean;
+  items: { titleKey: string; url: string; icon: LucideIcon }[];
+}
+
+const navGroups: NavGroup[] = [
   {
     labelKey: 'overview',
     items: [
@@ -124,7 +132,7 @@ export function AppSidebar() {
 
       <SidebarContent className="scrollbar-thin">
         {navGroups.map(group => {
-          if ((group as any).adminOrManager && !isAdmin && !isManager) return null;
+          if (group.adminOrManager && !isAdmin && !isManager) return null;
           return (
             <SidebarGroup key={group.labelKey}>
               <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>

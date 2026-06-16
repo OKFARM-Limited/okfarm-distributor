@@ -64,7 +64,7 @@ export default function OrderPlacement() {
       <h1 className="text-2xl font-bold flex items-center gap-2"><ShoppingCart className="h-6 w-6" /> Orders</h1>
 
       <Tabs defaultValue="new">
-        <TabsList><TabsTrigger value="new">New Order</TabsTrigger><TabsTrigger value="history">Order History ({(orders as any[]).length})</TabsTrigger></TabsList>
+        <TabsList><TabsTrigger value="new">New Order</TabsTrigger><TabsTrigger value="history">Order History ({orders.length})</TabsTrigger></TabsList>
 
         <TabsContent value="new">
           <Card>
@@ -115,7 +115,7 @@ export default function OrderPlacement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(orders as any[]).map(o => (
+                  {orders.map(o => (
                     <TableRow key={o.id}>
                       <TableCell>{o.order_date}</TableCell>
                       <TableCell>{o.outlets?.name || '—'}</TableCell>
@@ -142,7 +142,7 @@ export default function OrderPlacement() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(orders as any[]).length === 0 && (
+                  {orders.length === 0 && (
                     <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No orders yet.</TableCell></TableRow>
                   )}
                 </TableBody>

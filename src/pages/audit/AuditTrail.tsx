@@ -8,7 +8,7 @@ import { PaginationControls } from '@/components/PaginationControls';
 
 export default function AuditTrail() {
   const { data: logs = [], isLoading } = useAuditLogs();
-  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(logs as any[], 25);
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(logs, 25);
 
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 

@@ -41,14 +41,14 @@ export default function FanAcademy() {
   const isLoading = mLoading || pLoading || vLoading;
 
   // Use DB modules if available, else show defaults
-  const courses = (modules as any[]).length > 0 ? (modules as any[]).map(m => ({
+  const courses = modules.length > 0 ? modules.map(m => ({
     id: m.id, title: m.title, category: m.category, duration: m.duration, mandatory: m.mandatory, description: m.description,
   })) : defaultCourses.map((c, i) => ({ id: `default-${i}`, ...c }));
 
   // Build vendor progress from DB
-  const activeVendors = (vendors as any[]).filter(v => v.status === 'active').slice(0, 20);
+  const activeVendors = vendors.filter(v => v.status === 'active').slice(0, 20);
   const vendorTraining = activeVendors.map(v => {
-    const vProgress = (progress as any[]).filter(p => p.vendor_id === v.id);
+    const vProgress = progress.filter(p => p.vendor_id === v.id);
     const completed = vProgress.filter(p => p.status === 'completed').length;
     const total = courses.length || 1;
     return { vendor: v, progress: vProgress, completionRate: Math.round((completed / total) * 100) };

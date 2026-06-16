@@ -1,4 +1,4 @@
-import { useCommissions, useCreatePayout } from '@/hooks/useSupabaseData';
+import { useCommissions, useCreatePayout, type DbCommission } from '@/hooks/useSupabaseData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,13 @@ export default function PayoutTracking() {
   const { data: commissions = [], isLoading } = useCommissions('all');
   const createPayout = useCreatePayout();
   const { viewerProps } = useViewerGuard();
-  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(commissions as any[], 20);
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(commissions, 20);
 
-  const handleDisburse = (commission: Record<string, unknown>) => {
+  const handleDisburse = (commission: DbCommission) => {
     createPayout.mutate(
       {
-        commission_id: commission.id,
-        vendor_id: commission.vendor_id,
+        commission_id: commission.id as string,
+        vendor_id: commission.vendor_id as string,
         amount: Number(commission.total_commission),
         method: 'mobile_money',
         reference: `PAY-${Date.now().toString(36).toUpperCase()}`,

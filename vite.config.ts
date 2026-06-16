@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => ({
         name: 'OKFARM Distributor Manager',
         short_name: 'OKFARM',
         description: 'FanMilk Nigeria distributor management platform',
-        theme_color: '#1e40af',
+        theme_color: '#1a6fb5',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',

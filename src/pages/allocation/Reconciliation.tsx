@@ -31,8 +31,7 @@ export default function Reconciliation() {
 
   const handleReconcile = () => {
     if (!todayAlloc) return;
-    type AllocItem = { product_id: string; quantity: number; unit_price: number };
-    const items = ((todayAlloc as Record<string, unknown>).allocation_items as AllocItem[] | undefined)?.map((item) => {
+    const items = todayAlloc.allocation_items.map((item) => {
       const ret = returns[item.product_id] || 0;
       const sp = spoilage[item.product_id] || 0;
       const sold = item.quantity - ret - sp;
@@ -44,7 +43,7 @@ export default function Reconciliation() {
         sold_qty: sold,
         unit_price: Number(item.unit_price),
       };
-    }) || [];
+    });
 
     const totalSold = items.reduce((s, i) => s + i.sold_qty, 0);
     const totalReturned = items.reduce((s, i) => s + i.returned_qty, 0);
@@ -64,7 +63,7 @@ export default function Reconciliation() {
         status: 'completed',
         proof_photo_url: proofPhoto,
         items,
-      } as any,
+      },
       {
         onSuccess: () => {
           toast({ title: 'Reconciliation Saved', description: `Evening reconciliation for ${vendor?.name} completed.` });
@@ -104,7 +103,7 @@ export default function Reconciliation() {
             <Table>
               <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>Allocated</TableHead><TableHead>Returned</TableHead><TableHead>Spoilage</TableHead><TableHead>Sold</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
               <TableBody>
-                {((todayAlloc as Record<string, unknown>).allocation_items as Array<{ id: string; product_id: string; quantity: number; unit_price: number; products?: { name: string } }> | undefined)?.map((item) => {
+                {todayAlloc.allocation_items.map((item) => {
                   const ret = returns[item.product_id] || 0;
                   const sp = spoilage[item.product_id] || 0;
                   const sold = item.quantity - ret - sp;

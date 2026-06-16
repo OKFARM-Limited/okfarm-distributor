@@ -32,7 +32,7 @@ export default function IncentivePrograms() {
   const isLoading = pLoading || cLoading || vLoading;
 
   // Use DB programs if available, else show defaults
-  const displayPrograms = (programs as any[]).length > 0 ? (programs as any[]).map(p => ({
+  const displayPrograms = programs.length > 0 ? programs.map(p => ({
     name: p.name, description: p.description, icon: p.icon || '⭐',
     eligibility: p.eligibility_criteria, reward: p.reward, status: p.status,
   })) : defaultPrograms;
@@ -40,8 +40,8 @@ export default function IncentivePrograms() {
   const activePrograms = displayPrograms.filter(p => p.status === 'active').length;
 
   // Build vendor eligibility from commissions
-  const vendorEligibility = (commissions as any[]).slice(0, 20).map(c => {
-    const vendor = (vendors as any[]).find(v => v.id === c.vendor_id);
+  const vendorEligibility = commissions.slice(0, 20).map(c => {
+    const vendor = vendors.find(v => v.id === c.vendor_id);
     const eligible: string[] = [];
     if (c.tier === 'platinum' && Number(c.consistency_rate) >= 90) eligible.push('Right to Dream');
     if (['gold', 'platinum'].includes(c.tier)) eligible.push('Trade Premiums');

@@ -15,7 +15,7 @@ export default function PaymentTracking() {
   const { selectedOutletId, isAllOutlets, getOutletName } = useOutletContext();
   const { data: sales = [], isLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
 
-  const outstanding = (sales as any[]).filter(s => Number(s.outstanding) > 0);
+  const outstanding = sales.filter(s => Number(s.outstanding) > 0);
   const filtered = dateFilter ? outstanding.filter(s => s.date?.includes(dateFilter)) : outstanding;
   const totalDues = filtered.reduce((s, r) => s + Number(r.outstanding), 0);
   const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage, resetPage } = usePagination(filtered, 20);

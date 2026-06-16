@@ -1,8 +1,12 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 
 // ─── Credentials ─────────────────────────────────────────────────────
-const EMAIL = process.env.E2E_EMAIL || 'leonkouchica@gmail.com';
-const PASSWORD = process.env.E2E_PASSWORD || 'Adewale83@#';
+// Set E2E_EMAIL and E2E_PASSWORD in .env.test (see .env.test.example)
+const EMAIL = process.env.E2E_EMAIL;
+const PASSWORD = process.env.E2E_PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  throw new Error('E2E_EMAIL and E2E_PASSWORD must be set in environment. Copy .env.test.example → .env.test');
+}
 
 // ─── Shared context: login ONCE, reuse for all tests ─────────────────
 let context: BrowserContext;

@@ -110,7 +110,7 @@ export default function VendorDetail() {
       <VendorAuthLink
         vendorId={vendor.id}
         vendorName={vendor.name}
-        authUserId={(vendor as any).auth_user_id ?? null}
+        authUserId={vendor.auth_user_id ?? null}
         vendorEmail={vendor.email ?? null}
       />
 

@@ -20,8 +20,8 @@ export default function ForecastReorder() {
   const { viewerProps } = useViewerGuard();
 
   // If we have forecasts from DB, use them; otherwise compute from stock levels
-  const productStats = (forecasts as any[]).length > 0
-    ? (forecasts as any[]).map(f => ({
+  const productStats = forecasts.length > 0
+    ? forecasts.map(f => ({
         id: f.product_id,
         name: f.products?.name || 'Unknown',
         unit: f.products?.unit || 'pack',
@@ -32,7 +32,7 @@ export default function ForecastReorder() {
         suggestedOrder: f.suggested_order,
         minStock: 50,
       }))
-    : (stockLevels as any[]).map(s => {
+    : stockLevels.map(s => {
         const avgDaily = 10; // default estimate
         const daysLeft = avgDaily > 0 ? Math.floor(s.current_stock / avgDaily) : 999;
         return {

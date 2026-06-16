@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useInboundDeliveries, useUpdateDelivery, useStockLevels } from '@/hooks/useSupabaseData';
+import { useInboundDeliveries, useUpdateDelivery, useStockLevels, type DbDelivery } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,12 @@ import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
 import InvoiceVerificationDialog from '@/components/inventory/InvoiceVerificationDialog';
 
 export default function InventoryInbound() {
-  const [viewDelivery, setViewDelivery] = useState<any>(null);
+  const [viewDelivery, setViewDelivery] = useState<DbDelivery | null>(null);
   const [showNewDelivery, setShowNewDelivery] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
-  const [verificationResult, setVerificationResult] = useState<any>(null);
+  const [verificationResult, setVerificationResult] = useState<Record<string, unknown> | null>(null);
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [showVerification, setShowVerification] = useState(false);
@@ -32,9 +32,9 @@ export default function InventoryInbound() {
   const updateDelivery = useUpdateDelivery();
   const { viewerProps, isViewer } = useViewerGuard();
 
-  const totalStock = (stockLevels as any[]).reduce((s, l) => s + l.current_stock, 0);
-  const lowStockItems = (stockLevels as any[]).filter(s => s.current_stock <= s.min_stock);
-  const pendingDeliveries = (deliveries as any[]).filter(d => d.status === 'pending');
+  const totalStock = stockLevels.reduce((s, l) => s + l.current_stock, 0);
+  const lowStockItems = stockLevels.filter(s => s.current_stock <= s.min_stock);
+  const pendingDeliveries = deliveries.filter(d => d.status === 'pending');
 
   const markReceived = (id: string) => {
     updateDelivery.mutate(
@@ -90,12 +90,12 @@ export default function InventoryInbound() {
       toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached. Verifying...' });
 
       // Trigger AI verification
-      const delivery = (deliveries as any[]).find(d => d.id === uploadTargetId);
+      const delivery = deliveries.find(d => d.id === uploadTargetId);
       if (delivery) {
         runVerification(urlData.publicUrl, delivery);
       }
     } catch (err: unknown) {
-      toast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+      toast({ title: 'Upload failed', description: (err as Error).message, variant: 'destructive' });
     } finally {
       setUploading(null);
       setUploadTargetId(null);
@@ -103,7 +103,7 @@ export default function InventoryInbound() {
     }
   };
 
-  const runVerification = async (invoiceUrl: string, delivery: Record<string, unknown>) => {
+  const runVerification = async (invoiceUrl: string, delivery: DbDelivery) => {
     setVerificationResult(null);
     setVerificationError(null);
     setVerificationLoading(true);
@@ -114,7 +114,7 @@ export default function InventoryInbound() {
         invoice_number: delivery.invoice_number,
         supplier: delivery.supplier,
         total_value: Number(delivery.total_value),
-        items: (delivery.delivery_items || []).map((i) => ({
+        items: (delivery.delivery_items || []).map((i: DbDelivery['delivery_items'][number]) => ({
           product_name: i.products?.name || 'Unknown',
           quantity: i.quantity,
           unit_price: Number(i.unit_price),
@@ -130,7 +130,7 @@ export default function InventoryInbound() {
 
       setVerificationResult(data);
     } catch (err: unknown) {
-      setVerificationError(err.message || 'Verification failed');
+      setVerificationError((err as Error).message || 'Verification failed');
     } finally {
       setVerificationLoading(false);
     }
@@ -163,7 +163,7 @@ export default function InventoryInbound() {
         <Card><CardContent className="pt-4 text-center"><Package className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{totalStock}</p><p className="text-xs text-muted-foreground">Total Units in Stock</p></CardContent></Card>
         <Card><CardContent className="pt-4 text-center"><Truck className="h-5 w-5 mx-auto text-secondary mb-1" /><p className="text-2xl font-bold">{pendingDeliveries.length}</p><p className="text-xs text-muted-foreground">Pending Deliveries</p></CardContent></Card>
         <Card><CardContent className="pt-4 text-center"><AlertTriangle className="h-5 w-5 mx-auto text-destructive mb-1" /><p className="text-2xl font-bold">{lowStockItems.length}</p><p className="text-xs text-muted-foreground">Low Stock SKUs</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><CheckCircle className="h-5 w-5 mx-auto text-green-500 mb-1" /><p className="text-2xl font-bold">{(deliveries as any[]).filter(d => d.status === 'verified' || d.status === 'received').length}</p><p className="text-xs text-muted-foreground">Received</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><CheckCircle className="h-5 w-5 mx-auto text-green-500 mb-1" /><p className="text-2xl font-bold">{deliveries.filter(d => d.status === 'verified' || d.status === 'received').length}</p><p className="text-xs text-muted-foreground">Received</p></CardContent></Card>
       </div>
 
       <Tabs defaultValue="stock">
@@ -173,8 +173,8 @@ export default function InventoryInbound() {
           <Card>
             <CardHeader><CardTitle className="text-base">Net Stock Position</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {(stockLevels as any[]).length === 0 && <p className="text-center text-muted-foreground py-8">No stock data yet. Stock levels will appear here once populated.</p>}
-              {(stockLevels as any[]).map((s) => {
+              {stockLevels.length === 0 && <p className="text-center text-muted-foreground py-8">No stock data yet. Stock levels will appear here once populated.</p>}
+              {stockLevels.map((s) => {
                 const pct = Math.min((s.current_stock / s.max_stock) * 100, 100);
                 const isLow = s.current_stock <= s.min_stock;
                 return (
@@ -199,7 +199,7 @@ export default function InventoryInbound() {
                   <TableRow><TableHead>Date</TableHead><TableHead>Invoice</TableHead><TableHead>Supplier</TableHead><TableHead>Items</TableHead><TableHead>Total</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(deliveries as any[]).map(d => (
+                  {deliveries.map(d => (
                     <TableRow key={d.id}>
                       <TableCell>{d.date}</TableCell>
                       <TableCell className="text-muted-foreground">
@@ -230,7 +230,7 @@ export default function InventoryInbound() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(deliveries as any[]).length === 0 && (
+                  {deliveries.length === 0 && (
                     <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No deliveries recorded yet.</TableCell></TableRow>
                   )}
                 </TableBody>

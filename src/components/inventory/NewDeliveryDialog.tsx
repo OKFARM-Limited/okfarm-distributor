@@ -48,7 +48,7 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
     setItems(items.map((item, i) => {
       if (i !== idx) return item;
       if (field === 'product_id') {
-        const product = (products as any[]).find(p => p.id === value);
+        const product = products.find(p => p.id === value);
         return { ...item, product_id: value as string, unit_price: product?.unit_price || 0 };
       }
       return { ...item, [field]: Number(value) };
@@ -83,14 +83,14 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
           outlet_id: selectedOutletId && selectedOutletId !== 'all' ? selectedOutletId : null,
           status: 'pending',
           proof_photo_url: proofPhoto,
-        } as any,
+        } as Parameters<typeof createDelivery.mutateAsync>[0]['delivery'],
         items: validItems,
       });
       toast({ title: '✅ Delivery Created', description: `Invoice ${invoiceNumber} recorded.` });
       resetForm();
       onOpenChange(false);
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Error', description: (err as Error).message, variant: 'destructive' });
     }
   };
 
@@ -161,7 +161,7 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
                           <SelectValue placeholder="Select product" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(products as any[]).map(p => (
+                          {products.map(p => (
                             <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>
                           ))}
                         </SelectContent>
