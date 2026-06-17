@@ -77,11 +77,13 @@ export default function Reconciliation() {
   if (vLoading || aLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div>
-        <h1 className="text-2xl font-bold">Evening Reconciliation</h1>
-        {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Evening Reconciliation</h1>
+          <p className="text-muted-foreground text-sm">Reconcile vendor returns, spoilage and cash collected at end of day.</p>
+        </div>
       </div>
 
       <Card>

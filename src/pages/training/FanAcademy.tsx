@@ -60,23 +60,40 @@ export default function FanAcademy() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Fan Academy</h1>
-          <p className="text-muted-foreground">Vendor training & upskilling tracker</p>
+          <h1 className="text-2xl font-bold">Fan Academy</h1>
+          <p className="text-muted-foreground text-sm">Vendor training & upskilling tracker for continuous development.</p>
         </div>
-        <Button onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })} {...viewerProps}>
-          <GraduationCap className="h-4 w-4 mr-2" />Export Report
+        <Button variant="outline" size="sm" onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })} {...viewerProps}>
+          <GraduationCap className="h-4 w-4 mr-1.5" />Export Report
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-4 flex items-center gap-3"><BookOpen className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Total Courses</p><p className="text-xl font-bold">{courses.length}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Users className="h-8 w-8 text-blue-500" /><div><p className="text-xs text-muted-foreground">Vendors Enrolled</p><p className="text-xl font-bold">{vendorTraining.length}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Award className="h-8 w-8 text-yellow-500" /><div><p className="text-xs text-muted-foreground">Avg Completion</p><p className="text-xl font-bold">{avgCompletion}%</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><CheckCircle className="h-8 w-8 text-green-500" /><div><p className="text-xs text-muted-foreground">Fully Trained</p><p className="text-xl font-bold">{fullyTrained}</p></div></CardContent></Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-600 mb-2"><BookOpen className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Total Courses</p>
+          <p className="font-bold text-xl">{courses.length}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 mb-2"><Users className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Vendors Enrolled</p>
+          <p className="font-bold text-xl">{vendorTraining.length}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-50 text-amber-600 mb-2"><Award className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Avg Completion</p>
+          <p className="font-bold text-xl">{avgCompletion}%</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 text-purple-600 mb-2"><CheckCircle className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Fully Trained</p>
+          <p className="font-bold text-xl">{fullyTrained}</p>
+        </CardContent></Card>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

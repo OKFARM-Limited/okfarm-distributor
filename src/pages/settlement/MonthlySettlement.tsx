@@ -81,15 +81,16 @@ export default function MonthlySettlement() {
   const statusVariant: Record<string, 'default' | 'secondary' | 'destructive'> = { paid: 'default', due: 'secondary', overdue: 'destructive', partial: 'secondary' };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Monthly Settlement</h1>
-          <p className="text-muted-foreground">{latest ? `${latest.month} — ${latest.outlets?.name || 'All Outlets'}` : 'No settlement data yet'}</p>
+          <h1 className="text-2xl font-bold">Monthly Settlement</h1>
+          <p className="text-muted-foreground text-sm">Manage supplier settlements, track receivables and monitor payment progress.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => {
+          <Button variant="outline" size="sm" onClick={() => {
             if (!latest) return;
             generatePDFReport({
               title: 'Monthly Settlement Report',

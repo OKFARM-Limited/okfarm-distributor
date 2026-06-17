@@ -2,7 +2,8 @@ import {
   Users, Package, ClipboardList, BarChart3, DollarSign, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
   Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
-  Building2, GraduationCap, Gift, Handshake, Store, UserCog, Grid3X3, RefreshCw, Upload, User as UserIcon, BellRing
+  Building2, GraduationCap, Gift, Handshake, Store, UserCog, Grid3X3, RefreshCw, Upload, User as UserIcon, BellRing,
+  ChevronDown
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -110,22 +111,25 @@ export function AppSidebar() {
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'manager';
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         {!collapsed ? (
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-              OK
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white font-bold text-base shadow-lg shadow-blue-500/20">
+              D
             </div>
             <div>
-              <p className="text-sm font-semibold text-sidebar-foreground">OKFARM</p>
-              <p className="text-xs text-sidebar-foreground/60">Distributor Manager</p>
+              <p className="text-base font-bold text-sidebar-foreground tracking-tight">Distribo</p>
             </div>
           </div>
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm mx-auto">
-            OK
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white font-bold text-base mx-auto shadow-lg shadow-blue-500/20">
+            D
           </div>
         )}
       </SidebarHeader>
@@ -135,22 +139,34 @@ export function AppSidebar() {
           if (group.adminOrManager && !isAdmin && !isManager) return null;
           return (
             <SidebarGroup key={group.labelKey}>
-              <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] font-semibold tracking-wider">{t(group.labelKey)}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map(item => (
-                    <SidebarMenuItem key={item.url}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={location.pathname === item.url || (item.url !== '/' && location.pathname.startsWith(item.url))}
-                      >
-                        <NavLink to={item.url} end={item.url === '/'} className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                          <item.icon className="h-4 w-4" />
-                          {!collapsed && <span>{t(item.titleKey)}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {group.items.map(item => {
+                    const isActive = location.pathname === item.url || (item.url !== '/' && location.pathname.startsWith(item.url));
+                    return (
+                      <SidebarMenuItem key={item.url}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                        >
+                          <NavLink
+                            to={item.url}
+                            end={item.url === '/'}
+                            className={`transition-all duration-200 rounded-lg ${
+                              isActive
+                                ? 'bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-md shadow-sidebar-primary/20'
+                                : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+                            }`}
+                            activeClassName="bg-sidebar-primary text-sidebar-primary-foreground font-medium"
+                          >
+                            <item.icon className="h-4 w-4" />
+                            {!collapsed && <span>{t(item.titleKey)}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -160,16 +176,21 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
         {user && (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
+          <div className="flex items-center gap-2 rounded-lg p-2 hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
+            <Avatar className="h-8 w-8 bg-sidebar-primary text-sidebar-primary-foreground">
               <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.name[0]}</AvatarFallback>
+              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                {getInitials(user.name)}
+              </AvatarFallback>
             </Avatar>
             {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate text-sidebar-foreground">{user.name}</p>
-                <p className="text-xs text-sidebar-foreground/60 capitalize">{user.role}</p>
-              </div>
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate text-sidebar-foreground">{user.name}</p>
+                  <p className="text-[10px] text-sidebar-foreground/60 capitalize">{user.role === 'admin' ? 'Super Admin' : user.role}</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-sidebar-foreground/50 shrink-0" />
+              </>
             )}
           </div>
         )}

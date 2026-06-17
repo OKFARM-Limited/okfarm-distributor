@@ -60,8 +60,13 @@ export default function OrderPlacement() {
   if (pLoading || oLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <h1 className="text-2xl font-bold flex items-center gap-2"><ShoppingCart className="h-6 w-6" /> Orders</h1>
+    <div className="space-y-5 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Orders</h1>
+          <p className="text-muted-foreground text-sm">Place new depot orders and track order history and delivery status.</p>
+        </div>
+      </div>
 
       <Tabs defaultValue="new">
         <TabsList><TabsTrigger value="new">New Order</TabsTrigger><TabsTrigger value="history">Order History ({orders.length})</TabsTrigger></TabsList>

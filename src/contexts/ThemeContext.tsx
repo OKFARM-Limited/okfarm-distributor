@@ -9,13 +9,13 @@ const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void }>({
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('okfarm_theme');
+    const saved = localStorage.getItem('distribo_theme');
     return (saved as Theme) || 'light';
   });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('okfarm_theme', theme);
+    localStorage.setItem('distribo_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(t => (t === 'light' ? 'dark' : 'light'));

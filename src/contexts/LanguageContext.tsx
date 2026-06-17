@@ -13,12 +13,12 @@ const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    return (localStorage.getItem('okfarm_lang') as Language) || 'en';
+    return (localStorage.getItem('distribo_lang') as Language) || 'en';
   });
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('okfarm_lang', lang);
+    localStorage.setItem('distribo_lang', lang);
   }, []);
 
   const t = useCallback((key: string) => {

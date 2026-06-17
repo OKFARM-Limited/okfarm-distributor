@@ -2,10 +2,9 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { Bell, Moon, Sun, Search, LogOut, MapPin } from 'lucide-react';
+import { Bell, Moon, Sun, LogOut, Calendar, ChevronDown } from 'lucide-react';
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -19,76 +18,75 @@ import { toast } from '@/hooks/use-toast';
 export function TopBar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { selectedOutletId, setSelectedOutletId, selectedOutlet, allOutlets, isAllOutlets } = useOutletContext();
+  const { selectedOutletId, setSelectedOutletId, allOutlets } = useOutletContext();
   const navigate = useNavigate();
 
   const handleNotification = () => {
-    toast({
-      title: '⚠️ Low Stock Alert',
-      description: `FanYogo Strawberry is running low at ${selectedOutlet?.name || 'multiple outlets'}. 15 packs remaining.`,
-    });
+    navigate('/notifications');
   };
 
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const today = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 backdrop-blur px-4">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/95 backdrop-blur px-4">
       <SidebarTrigger className="shrink-0" />
 
-      {/* Outlet Selector */}
-      <div className="flex items-center gap-2">
-        <MapPin className="h-4 w-4 text-primary shrink-0" />
-        <Select value={selectedOutletId} onValueChange={setSelectedOutletId}>
-          <SelectTrigger className="h-9 w-[180px] md:w-[200px] text-sm font-medium border-primary/30">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Outlets (Overview)</SelectItem>
-            {allOutlets.map(o => (
-              <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Date Display */}
+      <div className="hidden md:flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm text-muted-foreground">
+        <Calendar className="h-4 w-4 text-muted-foreground/70" />
+        <span className="font-medium text-foreground">{today}</span>
+        <ChevronDown className="h-3.5 w-3.5" />
       </div>
 
-      <div className="hidden md:flex flex-1 max-w-md">
-        <div className="relative w-full">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={`Search${!isAllOutlets ? ` in ${selectedOutlet?.short_code}` : ''}...`} className="pl-9 h-9 bg-muted/50" />
-        </div>
-      </div>
+      {/* Outlet Selector */}
+      <Select value={selectedOutletId} onValueChange={setSelectedOutletId}>
+        <SelectTrigger className="h-9 w-[160px] md:w-[180px] text-sm font-medium">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Outlets</SelectItem>
+          {allOutlets.map(o => (
+            <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <div className="flex-1" />
 
-      {/* Current Outlet Badge */}
-      {!isAllOutlets && selectedOutlet && (
-        <Badge variant="outline" className="hidden lg:flex items-center gap-1 text-xs border-primary/30 text-primary">
-          <MapPin className="h-3 w-3" />
-          {selectedOutlet.short_code}
-        </Badge>
-      )}
-
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <OfflineIndicator />
-
-        <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={handleNotification}>
-          <Bell className="h-4 w-4" />
-          <Badge className="absolute -top-0.5 -right-0.5 h-4 w-4 p-0 flex items-center justify-center text-[10px] bg-destructive text-destructive-foreground">
-            3
-          </Badge>
-        </Button>
 
         <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
 
+        {/* Notification Bell */}
+        <Button variant="ghost" size="icon" className="h-9 w-9 relative" onClick={handleNotification}>
+          <Bell className="h-4 w-4" />
+          <Badge className="absolute -top-0.5 -right-0.5 h-4 min-w-4 p-0 flex items-center justify-center text-[10px] bg-destructive text-destructive-foreground rounded-full">
+            3
+          </Badge>
+        </Button>
+
+        {/* User Avatar */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-9 gap-2 px-2">
-                <Avatar className="h-7 w-7">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full p-0 ml-1">
+                <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
                   <AvatarImage src={user.avatar} />
-                  <AvatarFallback>{user.name[0]}</AvatarFallback>
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="hidden md:inline text-sm">{user.name.split(' ')[0]}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">

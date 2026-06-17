@@ -54,17 +54,32 @@ export default function IncentivePrograms() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Incentive Programs</h1>
-        <p className="text-muted-foreground">Rewards, trade premiums & vendor advancement opportunities</p>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Incentive Programs</h1>
+          <p className="text-muted-foreground text-sm">Rewards, trade premiums & vendor advancement opportunities.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Award className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Active Programs</p><p className="text-xl font-bold">{activePrograms}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Trophy className="h-8 w-8 text-yellow-500" /><div><p className="text-xs text-muted-foreground">Eligible Vendors</p><p className="text-xl font-bold">{totalEligible}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Star className="h-8 w-8 text-orange-500" /><div><p className="text-xs text-muted-foreground">Right to Dream Candidates</p><p className="text-xl font-bold">{vendorEligibility.filter(ve => ve.eligible.includes('Right to Dream')).length}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-600 mb-2"><Award className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Active Programs</p>
+          <p className="font-bold text-xl">{activePrograms}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-50 text-amber-600 mb-2"><Trophy className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Eligible Vendors</p>
+          <p className="font-bold text-xl">{totalEligible}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 text-purple-600 mb-2"><Star className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Right to Dream Candidates</p>
+          <p className="font-bold text-xl">{vendorEligibility.filter(ve => ve.eligible.includes('Right to Dream')).length}</p>
+        </CardContent></Card>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

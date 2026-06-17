@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const VAPID_PUBLIC_KEY_STORAGE = 'okfarm_push_enabled';
+const VAPID_PUBLIC_KEY_STORAGE = 'distribo_push_enabled';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);

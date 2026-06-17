@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProducts, useUpsertProduct, useDeleteProduct } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,9 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Package, Loader2 } from 'lucide-react';
+import {
+  Plus, Pencil, Trash2, Package, Loader2, Search, Filter, Download,
+  DollarSign, BarChart3, Tag, MoreHorizontal, ChevronLeft, ChevronRight
+} from 'lucide-react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { usePagination } from '@/hooks/usePagination';
 
 const CATEGORIES = ['Yogurt', 'Ice Cream', 'Popsicle', 'Juice', 'Milk'];
 const UNITS = ['pack', 'box', 'carton', 'piece', 'sachet'];
@@ -32,6 +36,8 @@ export default function ProductManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const { data: products = [], isLoading } = useProducts();
   const { viewerProps } = useViewerGuard();
   const upsertProduct = useUpsertProduct();
@@ -64,47 +70,136 @@ export default function ProductManagement() {
     });
   };
 
+  // Filter products
+  const filtered = useMemo(() => {
+    return products.filter(p => {
+      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
+      const matchCategory = categoryFilter === 'all' || p.category === categoryFilter;
+      return matchSearch && matchCategory;
+    });
+  }, [products, search, categoryFilter]);
+
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(filtered, 10);
+
+  // KPIs
+  const kpis = useMemo(() => {
+    const total = products.length;
+    const categories = [...new Set(products.map(p => p.category))].length;
+    const avgPrice = total > 0 ? products.reduce((s, p) => s + Number(p.unit_price), 0) / total : 0;
+    const highestPrice = products.reduce((max, p) => Math.max(max, Number(p.unit_price)), 0);
+    return { total, categories, avgPrice, highestPrice };
+  }, [products]);
+
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
+  const kpiCards = [
+    { label: 'Total Products', value: kpis.total.toString(), icon: Package, color: 'bg-blue-50 text-blue-600' },
+    { label: 'Categories', value: kpis.categories.toString(), icon: Tag, color: 'bg-emerald-50 text-emerald-600' },
+    { label: 'Avg. Price', value: `₦${Math.round(kpis.avgPrice).toLocaleString()}`, icon: DollarSign, color: 'bg-amber-50 text-amber-600' },
+    { label: 'Highest Price', value: `₦${kpis.highestPrice.toLocaleString()}`, icon: BarChart3, color: 'bg-purple-50 text-purple-600' },
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Package className="h-6 w-6" /> Product Management</h1>
-        <Button onClick={openNew} className="gap-1" {...viewerProps}><Plus className="h-4 w-4" /> Add Product</Button>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Products</h1>
+          <p className="text-muted-foreground text-sm">Manage your product catalog, pricing and SKU information.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export</Button>
+          <Button size="sm" onClick={openNew} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Product</Button>
+        </div>
       </div>
 
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpiCards.map(kpi => (
+          <Card key={kpi.label}>
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className={`inline-flex items-center justify-center h-10 w-10 rounded-full ${kpi.color} mb-2`}><kpi.icon className="h-5 w-5" /></div>
+              <p className="text-xs text-muted-foreground">{kpi.label}</p>
+              <p className="font-bold text-xl">{kpi.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Search & Filters */}
+      <Card>
+        <CardContent className="py-3 px-4">
+          <div className="flex flex-col lg:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search products by name or SKU..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="All Categories" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" className="shrink-0"><Filter className="h-4 w-4" /></Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Product Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"><input type="checkbox" className="rounded" /></TableHead>
+                <TableHead>Product</TableHead>
                 <TableHead>SKU</TableHead>
-                <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Unit</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead className="text-right">Price (₦)</TableHead>
                 <TableHead>Barcode</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.map(p => (
+              {paginatedItems.map(p => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell><Badge variant="outline">{p.category}</Badge></TableCell>
-                  <TableCell>{p.unit}</TableCell>
-                  <TableCell>₦{Number(p.unit_price).toLocaleString()}</TableCell>
+                  <TableCell onClick={e => e.stopPropagation()}><input type="checkbox" className="rounded" /></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>
+                      <span className="font-medium text-sm">{p.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{p.sku}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{p.category}</Badge></TableCell>
+                  <TableCell className="text-sm capitalize">{p.unit}</TableCell>
+                  <TableCell className="text-right text-sm font-medium">₦{Number(p.unit_price).toLocaleString()}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{p.barcode || '—'}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(p.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
+              {paginatedItems.length === 0 && (
+                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No products found.</TableCell></TableRow>
+              )}
             </TableBody>
           </Table>
+          <div className="flex items-center justify-between px-4 py-2.5 border-t text-sm text-muted-foreground">
+            <span>Showing {Math.min(((currentPage - 1) * 10) + 1, totalItems)} to {Math.min(currentPage * 10, totalItems)} of {totalItems} products</span>
+            <div className="flex gap-1">
+              <Button variant="outline" size="icon" className="h-7 w-7" disabled={!hasPrevPage} onClick={() => goToPage(currentPage - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+              {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
+                <Button key={i + 1} variant={currentPage === i + 1 ? 'default' : 'outline'} size="icon" className="h-7 w-7" onClick={() => goToPage(i + 1)}>{i + 1}</Button>
+              ))}
+              <Button variant="outline" size="icon" className="h-7 w-7" disabled={!hasNextPage} onClick={() => goToPage(currentPage + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

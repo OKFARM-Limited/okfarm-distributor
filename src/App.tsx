@@ -11,6 +11,7 @@ import { OutletProvider } from "./contexts/OutletContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AppLayout } from "./components/layout/AppLayout";
 import Login from "./pages/Login";
+import PasswordRecovery from "./pages/PasswordRecovery";
 import { Loader2 } from "lucide-react";
 
 // Route-based code splitting — lazy-load all pages except Login (auth critical path)
@@ -85,6 +86,7 @@ function AppRoutes() {
     <Suspense fallback={<LazyFallback />}>
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/password-recovery" element={<PasswordRecovery />} />
       <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="vendors" element={<VendorList />} />

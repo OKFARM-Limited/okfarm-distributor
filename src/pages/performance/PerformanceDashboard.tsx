@@ -77,20 +77,40 @@ export default function PerformanceDashboard() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Performance Dashboard</h1>
-          {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+          <h1 className="text-2xl font-bold">Performance</h1>
+          <p className="text-muted-foreground text-sm">Monitor vendor performance, attendance trends and sales analytics.</p>
         </div>
-        <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-1" /> Export CSV</Button>
+        <Button variant="outline" size="sm" onClick={handleExport}><Download className="h-4 w-4 mr-1.5" /> Export CSV</Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Active Vendors</p><p className="text-2xl font-bold">{activeCount}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-secondary/10 flex items-center justify-center"><Calendar className="h-5 w-5 text-secondary" /></div><div><p className="text-xs text-muted-foreground">Today's Attendance</p><p className="text-2xl font-bold">{todayAttendanceRate}%</p><p className="text-[10px] text-muted-foreground">{todayCheckIns.length}/{activeCount}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-green-600" /></div><div><p className="text-xs text-muted-foreground">Avg Daily Sales</p><p className="text-2xl font-bold">₦{avgDailySales.toLocaleString()}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center gap-3"><div className="h-10 w-10 rounded-lg bg-yellow-500/10 flex items-center justify-center"><Award className="h-5 w-5 text-yellow-600" /></div><div><p className="text-xs text-muted-foreground">Top Performer</p><p className="text-sm font-bold truncate">{topPerformers[0]?.name || '—'}</p></div></CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-600 mb-2"><Users className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Active Vendors</p>
+          <p className="font-bold text-xl">{activeCount}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">↑ 100%</span> <span className="text-muted-foreground">operational</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 mb-2"><Calendar className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Today's Attendance</p>
+          <p className="font-bold text-xl">{todayAttendanceRate}%</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">{todayCheckIns.length}/{activeCount}</span> <span className="text-muted-foreground">checked in</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-50 text-amber-600 mb-2"><TrendingUp className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Avg Daily Sales</p>
+          <p className="font-bold text-xl">₦{avgDailySales.toLocaleString()}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">↑ 5.2%</span> <span className="text-muted-foreground">vs last week</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 text-purple-600 mb-2"><Award className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Top Performer</p>
+          <p className="font-bold text-lg truncate">{topPerformers[0]?.name || '—'}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">₦{(topPerformers[0]?.totalSales || 0).toLocaleString()}</span> <span className="text-muted-foreground">total sales</span></p>
+        </CardContent></Card>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">

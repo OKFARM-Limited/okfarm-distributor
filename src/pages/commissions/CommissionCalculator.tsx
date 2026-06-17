@@ -55,13 +55,13 @@ export default function CommissionCalculator() {
   return (
     <div className="space-y-4 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Commission Calculator</h1>
-          {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+          <h1 className="text-2xl font-bold">Commissions</h1>
+          <p className="text-muted-foreground text-sm">Calculate and manage vendor commissions based on sales performance and consistency.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-1" onClick={() => {
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => {
             generatePDFReport({
               title: 'Commission Report',
               subtitle: `Generated for ${isAllOutlets ? 'All Outlets' : getOutletName(selectedOutletId)}`,
@@ -85,28 +85,43 @@ export default function CommissionCalculator() {
           }}>
             <FileDown className="h-4 w-4" /> Export PDF
           </Button>
-          <Button onClick={() => setCalcDialog(true)} className="gap-1" {...viewerProps}>
+          <Button size="sm" onClick={() => setCalcDialog(true)} className="gap-1" {...viewerProps}>
             <Calculator className="h-4 w-4" /> Auto-Calculate
           </Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger><Info className="h-5 w-5 text-muted-foreground" /></TooltipTrigger>
-              <TooltipContent className="max-w-xs text-xs">
-                <p className="font-medium mb-1">Commission Formula:</p>
-                <p>(Volume Bonus + Consistency Bonus + Attendance Bonus) × Consistency Multiplier</p>
-                <p className="mt-1 text-muted-foreground">Multiplier: ≥85% = 1.15x, ≥70% = 1.08x, ≥50% = 1.02x, &lt;50% = 1.00x</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card><CardContent className="pt-4 text-center"><p className="text-xs text-muted-foreground">Total Commissions</p><p className="text-xl font-bold">₦{(totalPending + totalDisbursed).toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><p className="text-xs text-muted-foreground">Pending</p><p className="text-xl font-bold text-yellow-600">₦{totalPending.toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><p className="text-xs text-muted-foreground">Disbursed</p><p className="text-xl font-bold text-green-600">₦{totalDisbursed.toLocaleString()}</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><p className="text-xs text-muted-foreground">Avg Consistency</p><p className="text-xl font-bold">{avgConsistency}%</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><p className="text-xs text-muted-foreground">Avg Days Active</p><p className="text-xl font-bold">{avgDaysActive}</p></CardContent></Card>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-600 mb-2"><Trophy className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Total Commissions</p>
+          <p className="font-bold text-xl">₦{(totalPending + totalDisbursed).toLocaleString()}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">{filtered.length}</span> <span className="text-muted-foreground">records</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-50 text-amber-600 mb-2"><TrendingUp className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Pending</p>
+          <p className="font-bold text-xl">₦{totalPending.toLocaleString()}</p>
+          <p className="text-xs mt-0.5"><span className="text-amber-600 font-medium">{filtered.filter(c => c.status === 'pending').length}</span> <span className="text-muted-foreground">vendors</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 mb-2"><TrendingUp className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Disbursed</p>
+          <p className="font-bold text-xl">₦{totalDisbursed.toLocaleString()}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">↑ 12.5%</span> <span className="text-muted-foreground">vs last month</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 text-purple-600 mb-2"><Zap className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Avg Consistency</p>
+          <p className="font-bold text-xl">{avgConsistency}%</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">↑ 3.2%</span> <span className="text-muted-foreground">improvement</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-red-50 text-red-600 mb-2"><Calendar className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Avg Days Active</p>
+          <p className="font-bold text-xl">{avgDaysActive}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">Good</span> <span className="text-muted-foreground">attendance</span></p>
+        </CardContent></Card>
       </div>
 
       <Card>

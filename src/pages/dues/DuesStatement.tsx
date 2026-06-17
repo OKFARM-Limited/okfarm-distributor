@@ -32,7 +32,7 @@ export default function DuesStatement() {
     printWindow.document.write(`
       <html><head><title>Dues Statement - ${vendor?.name}</title>
       <style>body{font-family:Arial,sans-serif;padding:20px;color:#333}h1{font-size:20px}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:13px}th{background:#f5f5f5;font-weight:600}.summary{display:flex;gap:20px;margin:16px 0}.summary-item{padding:12px;border:1px solid #ddd;border-radius:6px;flex:1;text-align:center}.outstanding{color:#dc2626;font-weight:600}.footer{margin-top:40px;font-size:11px;color:#999;text-align:center}</style></head><body>
-        <h1>OKFARM — Dues Statement</h1>
+        <h1>Distribo — Dues Statement</h1>
         <p><strong>${vendor?.name}</strong> (${vendor?.vendor_code}) | ${vendor?.territory} | ${vendor?.phone}</p>
         <p>Generated: ${new Date().toLocaleDateString()}</p>
         <div class="summary">
@@ -43,7 +43,7 @@ export default function DuesStatement() {
         </div>
         <table><thead><tr><th>Date</th><th>Total Value</th><th>Paid</th><th>Outstanding</th><th>Method</th></tr></thead>
         <tbody>${vendorSales.map(s => `<tr><td>${s.date}</td><td>₦${Number(s.total_value).toLocaleString()}</td><td>₦${Number(s.amount_paid).toLocaleString()}</td><td class="${Number(s.outstanding) > 0 ? 'outstanding' : ''}">₦${Number(s.outstanding).toLocaleString()}</td><td>${s.payment_method}</td></tr>`).join('')}</tbody></table>
-        <div class="footer">Computer-generated statement from OKFARM Distributor Manager.</div>
+        <div class="footer">Computer-generated statement from Distribo.</div>
       </body></html>`);
     printWindow.document.close();
     printWindow.print();
@@ -52,11 +52,14 @@ export default function DuesStatement() {
   if (vLoading || sLoading || aLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><FileText className="h-6 w-6" /> Dues Statement</h1>
-        <Button onClick={handlePrint} disabled={!selectedVendor} className="gap-1" {...viewerProps}><Printer className="h-4 w-4" /> Print / PDF</Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Dues Statement</h1>
+          <p className="text-muted-foreground text-sm">Generate and review vendor dues statements and outstanding balances.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handlePrint} disabled={!selectedVendor} className="gap-1" {...viewerProps}><Printer className="h-4 w-4" /> Print / PDF</Button>
       </div>
 
       <Select value={selectedVendor} onValueChange={setSelectedVendor}>

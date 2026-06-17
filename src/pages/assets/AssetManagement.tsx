@@ -80,21 +80,28 @@ export default function AssetManagement() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div>
-        <h1 className="text-2xl font-bold">Asset Management</h1>
-        {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Assets</h1>
+          <p className="text-muted-foreground text-sm">Manage distribution assets, assignments and maintenance schedules.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Assets', value: stats.total, color: 'text-primary' },
-          { label: 'Available', value: stats.available, color: 'text-primary' },
-          { label: 'Assigned', value: stats.assigned, color: 'text-primary' },
-          { label: 'Maintenance', value: stats.maintenance, color: 'text-primary' },
+          { label: 'Total Assets', value: stats.total, color: 'bg-blue-50 text-blue-600', icon: Package },
+          { label: 'Available', value: stats.available, color: 'bg-emerald-50 text-emerald-600', icon: Package },
+          { label: 'Assigned', value: stats.assigned, color: 'bg-amber-50 text-amber-600', icon: Bike },
+          { label: 'In Maintenance', value: stats.maintenance, color: 'bg-red-50 text-red-600', icon: Wrench },
         ].map(s => (
-          <Card key={s.label}><CardContent className="pt-4 text-center"><p className="text-xs text-muted-foreground">{s.label}</p><p className={`text-2xl font-bold ${s.color}`}>{s.value}</p></CardContent></Card>
+          <Card key={s.label}><CardContent className="pt-4 pb-3 px-4">
+            <div className={`inline-flex items-center justify-center h-10 w-10 rounded-full ${s.color} mb-2`}><s.icon className="h-5 w-5" /></div>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+            <p className="font-bold text-xl">{s.value}</p>
+          </CardContent></Card>
         ))}
       </div>
 

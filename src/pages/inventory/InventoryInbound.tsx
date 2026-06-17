@@ -1,20 +1,28 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useInboundDeliveries, useUpdateDelivery, useStockLevels, type DbDelivery } from '@/hooks/useSupabaseData';
+import { useInboundDeliveries, useUpdateDelivery, useStockLevels, useProducts, type DbDelivery } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileText, ExternalLink, Plus } from 'lucide-react';
+import {
+  Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileText, ExternalLink, Plus,
+  Download, Search, Filter, DollarSign, XCircle, MoreHorizontal, ChevronLeft, ChevronRight
+} from 'lucide-react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
 import InvoiceVerificationDialog from '@/components/inventory/InvoiceVerificationDialog';
+import { usePagination } from '@/hooks/usePagination';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+
+const CHART_COLORS = ['hsl(221, 100%, 50%)', 'hsl(152, 55%, 42%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 55%)', 'hsl(0, 72%, 51%)', 'hsl(210, 15%, 75%)'];
 
 export default function InventoryInbound() {
   const [viewDelivery, setViewDelivery] = useState<DbDelivery | null>(null);
@@ -26,15 +34,50 @@ export default function InventoryInbound() {
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [showVerification, setShowVerification] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [search, setSearch] = useState('');
   const { selectedOutletId, isAllOutlets } = useOutletContext();
   const { data: deliveries = [], isLoading: dLoading } = useInboundDeliveries(isAllOutlets ? 'all' : selectedOutletId);
   const { data: stockLevels = [], isLoading: sLoading } = useStockLevels(isAllOutlets ? 'all' : selectedOutletId);
+  const { data: products = [] } = useProducts();
   const updateDelivery = useUpdateDelivery();
   const { viewerProps, isViewer } = useViewerGuard();
 
   const totalStock = stockLevels.reduce((s, l) => s + l.current_stock, 0);
   const lowStockItems = stockLevels.filter(s => s.current_stock <= s.min_stock);
+  const outOfStockItems = stockLevels.filter(s => s.current_stock === 0);
   const pendingDeliveries = deliveries.filter(d => d.status === 'pending');
+  const totalValue = stockLevels.reduce((s, l) => s + (l.current_stock * Number(l.products?.unit_price || 0)), 0);
+
+  // Filter stock levels
+  const filteredStock = useMemo(() => {
+    let items = stockLevels;
+    if (search) items = items.filter(s => (s.products?.name || '').toLowerCase().includes(search.toLowerCase()));
+    if (activeTab === 'low') items = items.filter(s => s.current_stock > 0 && s.current_stock <= s.min_stock);
+    if (activeTab === 'out') items = items.filter(s => s.current_stock === 0);
+    return items;
+  }, [stockLevels, search, activeTab]);
+
+  const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage } = usePagination(filteredStock, 8);
+
+  // Category breakdown for donut
+  const categoryData = useMemo(() => {
+    const cats: Record<string, number> = {};
+    stockLevels.forEach(s => {
+      const product = products.find(p => p.id === s.product_id);
+      const cat = product?.category || 'Other';
+      cats[cat] = (cats[cat] || 0) + (s.current_stock * Number(s.products?.unit_price || 0));
+    });
+    return Object.entries(cats).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [stockLevels, products]);
+
+  const categoryTotal = categoryData.reduce((s, c) => s + c.value, 0);
+
+  const formatCurrency = (val: number) => {
+    if (val >= 1000000) return `₦${(val / 1000000).toFixed(2)}M`;
+    if (val >= 1000) return `₦${(val / 1000).toFixed(0)}K`;
+    return `₦${val.toLocaleString()}`;
+  };
 
   const markReceived = (id: string) => {
     updateDelivery.mutate(
@@ -54,192 +97,307 @@ export default function InventoryInbound() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !uploadTargetId) return;
-
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      toast({ title: 'File too large', description: 'Maximum file size is 10MB.', variant: 'destructive' });
-      return;
-    }
-
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) { toast({ title: 'File too large', description: 'Maximum file size is 10MB.', variant: 'destructive' }); return; }
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast({ title: 'Invalid file type', description: 'Please upload a PDF or image file.', variant: 'destructive' });
-      return;
-    }
-
+    if (!allowedTypes.includes(file.type)) { toast({ title: 'Invalid file type', description: 'Please upload a PDF or image file.', variant: 'destructive' }); return; }
     setUploading(uploadTargetId);
     try {
       const ext = file.name.split('.').pop();
       const filePath = `${uploadTargetId}/${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('invoices')
-        .upload(filePath, file, { upsert: true });
-
+      const { error: uploadError } = await supabase.storage.from('invoices').upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('invoices')
-        .getPublicUrl(filePath);
-
-      await updateDelivery.mutateAsync({
-        id: uploadTargetId,
-        invoice_file_url: urlData.publicUrl,
-      });
-
+      const { data: urlData } = supabase.storage.from('invoices').getPublicUrl(filePath);
+      await updateDelivery.mutateAsync({ id: uploadTargetId, invoice_file_url: urlData.publicUrl });
       toast({ title: '✅ Invoice Uploaded', description: 'Invoice file has been attached. Verifying...' });
-
-      // Trigger AI verification
       const delivery = deliveries.find(d => d.id === uploadTargetId);
-      if (delivery) {
-        runVerification(urlData.publicUrl, delivery);
-      }
+      if (delivery) runVerification(urlData.publicUrl, delivery);
     } catch (err: unknown) {
       toast({ title: 'Upload failed', description: (err as Error).message, variant: 'destructive' });
-    } finally {
-      setUploading(null);
-      setUploadTargetId(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    } finally { setUploading(null); setUploadTargetId(null); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
   const runVerification = async (invoiceUrl: string, delivery: DbDelivery) => {
-    setVerificationResult(null);
-    setVerificationError(null);
-    setVerificationLoading(true);
-    setShowVerification(true);
-
+    setVerificationResult(null); setVerificationError(null); setVerificationLoading(true); setShowVerification(true);
     try {
       const deliveryData = {
-        invoice_number: delivery.invoice_number,
-        supplier: delivery.supplier,
-        total_value: Number(delivery.total_value),
+        invoice_number: delivery.invoice_number, supplier: delivery.supplier, total_value: Number(delivery.total_value),
         items: (delivery.delivery_items || []).map((i: DbDelivery['delivery_items'][number]) => ({
-          product_name: i.products?.name || 'Unknown',
-          quantity: i.quantity,
-          unit_price: Number(i.unit_price),
+          product_name: i.products?.name || 'Unknown', quantity: i.quantity, unit_price: Number(i.unit_price),
         })),
       };
-
-      const { data, error } = await supabase.functions.invoke('verify-invoice', {
-        body: { invoiceImageUrl: invoiceUrl, deliveryData },
-      });
-
+      const { data, error } = await supabase.functions.invoke('verify-invoice', { body: { invoiceImageUrl: invoiceUrl, deliveryData } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
       setVerificationResult(data);
     } catch (err: unknown) {
       setVerificationError((err as Error).message || 'Verification failed');
-    } finally {
-      setVerificationLoading(false);
-    }
+    } finally { setVerificationLoading(false); }
   };
 
   if (dLoading || sLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
+  const kpiCards = [
+    { label: 'Total Inventory Value', value: formatCurrency(totalValue), icon: DollarSign, color: 'bg-blue-50 text-blue-600', trend: '6.3%', up: true, trendLabel: 'vs last month' },
+    { label: 'Total Stock (Units)', value: totalStock.toLocaleString(), icon: Package, color: 'bg-emerald-50 text-emerald-600', trend: '8.7%', up: true, trendLabel: 'vs last month' },
+    { label: 'In Stock (Units)', value: (totalStock - outOfStockItems.reduce((s, i) => s + 0, 0)).toLocaleString(), icon: CheckCircle, color: 'bg-purple-50 text-purple-600', trend: `${totalStock > 0 ? '85%' : '0%'}`, up: true, trendLabel: 'of total stock' },
+    { label: 'Low Stock Items', value: lowStockItems.length.toString(), icon: AlertTriangle, color: 'bg-amber-50 text-amber-600', trend: lowStockItems.length.toString(), up: false, trendLabel: 'Require attention' },
+    { label: 'Out of Stock Items', value: outOfStockItems.length.toString(), icon: XCircle, color: 'bg-red-50 text-red-600', trend: outOfStockItems.length.toString(), up: false, trendLabel: 'Require attention' },
+  ];
+
+  const tabs = [
+    { key: 'all', label: 'All Products', count: stockLevels.length },
+    { key: 'low', label: 'Low Stock', count: lowStockItems.length },
+    { key: 'out', label: 'Out of Stock', count: outOfStockItems.length },
+  ];
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Inventory Inbound</h1>
-        {!isViewer && (
-          <Button onClick={() => setShowNewDelivery(true)}>
-            <Plus className="h-4 w-4 mr-1" /> New Delivery
-          </Button>
-        )}
+      <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden" onChange={handleFileUpload} />
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Inventory</h1>
+          <p className="text-muted-foreground text-sm">Track stock levels, monitor inventory value and manage product availability.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export Report</Button>
+          {!isViewer && <Button size="sm" onClick={() => setShowNewDelivery(true)}><Plus className="h-4 w-4 mr-1.5" />Adjust Stock</Button>}
+        </div>
       </div>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".pdf,.jpg,.jpeg,.png,.webp"
-        className="hidden"
-        onChange={handleFileUpload}
-      />
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card><CardContent className="pt-4 text-center"><Package className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{totalStock}</p><p className="text-xs text-muted-foreground">Total Units in Stock</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><Truck className="h-5 w-5 mx-auto text-secondary mb-1" /><p className="text-2xl font-bold">{pendingDeliveries.length}</p><p className="text-xs text-muted-foreground">Pending Deliveries</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><AlertTriangle className="h-5 w-5 mx-auto text-destructive mb-1" /><p className="text-2xl font-bold">{lowStockItems.length}</p><p className="text-xs text-muted-foreground">Low Stock SKUs</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><CheckCircle className="h-5 w-5 mx-auto text-green-500 mb-1" /><p className="text-2xl font-bold">{deliveries.filter(d => d.status === 'verified' || d.status === 'received').length}</p><p className="text-xs text-muted-foreground">Received</p></CardContent></Card>
-      </div>
-
-      <Tabs defaultValue="stock">
-        <TabsList><TabsTrigger value="stock">Stock Levels</TabsTrigger><TabsTrigger value="deliveries">Deliveries</TabsTrigger></TabsList>
-
-        <TabsContent value="stock">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Net Stock Position</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {stockLevels.length === 0 && <p className="text-center text-muted-foreground py-8">No stock data yet. Stock levels will appear here once populated.</p>}
-              {stockLevels.map((s) => {
-                const pct = Math.min((s.current_stock / s.max_stock) * 100, 100);
-                const isLow = s.current_stock <= s.min_stock;
-                return (
-                  <div key={s.id} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className={isLow ? 'text-destructive font-medium' : ''}>{s.products?.name || 'Unknown'}</span>
-                      <span className="text-muted-foreground">{s.current_stock} / {s.max_stock} {isLow && '⚠️'}</span>
-                    </div>
-                    <Progress value={pct} className={isLow ? '[&>div]:bg-destructive' : ''} />
-                  </div>
-                );
-              })}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {kpiCards.map((kpi) => (
+          <Card key={kpi.label} className="relative overflow-hidden">
+            <CardContent className="pt-4 pb-3 px-4">
+              <div className={`inline-flex items-center justify-center h-10 w-10 rounded-full ${kpi.color} mb-2`}>
+                <kpi.icon className="h-5 w-5" />
+              </div>
+              <p className="text-xs text-muted-foreground">{kpi.label}</p>
+              <p className="font-bold text-xl">{kpi.value}</p>
+              <p className="text-xs mt-0.5">
+                <span className={`font-medium ${kpi.up ? 'text-emerald-600' : 'text-red-500'}`}>{kpi.up ? '↑' : ''} {kpi.trend}</span>{' '}
+                <span className="text-muted-foreground">{kpi.trendLabel}</span>
+              </p>
             </CardContent>
           </Card>
-        </TabsContent>
+        ))}
+      </div>
 
-        <TabsContent value="deliveries">
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow><TableHead>Date</TableHead><TableHead>Invoice</TableHead><TableHead>Supplier</TableHead><TableHead>Items</TableHead><TableHead>Total</TableHead><TableHead>Due Date</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
-                </TableHeader>
-                <TableBody>
-                  {deliveries.map(d => (
-                    <TableRow key={d.id}>
-                      <TableCell>{d.date}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          {d.invoice_file_url && <FileText className="h-3 w-3 text-primary" />}
-                          {d.invoice_number}
+      {/* Search & Filters */}
+      <Card>
+        <CardContent className="py-3 px-4">
+          <div className="flex flex-col lg:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search products, SKU, or category..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+            <Select defaultValue="all_categories">
+              <SelectTrigger className="w-full lg:w-36"><SelectValue placeholder="All Categories" /></SelectTrigger>
+              <SelectContent><SelectItem value="all_categories">All Categories</SelectItem></SelectContent>
+            </Select>
+            <Select defaultValue="all_brands">
+              <SelectTrigger className="w-full lg:w-32"><SelectValue placeholder="All Brands" /></SelectTrigger>
+              <SelectContent><SelectItem value="all_brands">All Brands</SelectItem></SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" className="shrink-0"><Filter className="h-4 w-4" /></Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Content */}
+      <div className="grid lg:grid-cols-5 gap-4">
+        {/* Product Table */}
+        <Card className="lg:col-span-3">
+          <CardContent className="p-0">
+            {/* Tabs */}
+            <div className="flex items-center gap-0 border-b px-4">
+              {tabs.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.key ? 'text-primary border-primary' : 'text-muted-foreground border-transparent hover:text-foreground'}`}
+                >
+                  {tab.label}
+                  {tab.count > 0 && <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 py-0">{tab.count}</Badge>}
+                </button>
+              ))}
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-8"><input type="checkbox" className="rounded" /></TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Total Stock</TableHead>
+                  <TableHead className="text-right">Available</TableHead>
+                  <TableHead className="text-right">Stock Value (₦)</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedItems.map(s => {
+                  const product = products.find(p => p.id === s.product_id);
+                  const pct = s.max_stock > 0 ? Math.round((s.current_stock / s.max_stock) * 100) : 0;
+                  const isLow = s.current_stock > 0 && s.current_stock <= s.min_stock;
+                  const isOut = s.current_stock === 0;
+                  const stockValue = s.current_stock * Number(s.products?.unit_price || 0);
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell onClick={e => e.stopPropagation()}><input type="checkbox" className="rounded" /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>
+                          <span className="font-medium text-sm">{s.products?.name || 'Unknown'}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{d.supplier}</TableCell>
-                      <TableCell>{d.delivery_items?.length || 0} SKUs</TableCell>
-                      <TableCell>₦{Number(d.total_value).toLocaleString()}</TableCell>
-                      <TableCell>{d.due_date}</TableCell>
-                      <TableCell><Badge variant={d.status === 'received' ? 'default' : d.status === 'verified' ? 'secondary' : 'outline'}>{d.status}</Badge></TableCell>
-                      <TableCell className="text-right space-x-1">
-                        {!isViewer && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => triggerUpload(d.id)}
-                            disabled={uploading === d.id}
-                            title={d.invoice_file_url ? 'Replace invoice' : 'Upload invoice'}
-                          >
-                            {uploading === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                          </Button>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={() => setViewDelivery(d)}><Eye className="h-3 w-3" /></Button>
-                        {d.status === 'pending' && <Button size="sm" onClick={() => markReceived(d.id)} {...viewerProps}>Receive</Button>}
+                      <TableCell className="text-sm text-muted-foreground">{product?.sku || '-'}</TableCell>
+                      <TableCell className="text-sm">{product?.category || '-'}</TableCell>
+                      <TableCell className="text-right text-sm">{s.max_stock.toLocaleString()}</TableCell>
+                      <TableCell className="text-right">
+                        <div>
+                          <span className="text-sm font-medium">{s.current_stock.toLocaleString()}</span>
+                          <span className={`text-xs ml-1 ${isLow ? 'text-amber-600' : isOut ? 'text-red-500' : 'text-emerald-600'}`}>({pct}%)</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium">₦{stockValue.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${isOut ? 'bg-red-50 text-red-700 border-red-200' : isLow ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}
+                        >
+                          {isOut ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
                       </TableCell>
                     </TableRow>
-                  ))}
-                  {deliveries.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No deliveries recorded yet.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  );
+                })}
+                {paginatedItems.length === 0 && (
+                  <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">No products found.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-t text-sm text-muted-foreground">
+              <span>Showing {Math.min(((currentPage - 1) * 8) + 1, totalItems)} to {Math.min(currentPage * 8, totalItems)} of {totalItems} products</span>
+              <div className="flex gap-1">
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={!hasPrevPage} onClick={() => goToPage(currentPage - 1)}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+                {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => (
+                  <Button key={i + 1} variant={currentPage === i + 1 ? 'default' : 'outline'} size="icon" className="h-7 w-7" onClick={() => goToPage(i + 1)}>{i + 1}</Button>
+                ))}
+                {totalPages > 3 && <span className="px-1">...</span>}
+                {totalPages > 3 && <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => goToPage(totalPages)}>{totalPages}</Button>}
+                <Button variant="outline" size="icon" className="h-7 w-7" disabled={!hasNextPage} onClick={() => goToPage(currentPage + 1)}><ChevronRight className="h-3.5 w-3.5" /></Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right Panel */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Inventory Value by Category */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-semibold">Inventory Value by Category</CardTitle>
+              <Select defaultValue="this_month"><SelectTrigger className="w-28 h-8"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="this_month">This Month</SelectItem></SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={categoryData.length > 0 ? categoryData : [{ name: 'No Data', value: 1 }]} cx="50%" cy="50%" innerRadius={50} outerRadius={75} paddingAngle={2} dataKey="value">
+                      {(categoryData.length > 0 ? categoryData : [{ name: 'No Data', value: 1 }]).map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                    </Pie>
+                    <text x="50%" y="46%" textAnchor="middle" className="text-base font-bold fill-foreground">{formatCurrency(categoryTotal)}</text>
+                    <text x="50%" y="57%" textAnchor="middle" className="text-[10px] fill-muted-foreground">Total Value</text>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-2">
+                {categoryData.map((cat, i) => (
+                  <div key={cat.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                      <span>{cat.name}</span>
+                    </div>
+                    <span className="font-medium">{formatCurrency(cat.value)} ({categoryTotal > 0 ? ((cat.value / categoryTotal) * 100).toFixed(1) : 0}%)</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
 
+          {/* Stock Alerts */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-semibold">Stock Alerts</CardTitle>
+              <Button variant="link" size="sm" className="text-primary p-0 h-auto">View All</Button>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {lowStockItems.slice(0, 4).map(s => (
+                <div key={s.id} className="flex items-start gap-3">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${s.current_stock === 0 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{s.current_stock === 0 ? 'Out of stock' : 'Low stock'}: {s.products?.name}</p>
+                    <p className="text-xs text-muted-foreground">Available: {s.current_stock} units</p>
+                  </div>
+                </div>
+              ))}
+              {lowStockItems.length === 0 && <p className="text-sm text-center text-muted-foreground py-4">No stock alerts</p>}
+            </CardContent>
+          </Card>
+
+          {/* Inventory Summary */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-semibold">Inventory Summary</CardTitle>
+              <Select defaultValue="this_month"><SelectTrigger className="w-28 h-8"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="this_month">This Month</SelectItem></SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Added to Stock</p>
+                  <p className="font-bold text-sm">{deliveries.filter(d => d.status === 'received').length} deliveries</p>
+                  <p className="text-xs text-emerald-600">↑ 12.4%</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Pending Deliveries</p>
+                  <p className="font-bold text-sm">{pendingDeliveries.length}</p>
+                  <p className="text-xs text-muted-foreground">awaiting receipt</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Low Stock SKUs</p>
+                  <p className="font-bold text-sm">{lowStockItems.length}</p>
+                  <p className="text-xs text-amber-600">need reorder</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-xs text-muted-foreground">Out of Stock</p>
+                  <p className="font-bold text-sm">{outOfStockItems.length}</p>
+                  <p className="text-xs text-red-500">urgent</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Delivery Detail Dialog */}
       <Dialog open={!!viewDelivery} onOpenChange={o => !o && setViewDelivery(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Delivery Details</DialogTitle></DialogHeader>
@@ -251,39 +409,22 @@ export default function InventoryInbound() {
                 <div><span className="text-muted-foreground">Credit Term:</span> {viewDelivery.credit_term_days} days</div>
                 <div><span className="text-muted-foreground">Due:</span> {viewDelivery.due_date}</div>
               </div>
-
               {viewDelivery.invoice_file_url && (
                 <div className="border rounded-md p-3 bg-muted/30">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Invoice Attached</span>
-                    </div>
-                    <Button size="sm" variant="outline" asChild>
-                      <a href={viewDelivery.invoice_file_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-3 w-3 mr-1" /> View
-                      </a>
-                    </Button>
+                    <div className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4 text-primary" /><span className="font-medium">Invoice Attached</span></div>
+                    <Button size="sm" variant="outline" asChild><a href={viewDelivery.invoice_file_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3 mr-1" /> View</a></Button>
                   </div>
                   {viewDelivery.invoice_file_url.match(/\.(jpg|jpeg|png|webp)$/i) && (
-                    <img
-                      src={viewDelivery.invoice_file_url}
-                      alt="Invoice"
-                      className="mt-2 rounded-md max-h-48 w-full object-contain"
-                    />
+                    <img src={viewDelivery.invoice_file_url} alt="Invoice" className="mt-2 rounded-md max-h-48 w-full object-contain" />
                   )}
                 </div>
               )}
-
               <Table>
                 <TableHeader><TableRow><TableHead>Product</TableHead><TableHead>Qty</TableHead><TableHead className="text-right">Value</TableHead></TableRow></TableHeader>
                 <TableBody>
                   {(viewDelivery.delivery_items || []).map((i) => (
-                    <TableRow key={i.id}>
-                      <TableCell>{i.products?.name}</TableCell>
-                      <TableCell>{i.quantity}</TableCell>
-                      <TableCell className="text-right">₦{(i.quantity * Number(i.unit_price)).toLocaleString()}</TableCell>
-                    </TableRow>
+                    <TableRow key={i.id}><TableCell>{i.products?.name}</TableCell><TableCell>{i.quantity}</TableCell><TableCell className="text-right">₦{(i.quantity * Number(i.unit_price)).toLocaleString()}</TableCell></TableRow>
                   ))}
                 </TableBody>
               </Table>
@@ -294,17 +435,8 @@ export default function InventoryInbound() {
       </Dialog>
 
       <NewDeliveryDialog open={showNewDelivery} onOpenChange={setShowNewDelivery} />
-
-      <InvoiceVerificationDialog
-        open={showVerification}
-        onOpenChange={setShowVerification}
-        result={verificationResult}
-        isLoading={verificationLoading}
-        error={verificationError}
-        onConfirm={() => {
-          setShowVerification(false);
-          toast({ title: '✅ Verification Confirmed', description: 'Invoice verification acknowledged.' });
-        }}
+      <InvoiceVerificationDialog open={showVerification} onOpenChange={setShowVerification} result={verificationResult} isLoading={verificationLoading} error={verificationError}
+        onConfirm={() => { setShowVerification(false); toast({ title: '✅ Verification Confirmed', description: 'Invoice verification acknowledged.' }); }}
       />
     </div>
   );

@@ -37,9 +37,36 @@ export default function PayoutTracking() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <h1 className="text-2xl font-bold">Payout Tracking</h1>
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Payouts</h1>
+          <p className="text-muted-foreground text-sm">Track and disburse commission payouts to vendors.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <p className="text-xs text-muted-foreground">Total Pending</p>
+          <p className="font-bold text-xl">₦{commissions.filter(c => c.status === 'pending').reduce((s, c) => s + Number(c.total_commission), 0).toLocaleString()}</p>
+          <p className="text-xs mt-0.5"><span className="text-amber-600 font-medium">{commissions.filter(c => c.status === 'pending').length}</span> <span className="text-muted-foreground">vendors</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <p className="text-xs text-muted-foreground">Total Disbursed</p>
+          <p className="font-bold text-xl">₦{commissions.filter(c => c.status === 'disbursed').reduce((s, c) => s + Number(c.total_commission), 0).toLocaleString()}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">{commissions.filter(c => c.status === 'disbursed').length}</span> <span className="text-muted-foreground">completed</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <p className="text-xs text-muted-foreground">Total Records</p>
+          <p className="font-bold text-xl">{commissions.length}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <p className="text-xs text-muted-foreground">Grand Total</p>
+          <p className="font-bold text-xl">₦{commissions.reduce((s, c) => s + Number(c.total_commission), 0).toLocaleString()}</p>
+        </CardContent></Card>
+      </div>
 
       <Card>
         <CardContent className="p-0">

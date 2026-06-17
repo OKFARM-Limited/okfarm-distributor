@@ -13,8 +13,13 @@ export default function AuditTrail() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <h1 className="text-2xl font-bold">Audit Trail</h1>
+    <div className="space-y-5 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Audit Trail</h1>
+          <p className="text-muted-foreground text-sm">Track all system actions, changes and user activity logs.</p>
+        </div>
+      </div>
       <Card>
         <CardContent className="p-0">
           <Table>

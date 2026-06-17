@@ -55,14 +55,35 @@ export default function VendorCheckIn() {
   if (vLoading || cLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="h-6 w-6" /> Vendor Check-In / Check-Out</h1>
 
-      <div className="grid grid-cols-3 gap-3">
-        <Card><CardContent className="pt-4 text-center"><UserCheck className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{checkedInIds.length}</p><p className="text-xs text-muted-foreground">Checked In</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><LogOut className="h-5 w-5 mx-auto text-primary mb-1" /><p className="text-2xl font-bold">{checkedOutIds.length}</p><p className="text-xs text-muted-foreground">Checked Out</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><UserX className="h-5 w-5 mx-auto text-destructive mb-1" /><p className="text-2xl font-bold">{activeVendors.length - checkedInIds.length}</p><p className="text-xs text-muted-foreground">Absent</p></CardContent></Card>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Vendor Check-In</h1>
+          <p className="text-muted-foreground text-sm">Manage daily vendor attendance, check-ins and check-outs.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 mb-2"><UserCheck className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Checked In</p>
+          <p className="font-bold text-xl">{checkedInIds.length}</p>
+          <p className="text-xs mt-0.5"><span className="text-emerald-600 font-medium">{activeVendors.length > 0 ? Math.round((checkedInIds.length / activeVendors.length) * 100) : 0}%</span> <span className="text-muted-foreground">of total</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-600 mb-2"><LogOut className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Checked Out</p>
+          <p className="font-bold text-xl">{checkedOutIds.length}</p>
+          <p className="text-xs mt-0.5"><span className="text-muted-foreground">completed</span></p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-red-50 text-red-600 mb-2"><UserX className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Absent</p>
+          <p className="font-bold text-xl">{activeVendors.length - checkedInIds.length}</p>
+          <p className="text-xs mt-0.5"><span className="text-red-500 font-medium">{activeVendors.length > 0 ? Math.round(((activeVendors.length - checkedInIds.length) / activeVendors.length) * 100) : 0}%</span> <span className="text-muted-foreground">of total</span></p>
+        </CardContent></Card>
       </div>
 
       <div className="relative">

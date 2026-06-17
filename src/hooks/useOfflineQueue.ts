@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { TablesInsert } from '@/integrations/supabase/types';
 
-const DB_NAME = 'okfarm_offline';
+const DB_NAME = 'distribo_offline';
 const STORE = 'queue';
 const VERSION = 1;
 

@@ -36,7 +36,7 @@ export async function generatePDFReport(options: PDFReportOptions) {
   // Header
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('OKFARM Distributor Manager', 14, 20);
+  doc.text('Distribo', 14, 20);
   
   doc.setFontSize(14);
   doc.setFont('helvetica', 'normal');

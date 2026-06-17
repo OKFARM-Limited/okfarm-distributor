@@ -26,10 +26,12 @@ export default function AllocationHistory() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold">Allocation History</h1>
-        {!isAllOutlets && <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />{getOutletName(selectedOutletId)}</p>}
+    <div className="space-y-5 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Allocation History</h1>
+          <p className="text-muted-foreground text-sm">Browse and filter historical stock allocation records.</p>
+        </div>
       </div>
       <div className="flex flex-col sm:flex-row gap-2">
         <Input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="sm:w-48" />

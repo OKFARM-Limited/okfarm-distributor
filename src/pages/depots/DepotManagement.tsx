@@ -50,12 +50,13 @@ export default function DepotManagement() {
   const active = depots.find((d) => d.id === activeDepot) || depots[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
+
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Depot Management</h1>
-          <p className="text-muted-foreground">Manage multiple depot locations</p>
+          <h1 className="text-2xl font-bold">Depots</h1>
+          <p className="text-muted-foreground text-sm">Manage depot locations, staff, and distribution infrastructure.</p>
         </div>
         <div className="flex gap-2">
           {depots.length > 0 && (
@@ -70,7 +71,7 @@ export default function DepotManagement() {
           )}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button {...viewerProps}><Plus className="h-4 w-4 mr-2" />Add Depot</Button>
+              <Button size="sm" {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Depot</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Register New Depot</DialogTitle></DialogHeader>
@@ -96,11 +97,27 @@ export default function DepotManagement() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Building2 className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Active Depots</p><p className="text-xl font-bold">{depots.filter((d) => d.status === 'active').length}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Users className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Total Vendors</p><p className="text-xl font-bold">{totalVendors}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><Package className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Total Assets</p><p className="text-xl font-bold">{totalAssets}</p></div></CardContent></Card>
-        <Card><CardContent className="pt-4 flex items-center gap-3"><MapPin className="h-8 w-8 text-primary" /><div><p className="text-xs text-muted-foreground">Territories</p><p className="text-xl font-bold">{new Set(depots.map((d) => d.territory).filter(Boolean)).size}</p></div></CardContent></Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 text-blue-600 mb-2"><Building2 className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Active Depots</p>
+          <p className="font-bold text-xl">{depots.filter((d) => d.status === 'active').length}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 text-emerald-600 mb-2"><Users className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Total Vendors</p>
+          <p className="font-bold text-xl">{totalVendors}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-50 text-amber-600 mb-2"><Package className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Total Assets</p>
+          <p className="font-bold text-xl">{totalAssets}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-50 text-purple-600 mb-2"><MapPin className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Territories</p>
+          <p className="font-bold text-xl">{new Set(depots.map((d) => d.territory).filter(Boolean)).size}</p>
+        </CardContent></Card>
       </div>
 
       {active && (

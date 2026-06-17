@@ -59,11 +59,14 @@ export default function ForecastReorder() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><TrendingUp className="h-6 w-6" /> Forecast & Reorder</h1>
-        <Button onClick={handleAutoOrder} className="gap-1" disabled={totalSuggested === 0} {...viewerProps}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Forecast & Reorder</h1>
+          <p className="text-muted-foreground text-sm">AI-powered demand forecasting and automated reorder suggestions.</p>
+        </div>
+        <Button size="sm" onClick={handleAutoOrder} className="gap-1" disabled={totalSuggested === 0} {...viewerProps}>
           <ShoppingCart className="h-4 w-4" /> Auto-Order (₦{totalSuggested.toLocaleString()})
         </Button>
       </div>
