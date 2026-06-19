@@ -82,8 +82,11 @@ export default function BarcodeScanner() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in max-w-2xl">
-      <h1 className="text-2xl font-bold flex items-center gap-2"><ScanLine className="h-6 w-6" /> Barcode Scanner</h1>
+    <div className="space-y-5 animate-fade-in max-w-2xl">
+      <div>
+        <h1 className="text-2xl font-bold">Barcode Scanner</h1>
+        <p className="text-muted-foreground text-sm">Scan product barcodes to quickly record inventory movements.</p>
+      </div>
       <div className="flex gap-2">
         <Button variant={mode === 'camera' ? 'default' : 'outline'} onClick={() => setMode('camera')} className="gap-1"><Camera className="h-4 w-4" /> Camera</Button>
         <Button variant={mode === 'manual' ? 'default' : 'outline'} onClick={() => setMode('manual')} className="gap-1"><Keyboard className="h-4 w-4" /> Manual</Button>

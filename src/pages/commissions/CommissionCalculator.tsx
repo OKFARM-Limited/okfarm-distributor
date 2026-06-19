@@ -53,7 +53,7 @@ export default function CommissionCalculator() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>

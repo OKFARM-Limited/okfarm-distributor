@@ -79,10 +79,10 @@ export default function NotificationPreferences() {
   );
 
   return (
-    <div className="space-y-4 animate-fade-in max-w-2xl">
+    <div className="space-y-5 animate-fade-in max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold">Notification Preferences</h1>
-        <p className="text-sm text-muted-foreground">Control which alerts you receive and how.</p>
+        <p className="text-muted-foreground text-sm">Control which alerts you receive and how.</p>
       </div>
 
       <Card>

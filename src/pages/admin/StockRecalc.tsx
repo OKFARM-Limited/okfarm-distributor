@@ -81,11 +81,11 @@ export default function StockRecalc() {
   };
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
+    <div className="space-y-5 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold">Recalculate Stock</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Compare expected stock (deliveries − allocations − sales + returns/spoilage) against current stock levels.
           </p>
         </div>

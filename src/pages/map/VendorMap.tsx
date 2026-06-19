@@ -81,9 +81,12 @@ export default function VendorMap() {
   if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Vendor Map</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Vendor Map</h1>
+          <p className="text-muted-foreground text-sm">View vendor locations and route coverage across territories.</p>
+        </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2"><Switch checked={showRoutes} onCheckedChange={setShowRoutes} /><Label className="text-sm">Show Routes</Label></div>
           {showRoutes && <div className="flex items-center gap-2"><Switch checked={animating} onCheckedChange={setAnimating} /><Label className="text-sm">Animate</Label></div>}

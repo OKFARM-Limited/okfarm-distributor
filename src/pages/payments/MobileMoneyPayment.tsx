@@ -79,9 +79,12 @@ export default function MobileMoneyPayment() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in max-w-lg mx-auto">
+    <div className="space-y-5 animate-fade-in max-w-lg mx-auto">
       <ViewerBanner />
-      <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="h-6 w-6" /> Mobile Money Collection</h1>
+      <div>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="h-6 w-6" /> Mobile Money Collection</h1>
+        <p className="text-muted-foreground text-sm">Collect payments from vendors via mobile money platforms.</p>
+      </div>
 
       <div className="flex items-center gap-2 text-xs">
         {['Select Vendor', 'Payment Details', 'Confirm', 'Done'].map((label, i) => {

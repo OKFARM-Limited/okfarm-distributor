@@ -67,29 +67,35 @@ export default function VendorPortal() {
   const lastCommission = data.commissions[0];
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold">Welcome, {data.vendor.name}</h1>
-        <p className="text-sm text-muted-foreground">Vendor Code: {data.vendor.vendor_code}</p>
+    <div className="space-y-5 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Welcome, {data.vendor.name as string}</h1>
+          <p className="text-muted-foreground text-sm">Your vendor dashboard · Code: {data.vendor.vendor_code as string}</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card><CardContent className="pt-4">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs"><DollarSign className="h-4 w-4" /> Sales (30d)</div>
-          <p className="text-xl font-bold mt-1">₦{totalSales.toLocaleString()}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 mb-2"><DollarSign className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Sales (30d)</p>
+          <p className="text-xl font-bold">₦{totalSales.toLocaleString()}</p>
         </CardContent></Card>
-        <Card><CardContent className="pt-4">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs"><TrendingUp className="h-4 w-4" /> Outstanding</div>
-          <p className="text-xl font-bold mt-1 text-destructive">₦{outstanding.toLocaleString()}</p>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 mb-2"><TrendingUp className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Outstanding</p>
+          <p className="text-xl font-bold text-destructive">₦{outstanding.toLocaleString()}</p>
         </CardContent></Card>
-        <Card><CardContent className="pt-4">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs"><Award className="h-4 w-4" /> Last Commission</div>
-          <p className="text-xl font-bold mt-1">₦{Number(lastCommission?.total_commission || 0).toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground capitalize">{lastCommission?.tier || '—'}</p>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 mb-2"><Award className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Last Commission</p>
+          <p className="text-xl font-bold">₦{Number(lastCommission?.total_commission || 0).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground capitalize">{lastCommission?.tier as string || '—'}</p>
         </CardContent></Card>
-        <Card><CardContent className="pt-4">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs"><Calendar className="h-4 w-4" /> Days Active</div>
-          <p className="text-xl font-bold mt-1">{data.checkIns.length}</p>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 mb-2"><Calendar className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Days Active</p>
+          <p className="text-xl font-bold">{data.checkIns.length}</p>
         </CardContent></Card>
       </div>
 

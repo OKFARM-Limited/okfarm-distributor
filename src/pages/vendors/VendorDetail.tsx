@@ -46,22 +46,29 @@ export default function VendorDetail() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
-          <ArrowLeft className="h-4 w-4" /> Back to Vendors
-        </Button>
-        {(user?.role === 'admin' || user?.role === 'assistant') && (
-          <Button
-            variant={isActive ? 'destructive' : 'default'}
-            onClick={() => setConfirmDialog(true)}
-            className="gap-1"
-            {...viewerProps}
-          >
-            {isActive ? <><UserX className="h-4 w-4" /> Deactivate</> : <><UserCheck className="h-4 w-4" /> Reactivate</>}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">{vendor.name}</h1>
+          <p className="text-muted-foreground text-sm">Vendor profile · {vendor.vendor_code} · {vendor.territory}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/vendors')} className="gap-1">
+            <ArrowLeft className="h-4 w-4" /> Back to Vendors
           </Button>
-        )}
+          {(user?.role === 'admin' || user?.role === 'assistant') && (
+            <Button
+              size="sm"
+              variant={isActive ? 'destructive' : 'default'}
+              onClick={() => setConfirmDialog(true)}
+              className="gap-1"
+              {...viewerProps}
+            >
+              {isActive ? <><UserX className="h-4 w-4" /> Deactivate</> : <><UserCheck className="h-4 w-4" /> Reactivate</>}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">

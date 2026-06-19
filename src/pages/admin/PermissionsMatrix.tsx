@@ -86,10 +86,10 @@ export default function PermissionsMatrix() {
   const categories = [...new Set(permissions.map(p => p.categoryKey))];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('permissionsMatrix')}</h1>
-        <p className="text-muted-foreground">{t('roleOverview')}</p>
+        <h1 className="text-2xl font-bold">{t('permissionsMatrix')}</h1>
+        <p className="text-muted-foreground text-sm">{t('roleOverview')}</p>
       </div>
 
       <div className="flex flex-wrap gap-3">

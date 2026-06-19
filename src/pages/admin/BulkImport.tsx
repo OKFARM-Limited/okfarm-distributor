@@ -117,10 +117,10 @@ export default function BulkImport() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold">Bulk Import</h1>
-        <p className="text-sm text-muted-foreground">Upload CSV files to import vendors or products in bulk.</p>
+        <p className="text-muted-foreground text-sm">Upload CSV files to import vendors or products in bulk.</p>
       </div>
 
       <Tabs value={entity} onValueChange={v => { setEntity(v as EntityType); setRows([]); setResult(null); }}>

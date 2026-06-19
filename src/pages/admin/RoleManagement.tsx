@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, Search, ShieldCheck, UserCog, UserPlus } from 'lucide-react';
+import { Loader2, Search, ShieldCheck, UserCog, UserPlus, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/contexts/AuthContext';
 import { ViewerBanner } from '@/components/ViewerGuard';
@@ -114,18 +114,16 @@ export default function RoleManagement() {
   const roleCount = (role: UserRole) => users.filter(u => u.role === role).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <ViewerBanner />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <UserCog className="h-6 w-6" /> Role Management
-          </h1>
-          <p className="text-muted-foreground">View and assign user roles across the platform.</p>
+          <h1 className="text-2xl font-bold">Role Management</h1>
+          <p className="text-muted-foreground text-sm">View and assign user roles across the platform.</p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button {...viewerProps} className="gap-2">
+            <Button size="sm" {...viewerProps} className="gap-2">
               <UserPlus className="h-4 w-4" /> Create User
             </Button>
           </DialogTrigger>
@@ -176,37 +174,32 @@ export default function RoleManagement() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Users</CardDescription>
-            <CardTitle className="text-3xl">{users.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Admins</CardDescription>
-            <CardTitle className="text-3xl text-destructive">{roleCount('admin')}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Managers</CardDescription>
-            <CardTitle className="text-3xl text-primary">{roleCount('manager')}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Assistants</CardDescription>
-            <CardTitle className="text-3xl text-primary">{roleCount('assistant')}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Viewers</CardDescription>
-            <CardTitle className="text-3xl text-muted-foreground">{roleCount('viewer')}</CardTitle>
-          </CardHeader>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 mb-2"><Users className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Total Users</p>
+          <p className="text-2xl font-bold">{users.length}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 mb-2"><ShieldCheck className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Admins</p>
+          <p className="text-2xl font-bold text-destructive">{roleCount('admin')}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-primary/10 text-primary mb-2"><ShieldCheck className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Managers</p>
+          <p className="text-2xl font-bold text-primary">{roleCount('manager')}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 mb-2"><UserCog className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Assistants</p>
+          <p className="text-2xl font-bold text-emerald-600">{roleCount('assistant')}</p>
+        </CardContent></Card>
+        <Card><CardContent className="pt-4 pb-3 px-4">
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted text-muted-foreground mb-2"><UserCog className="h-5 w-5" /></div>
+          <p className="text-xs text-muted-foreground">Viewers</p>
+          <p className="text-2xl font-bold text-muted-foreground">{roleCount('viewer')}</p>
+        </CardContent></Card>
       </div>
 
       <Card>

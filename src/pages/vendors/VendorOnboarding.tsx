@@ -142,14 +142,16 @@ export default function VendorOnboarding() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in max-w-4xl">
-      <Button variant="ghost" onClick={() => navigate('/vendors')} className="gap-1">
-        <ArrowLeft className="h-4 w-4" /> Back to Vendors
-      </Button>
+    <div className="space-y-5 animate-fade-in max-w-4xl">
       <ViewerBanner />
-      <div className="flex items-center gap-2">
-        <UserPlus className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">Vendor Onboarding</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Vendor Onboarding</h1>
+          <p className="text-muted-foreground text-sm">Register a new vendor and complete their profile to begin operations.</p>
+        </div>
+        <Button size="sm" variant="ghost" onClick={() => navigate('/vendors')} className="gap-1 self-start">
+          <ArrowLeft className="h-4 w-4" /> Back to Vendors
+        </Button>
       </div>
 
       <form onSubmit={handleSubmit}>
