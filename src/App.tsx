@@ -101,6 +101,7 @@ function AppRoutes() {
         <Route path="mobile-money" element={<MobileMoneyPayment />} />
         <Route path="performance" element={<PerformanceDashboard />} />
         <Route path="performance/:vendorId" element={<VendorPerformance />} />
+        <Route path="map" element={<VendorMap />} />
         <Route path="checkin" element={<VendorCheckIn />} />
         <Route path="inventory" element={<InventoryInbound />} />
         <Route path="scanner" element={<BarcodeScanner />} />

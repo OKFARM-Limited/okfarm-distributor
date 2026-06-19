@@ -18,7 +18,7 @@ import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { usePagination } from '@/hooks/usePagination';
 
 export default function DailyAllocation() {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [vendorId, setVendorId] = useState('');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [search, setSearch] = useState('');
@@ -115,7 +115,7 @@ export default function DailyAllocation() {
         </div>
         <div className="flex items-center gap-2">
           {step === 2 && <Button variant="outline" size="sm" onClick={handleExportPDF}><Download className="h-4 w-4 mr-1.5" />Export PDF</Button>}
-          <Button size="sm" onClick={() => setStep(0)} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />New Allocation</Button>
+          <Button size="sm" onClick={() => setStep(1)} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />New Allocation</Button>
         </div>
       </div>
 
@@ -152,6 +152,7 @@ export default function DailyAllocation() {
 
             {step === 1 && (
               <>
+                <h3 className="font-semibold text-base">Select Vendor</h3>
                 <Select value={vendorId} onValueChange={setVendorId}>
                   <SelectTrigger><SelectValue placeholder="Choose a vendor..." /></SelectTrigger>
                   <SelectContent>{vendors.filter(v => v.status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.territory})</SelectItem>)}</SelectContent>

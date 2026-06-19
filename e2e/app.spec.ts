@@ -1,11 +1,37 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
 
 // ─── Credentials ─────────────────────────────────────────────────────
 // Set E2E_EMAIL and E2E_PASSWORD in .env.test (see .env.test.example)
-const EMAIL = process.env.E2E_EMAIL;
-const PASSWORD = process.env.E2E_PASSWORD;
+let EMAIL = process.env.E2E_EMAIL;
+let PASSWORD = process.env.E2E_PASSWORD;
+
 if (!EMAIL || !PASSWORD) {
-  throw new Error('E2E_EMAIL and E2E_PASSWORD must be set in environment. Copy .env.test.example → .env.test');
+  try {
+    const envTestPath = path.resolve(process.cwd(), '.env.test');
+    if (fs.existsSync(envTestPath)) {
+      const content = fs.readFileSync(envTestPath, 'utf-8');
+      const lines = content.split('\n');
+      for (const line of lines) {
+        const match = line.match(/^\s*([^=#]+)\s*=\s*(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          let val = match[2].trim();
+          if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+          if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
+          if (key === 'E2E_EMAIL') EMAIL = val;
+          if (key === 'E2E_PASSWORD') PASSWORD = val;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse .env.test:', e);
+  }
+}
+
+if (!EMAIL || !PASSWORD) {
+  throw new Error('E2E_EMAIL and E2E_PASSWORD must be set in environment or .env.test file. Copy .env.test.example → .env.test');
 }
 
 // ─── Shared context: login ONCE, reuse for all tests ─────────────────
@@ -99,25 +125,28 @@ test('navigate to settings', async () => {
 test('vendor list has search input', async () => {
   await page.goto('/vendors');
   await expect(page.locator('h1')).toContainText(/vendor/i, { timeout: 10_000 });
-  await expect(page.locator('input[placeholder="Search vendors..."]')).toBeVisible();
+  await expect(page.locator('input[placeholder="Search vendors by name, code or phone..."]')).toBeVisible();
 });
 
 test('vendor search filters results', async () => {
   await page.goto('/vendors');
-  await page.waitForSelector('input[placeholder="Search vendors..."]', { timeout: 10_000 });
-  await page.fill('input[placeholder="Search vendors..."]', 'Adewale');
+  await page.waitForSelector('input[placeholder="Search vendors by name, code or phone..."]', { timeout: 10_000 });
+  await page.fill('input[placeholder="Search vendors by name, code or phone..."]', 'Adewale');
   await page.waitForTimeout(500);
   expect(await page.textContent('body')).toBeDefined();
 });
 
 test('click vendor card opens detail', async () => {
   await page.goto('/vendors');
-  await page.waitForSelector('input[placeholder="Search vendors..."]', { timeout: 10_000 });
+  await page.waitForSelector('input[placeholder="Search vendors by name, code or phone..."]', { timeout: 10_000 });
   await page.waitForTimeout(2000);
 
-  const card = page.locator('[class*="cursor-pointer"]').first();
+  const card = page.locator('tbody tr').first();
   if (await card.isVisible({ timeout: 5_000 }).catch(() => false)) {
     await card.click();
+    const viewButton = page.locator('text=View Transactions');
+    await expect(viewButton).toBeVisible({ timeout: 5_000 });
+    await viewButton.click();
     await page.waitForURL(/\/vendors\//, { timeout: 10_000 });
     await expect(page.locator('text=Back to Vendors')).toBeVisible({ timeout: 10_000 });
   }
@@ -188,6 +217,7 @@ const featurePages = [
   { path: '/assets', title: /asset/i },
   { path: '/payments', title: /payment/i },
   { path: '/performance', title: /performance/i },
+  { path: '/map', title: /map/i },
   { path: '/checkin', title: /check/i },
   { path: '/inventory', title: /inventory|inbound/i },
   { path: '/notifications', title: /notification/i },
@@ -223,6 +253,6 @@ test('PWA manifest is valid', async () => {
   const response = await page.goto('/manifest.json');
   expect(response?.status()).toBe(200);
   const manifest = await response?.json();
-  expect(manifest.name).toBe('OKFARM Distributor Manager');
-  expect(manifest.short_name).toBe('OKFARM');
+  expect(manifest.name).toBe('Distribo Distributor Manager');
+  expect(manifest.short_name).toBe('Distribo');
 });

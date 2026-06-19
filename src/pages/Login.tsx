@@ -79,14 +79,9 @@ export default function Login() {
         <div className="relative z-10 p-10 xl:p-14 flex-1 flex flex-col">
           {/* Logo */}
           <div className="mb-12">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white font-bold text-xl shadow-lg shadow-blue-500/30">
-                D
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white tracking-tight">Distribo</p>
-                <p className="text-[10px] text-blue-400/80 tracking-widest uppercase font-medium">Distribution · Operations · Growth</p>
-              </div>
+            <div className="flex flex-col gap-2">
+              <img src="/Distribo-Transparent.png" alt="Distribo" className="h-10 w-auto object-contain self-start" />
+              <p className="text-[10px] text-blue-400/80 tracking-widest uppercase font-medium">Distribution · Operations · Growth</p>
             </div>
           </div>
 
@@ -134,9 +129,7 @@ export default function Login() {
               <div className="absolute bottom-[-4px] left-2 w-5 h-5 rounded-full bg-white/20" />
               <div className="absolute bottom-[-4px] right-2 w-5 h-5 rounded-full bg-white/20" />
               {/* Logo on truck */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-blue-400/60">
-                D
-              </div>
+              <img src="/distribo-icon.png" alt="" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 object-contain opacity-60" />
             </div>
           </div>
         </div>

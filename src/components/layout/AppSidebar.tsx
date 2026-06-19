@@ -119,17 +119,12 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         {!collapsed ? (
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white font-bold text-base shadow-lg shadow-blue-500/20">
-              D
-            </div>
-            <div>
-              <p className="text-base font-bold text-sidebar-foreground tracking-tight">Distribo</p>
-            </div>
+          <div className="flex items-center gap-2.5 h-9">
+            <img src="/Distribo-Transparent.png" alt="Distribo" className="h-8 w-auto object-contain" />
           </div>
         ) : (
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white font-bold text-base mx-auto shadow-lg shadow-blue-500/20">
-            D
+          <div className="flex items-center justify-center h-9 w-9 mx-auto">
+            <img src="/distribo-icon.png" alt="D" className="h-7 w-7 object-contain" />
           </div>
         )}
       </SidebarHeader>
