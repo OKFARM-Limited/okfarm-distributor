@@ -93,14 +93,23 @@ export default function Dashboard() {
       columns: [
         { header: 'Date', key: 'date' },
         { header: 'Vendor', key: 'vendor_name' },
-        { header: 'Total Value', key: 'total_value', align: 'right', format: (v) => `₦${Number(v).toLocaleString()}` },
-        { header: 'Paid', key: 'amount_paid', align: 'right', format: (v) => `₦${Number(v).toLocaleString()}` },
-        { header: 'Outstanding', key: 'outstanding', align: 'right', format: (v) => `₦${Number(v).toLocaleString()}` },
+        { header: 'Outlet', key: 'outlet_name' },
+        { header: 'Total Value', key: 'total_value', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+        { header: 'Paid', key: 'amount_paid', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+        { header: 'Outstanding', key: 'outstanding', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
       ],
-      data: sales.slice(0, 50),
+      data: sales.slice(0, 50).map(s => ({
+        date: s.date,
+        vendor_name: (s as any).vendors?.name || '-',
+        outlet_name: outlets.find(o => o.id === s.outlet_id)?.name || '-',
+        total_value: s.total_value,
+        amount_paid: s.amount_paid,
+        outstanding: s.outstanding,
+      })),
       summaryRows: [
-        { label: 'Total Sales', value: `₦${todayTotal.toLocaleString()}` },
+        { label: 'Total Sales (Today)', value: `NGN ${todayTotal.toLocaleString()}` },
         { label: 'Active Vendors', value: String(activeVendors) },
+        { label: 'Active Outlets', value: String(activeOutlets || outlets.length) },
       ],
     });
   };

@@ -70,7 +70,13 @@ export default function PerformanceDashboard() {
       topPerformers.map(v => `${v.name},${v.territory},${v.totalSales}`).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'performance_report.csv'; a.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'performance_report.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
     toast({ title: 'Report Exported', description: 'CSV file downloaded.' });
   };
 

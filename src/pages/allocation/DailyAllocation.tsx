@@ -84,12 +84,12 @@ export default function DailyAllocation() {
       filename: `allocation_${vendor?.name?.replace(/\s/g, '_')}_${date}.pdf`,
       columns: [
         { header: 'Product', key: 'product' },
-        { header: 'Unit Price (₦)', key: 'price', align: 'right', format: (v: number) => `₦${v.toLocaleString()}` },
+        { header: 'Unit Price (NGN)', key: 'price', align: 'right', format: (v: number) => `NGN ${v.toLocaleString()}` },
         { header: 'Quantity', key: 'qty', align: 'right' },
-        { header: 'Value (₦)', key: 'value', align: 'right', format: (v: number) => `₦${v.toLocaleString()}` },
+        { header: 'Value (NGN)', key: 'value', align: 'right', format: (v: number) => `NGN ${v.toLocaleString()}` },
       ],
       data: items.map(p => ({ product: p.name, price: Number(p.unit_price), qty: quantities[p.id], value: (quantities[p.id] || 0) * Number(p.unit_price) })),
-      summaryRows: [{ label: 'Total Value', value: `₦${totalValue.toLocaleString()}` }],
+      summaryRows: [{ label: 'Total Value (NGN)', value: `NGN ${totalValue.toLocaleString()}` }],
     });
     toast({ title: 'PDF Exported', description: 'Allocation PDF downloaded.' });
   };

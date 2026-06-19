@@ -99,19 +99,19 @@ export default function MonthlySettlement() {
               columns: [
                 { header: 'Invoice', key: 'invoice_number' },
                 { header: 'Date', key: 'date' },
-                { header: 'Amount', key: 'amount', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Amount (NGN)', key: 'amount', align: 'right', format: (v: number) => `NGN ${Number(v).toLocaleString()}` },
                 { header: 'Credit', key: 'credit_days', align: 'center', format: (v: number) => `${v}d` },
                 { header: 'Due Date', key: 'due_date' },
-                { header: 'Paid', key: 'amount_paid', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
-                { header: 'Balance', key: 'balance', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Paid (NGN)', key: 'amount_paid', align: 'right', format: (v: number) => `NGN ${Number(v).toLocaleString()}` },
+                { header: 'Balance (NGN)', key: 'balance', align: 'right', format: (v: number) => `NGN ${Number(v).toLocaleString()}` },
                 { header: 'Status', key: 'status' },
               ],
               data: lines.map((l) => ({ ...l, balance: Number(l.amount) - Number(l.amount_paid) })),
               summaryRows: [
-                { label: 'Total Receivable', value: `₦${totalReceivable.toLocaleString()}` },
-                { label: 'Total Paid', value: `₦${totalPaid.toLocaleString()}` },
-                { label: `Discount (${discountRate}%)`, value: `-₦${discount.toLocaleString()}` },
-                { label: 'Net Payable', value: `₦${netPayable.toLocaleString()}` },
+                { label: 'Total Receivable', value: `NGN ${totalReceivable.toLocaleString()}` },
+                { label: 'Total Paid', value: `NGN ${totalPaid.toLocaleString()}` },
+                { label: `Discount (${discountRate}%)`, value: `-NGN ${discount.toLocaleString()}` },
+                { label: 'Net Payable', value: `NGN ${netPayable.toLocaleString()}` },
               ],
             });
           }}>

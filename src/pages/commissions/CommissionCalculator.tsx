@@ -70,16 +70,16 @@ export default function CommissionCalculator() {
                 { header: 'Vendor', key: 'vendor' },
                 { header: 'Month', key: 'month' },
                 { header: 'Tier', key: 'tier' },
-                { header: 'Total Sales', key: 'total_sales', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Total Sales (NGN)', key: 'total_sales', align: 'right', format: (v: number) => `NGN ${Number(v).toLocaleString()}` },
                 { header: 'Days Active', key: 'days_active', align: 'center' },
                 { header: 'Consistency', key: 'consistency_rate', align: 'center', format: (v: number) => `${v}%` },
-                { header: 'Commission', key: 'total_commission', align: 'right', format: (v: number) => `₦${Number(v).toLocaleString()}` },
+                { header: 'Commission (NGN)', key: 'total_commission', align: 'right', format: (v: number) => `NGN ${Number(v).toLocaleString()}` },
                 { header: 'Status', key: 'status' },
               ],
               data: filtered.map(c => ({ ...c, vendor: c.vendors?.name || '—', total_sales: c.total_sales, total_commission: c.total_commission })),
               summaryRows: [
-                { label: 'Total Pending', value: `₦${totalPending.toLocaleString()}` },
-                { label: 'Total Disbursed', value: `₦${totalDisbursed.toLocaleString()}` },
+                { label: 'Total Pending', value: `NGN ${totalPending.toLocaleString()}` },
+                { label: 'Total Disbursed', value: `NGN ${totalDisbursed.toLocaleString()}` },
               ],
             });
           }}>

@@ -18,6 +18,8 @@ import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { usePagination } from '@/hooks/usePagination';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
 
 export default function OutletManagement() {
   const { data: outlets = [], isLoading } = useOutlets();
@@ -90,7 +92,58 @@ export default function OutletManagement() {
           <p className="text-muted-foreground text-sm">Manage your distribution outlets, locations and staff assignments.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export</Button>
+          <ExportMenu
+            label="Export"
+            onExportCSV={() => {
+              downloadCSV(
+                [
+                  { header: 'Name', key: 'name' },
+                  { header: 'Code', key: 'short_code' },
+                  { header: 'Address', key: 'address' },
+                  { header: 'Manager', key: 'manager' },
+                  { header: 'Phone', key: 'phone' },
+                  { header: 'Status', key: 'status' },
+                  { header: 'Vendors', key: 'vendor_count' },
+                  { header: 'Assets', key: 'asset_count' },
+                ],
+                filtered.map(o => ({
+                  ...o,
+                  vendor_count: allVendors.filter(v => v.outlet_id === o.id).length,
+                  asset_count: allAssets.filter(a => a.outlet_id === o.id).length,
+                })),
+                `outlets_${new Date().toISOString().split('T')[0]}.csv`,
+              );
+              toast({ title: 'CSV Downloaded', description: `${filtered.length} outlets exported.` });
+            }}
+            onExportPDF={() => {
+              generatePDFReport({
+                title: 'Outlet Directory Report',
+                subtitle: `Generated ${new Date().toLocaleDateString()} — ${filtered.length} outlets`,
+                filename: `outlets_${new Date().toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                columns: [
+                  { header: 'Name', key: 'name' },
+                  { header: 'Code', key: 'short_code' },
+                  { header: 'Address', key: 'address' },
+                  { header: 'Manager', key: 'manager' },
+                  { header: 'Phone', key: 'phone' },
+                  { header: 'Status', key: 'status' },
+                  { header: 'Vendors', key: 'vendor_count', align: 'center' },
+                  { header: 'Assets', key: 'asset_count', align: 'center' },
+                ],
+                data: filtered.map(o => ({
+                  ...o,
+                  vendor_count: allVendors.filter(v => v.outlet_id === o.id).length,
+                  asset_count: allAssets.filter(a => a.outlet_id === o.id).length,
+                })),
+                summaryRows: [
+                  { label: 'Total Outlets', value: filtered.length.toString() },
+                  { label: 'Active', value: filtered.filter(o => o.status === 'active').length.toString() },
+                ],
+              });
+              toast({ title: 'PDF Downloaded', description: `${filtered.length} outlets exported.` });
+            }}
+          />
           <Button size="sm" onClick={openAdd} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Outlet</Button>
         </div>
       </div>

@@ -16,6 +16,8 @@ import {
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { usePagination } from '@/hooks/usePagination';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
 
 const CATEGORIES = ['Yogurt', 'Ice Cream', 'Popsicle', 'Juice', 'Milk'];
 const UNITS = ['pack', 'box', 'carton', 'piece', 'sachet'];
@@ -110,7 +112,45 @@ export default function ProductManagement() {
           <p className="text-muted-foreground text-sm">Manage your product catalog, pricing and SKU information.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export</Button>
+          <ExportMenu
+            label="Export"
+            onExportCSV={() => {
+              downloadCSV(
+                [
+                  { header: 'Name', key: 'name' },
+                  { header: 'SKU', key: 'sku' },
+                  { header: 'Category', key: 'category' },
+                  { header: 'Unit', key: 'unit' },
+                  { header: 'Unit Price (₦)', key: 'unit_price' },
+                  { header: 'Barcode', key: 'barcode' },
+                ],
+                filtered,
+                `products_${new Date().toISOString().split('T')[0]}.csv`,
+              );
+              toast({ title: 'CSV Downloaded', description: `${filtered.length} products exported.` });
+            }}
+            onExportPDF={() => {
+              generatePDFReport({
+                title: 'Product Catalog Report',
+                subtitle: `Generated ${new Date().toLocaleDateString()} — ${filtered.length} products`,
+                filename: `products_${new Date().toISOString().split('T')[0]}.pdf`,
+                columns: [
+                  { header: 'Name', key: 'name' },
+                  { header: 'SKU', key: 'sku' },
+                  { header: 'Category', key: 'category' },
+                  { header: 'Unit', key: 'unit' },
+                  { header: 'Unit Price (NGN)', key: 'unit_price', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Barcode', key: 'barcode' },
+                ],
+                data: filtered,
+                summaryRows: [
+                  { label: 'Total Products', value: filtered.length.toString() },
+                  { label: 'Average Price (NGN)', value: `NGN ${Math.round(kpis.avgPrice).toLocaleString()}` },
+                ],
+              });
+              toast({ title: 'PDF Downloaded', description: `${filtered.length} products exported.` });
+            }}
+          />
           <Button size="sm" onClick={openNew} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Product</Button>
         </div>
       </div>

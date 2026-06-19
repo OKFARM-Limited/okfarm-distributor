@@ -40,12 +40,12 @@ export async function generatePDFReport(options: PDFReportOptions) {
   
   doc.setFontSize(14);
   doc.setFont('helvetica', 'normal');
-  doc.text(options.title, 14, 30);
+  doc.text(options.title.replace(/₦/g, 'NGN'), 14, 30);
   
   if (options.subtitle) {
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(options.subtitle, 14, 37);
+    doc.text(options.subtitle.replace(/₦/g, 'NGN'), 14, 37);
     doc.setTextColor(0);
   }
   
@@ -59,11 +59,12 @@ export async function generatePDFReport(options: PDFReportOptions) {
   doc.line(14, startY, pageWidth - 14, startY);
 
   // Table
-  const headers = options.columns.map(c => c.header);
+  const headers = options.columns.map(c => c.header.replace(/₦/g, 'NGN'));
   const body = options.data.map(row =>
     options.columns.map(col => {
       const val = row[col.key];
-      return col.format ? col.format(val) : (val ?? '');
+      const formatted = col.format ? col.format(val) : (val ?? '');
+      return String(formatted).replace(/₦/g, 'NGN ');
     })
   );
 
@@ -72,20 +73,36 @@ export async function generatePDFReport(options: PDFReportOptions) {
     head: [headers],
     body,
     theme: 'striped',
+    tableWidth: 'auto',
     headStyles: {
       fillColor: [41, 128, 185],
       textColor: 255,
       fontStyle: 'bold',
       fontSize: 9,
+      cellPadding: { top: 3, right: 4, bottom: 3, left: 4 },
+      overflow: 'linebreak',
     },
-    bodyStyles: { fontSize: 8 },
+    bodyStyles: {
+      fontSize: 8,
+      cellPadding: { top: 2.5, right: 4, bottom: 2.5, left: 4 },
+      overflow: 'linebreak',
+      minCellHeight: 8,
+    },
     alternateRowStyles: { fillColor: [245, 245, 245] },
     margin: { left: 14, right: 14 },
     columnStyles: options.columns.reduce((acc, col, i) => {
-      if (col.align) acc[i] = { halign: col.align };
-      if (col.width) acc[i] = { ...acc[i], cellWidth: col.width };
+      acc[i] = {
+        overflow: 'linebreak',
+        ...(col.align ? { halign: col.align } : {}),
+        ...(col.width ? { cellWidth: col.width } : {}),
+      };
       return acc;
-    }, {} as Record<number, { halign?: string; cellWidth?: number }>),
+    }, {} as Record<number, { halign?: string; cellWidth?: number; overflow?: string }>),
+    // Prevent any single cell from consuming the entire page width
+    styles: {
+      overflow: 'linebreak',
+      cellWidth: 'wrap',
+    },
   });
 
   // Summary rows at bottom
@@ -98,8 +115,10 @@ export async function generatePDFReport(options: PDFReportOptions) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     options.summaryRows.forEach(row => {
-      doc.text(row.label, 14, y);
-      doc.text(row.value, pageWidth - 14, y, { align: 'right' });
+      const cleanLabel = row.label.replace(/₦/g, 'NGN');
+      const cleanValue = row.value.replace(/₦/g, 'NGN ');
+      doc.text(cleanLabel, 14, y);
+      doc.text(cleanValue, pageWidth - 14, y, { align: 'right' });
       y += 7;
     });
   }
@@ -117,5 +136,13 @@ export async function generatePDFReport(options: PDFReportOptions) {
     );
   }
 
-  doc.save(options.filename);
+  const blob = doc.output('blob');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = options.filename.endsWith('.pdf') ? options.filename : `${options.filename}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

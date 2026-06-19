@@ -37,7 +37,7 @@ BEGIN
   END;
 
   v_action_url := CASE WHEN NEW.action_url IS NOT NULL
-    THEN 'https://okfarm-distributor.lovable.app' || NEW.action_url
+    THEN 'https://distribo.com.ng' || NEW.action_url
     ELSE NULL END;
 
   -- Targeted recipient

@@ -25,6 +25,8 @@ import { useAppSetting } from '@/hooks/useAppSetting';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
 
 const DEFAULT_TERRITORIES = ['Ikeja', 'Lekki', 'Surulere', 'Alimosho', 'Ikorodu'];
 
@@ -112,7 +114,48 @@ export default function VendorList() {
           <p className="text-muted-foreground text-sm">Manage your vendor network, performance and activities.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export</Button>
+          <ExportMenu
+            label="Export"
+            onExportCSV={() => {
+              downloadCSV(
+                [
+                  { header: 'Name', key: 'name' },
+                  { header: 'Code', key: 'vendor_code' },
+                  { header: 'Phone', key: 'phone' },
+                  { header: 'Territory', key: 'territory' },
+                  { header: 'Outlet', key: 'outlet_name' },
+                  { header: 'Status', key: 'status' },
+                  { header: 'Total Sales (₦)', key: 'total_sales' },
+                ],
+                filtered.map(v => ({ ...v, outlet_name: v.outlets?.name || getOutletName(v.outlet_id) })),
+                `vendors_${new Date().toISOString().split('T')[0]}.csv`,
+              );
+              toast({ title: 'CSV Downloaded', description: `${filtered.length} vendors exported.` });
+            }}
+            onExportPDF={() => {
+              generatePDFReport({
+                title: 'Vendor List Report',
+                subtitle: `Generated ${new Date().toLocaleDateString()} — ${filtered.length} vendors`,
+                filename: `vendors_${new Date().toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                columns: [
+                  { header: 'Name', key: 'name' },
+                  { header: 'Code', key: 'vendor_code' },
+                  { header: 'Phone', key: 'phone' },
+                  { header: 'Territory', key: 'territory' },
+                  { header: 'Outlet', key: 'outlet_name' },
+                  { header: 'Status', key: 'status' },
+                  { header: 'Total Sales (NGN)', key: 'total_sales', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                ],
+                data: filtered.map(v => ({ ...v, outlet_name: v.outlets?.name || getOutletName(v.outlet_id) })),
+                summaryRows: [
+                  { label: 'Total Vendors', value: filtered.length.toString() },
+                  { label: 'Active', value: filtered.filter(v => v.status === 'active').length.toString() },
+                ],
+              });
+              toast({ title: 'PDF Downloaded', description: `${filtered.length} vendors exported.` });
+            }}
+          />
           <Button size="sm" onClick={() => navigate('/vendors/onboard')} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Vendor</Button>
         </div>
       </div>

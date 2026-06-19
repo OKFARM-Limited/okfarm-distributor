@@ -11,10 +11,25 @@ serve(async (req) => {
   try {
     const { invoiceImageUrl, deliveryData } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
     if (!invoiceImageUrl) throw new Error("No invoice image URL provided");
+
+    // Fetch and download the image to convert to base64
+    const imgRes = await fetch(invoiceImageUrl);
+    if (!imgRes.ok) {
+      throw new Error(`Failed to download invoice image from URL: ${imgRes.statusText}`);
+    }
+    const contentType = imgRes.headers.get("content-type") || "image/jpeg";
+    const arrayBuffer = await imgRes.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const len = uint8Array.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    const base64Data = btoa(binary);
 
     const systemPrompt = `You are an invoice data extraction assistant. You will be given an image of a FanMilk invoice/delivery note. Extract the following data from the invoice:
 
@@ -24,7 +39,7 @@ serve(async (req) => {
 4. Line items: each with product name, quantity, unit price
 5. Total value
 
-You MUST respond using the extract_invoice_data tool. If you cannot read a field, use null. For line items you cannot parse, return an empty array.`;
+If you cannot read a field, use null. For line items you cannot parse, return an empty array.`;
 
     const userPrompt = `Extract data from this FanMilk invoice image. Here is the booked delivery for reference (use this to help identify products):
 - Invoice Number: ${deliveryData.invoice_number}
@@ -35,86 +50,78 @@ You MUST respond using the extract_invoice_data tool. If you cannot read a field
   unit_price: i.unit_price
 })) || [])}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const response = await fetch(geminiUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
+        contents: [
           {
-            role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              { type: "image_url", image_url: { url: invoiceImageUrl } },
+            parts: [
+              { text: userPrompt },
+              {
+                inlineData: {
+                  mimeType: contentType,
+                  data: base64Data,
+                },
+              },
             ],
           },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "extract_invoice_data",
-              description: "Extract structured invoice data from the image",
-              parameters: {
-                type: "object",
-                properties: {
-                  invoice_number: { type: "string", description: "Invoice number from the document" },
-                  date: { type: "string", description: "Date on the invoice (YYYY-MM-DD format)" },
-                  supplier: { type: "string", description: "Supplier name" },
-                  line_items: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        product_name: { type: "string" },
-                        quantity: { type: "number" },
-                        unit_price: { type: "number" },
-                      },
-                      required: ["product_name", "quantity", "unit_price"],
-                      additionalProperties: false,
-                    },
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
+        },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              invoice_number: { type: "STRING", description: "Invoice number from the document" },
+              date: { type: "STRING", description: "Date on the invoice (YYYY-MM-DD format)" },
+              supplier: { type: "STRING", description: "Supplier name" },
+              line_items: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    product_name: { type: "STRING" },
+                    quantity: { type: "NUMBER" },
+                    unit_price: { type: "NUMBER" },
                   },
-                  total_value: { type: "number", description: "Total invoice value" },
+                  required: ["product_name", "quantity", "unit_price"],
                 },
-                required: ["invoice_number", "date", "supplier", "line_items", "total_value"],
-                additionalProperties: false,
               },
+              total_value: { type: "NUMBER", description: "Total invoice value" },
             },
+            required: ["invoice_number", "date", "supplier", "line_items", "total_value"],
           },
-        ],
-        tool_choice: { type: "function", function: { name: "extract_invoice_data" } },
+        },
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+      console.error("Gemini API error:", response.status, errText);
 
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required. Please add credits to your workspace." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const result = await response.json();
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+    const textResult = result?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    if (!toolCall?.function?.arguments) {
+    if (!textResult) {
       throw new Error("AI did not return structured data");
     }
 
-    const extractedData = JSON.parse(toolCall.function.arguments);
+    const extractedData = JSON.parse(textResult);
 
     // Compare extracted vs booked
     const mismatches: any[] = [];

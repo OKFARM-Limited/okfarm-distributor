@@ -10,6 +10,8 @@ import { GraduationCap, BookOpen, CheckCircle, Clock, Users, Award, Loader2 } fr
 import { useToast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
 
 const defaultCourses = [
   { title: 'Road Safety & Traffic Awareness', category: 'safety', duration: '2 hours', mandatory: true, description: 'Essential road safety rules for push cart and bicycle vendors.' },
@@ -68,9 +70,57 @@ export default function FanAcademy() {
           <h1 className="text-2xl font-bold">Fan Academy</h1>
           <p className="text-muted-foreground text-sm">Vendor training & upskilling tracker for continuous development.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => toast({ title: 'Report Generated', description: 'Training completion report exported.' })} {...viewerProps}>
-          <GraduationCap className="h-4 w-4 mr-1.5" />Export Report
-        </Button>
+        <ExportMenu
+          label="Export Report"
+          onExportCSV={() => {
+            downloadCSV(
+              [
+                { header: 'Vendor', key: 'vendor_name' },
+                { header: 'Completed Courses', key: 'completed' },
+                { header: 'Total Courses', key: 'total' },
+                { header: 'Completion Rate (%)', key: 'completion_rate' },
+                { header: 'Status', key: 'training_status' },
+              ],
+              vendorTraining.map(vt => ({
+                vendor_name: vt.vendor.name,
+                completed: vt.progress.filter(p => p.status === 'completed').length,
+                total: courses.length,
+                completion_rate: vt.completionRate,
+                training_status: vt.completionRate === 100 ? 'Fully Trained' : vt.completionRate >= 50 ? 'In Progress' : 'Not Started',
+              })),
+              `training_report_${new Date().toISOString().split('T')[0]}.csv`,
+            );
+            toast({ title: 'CSV Downloaded', description: `Training report for ${vendorTraining.length} vendors exported.` });
+          }}
+          onExportPDF={() => {
+            generatePDFReport({
+              title: 'Fan Academy Training Report',
+              subtitle: `Generated ${new Date().toLocaleDateString()} — ${vendorTraining.length} vendors`,
+              filename: `training_report_${new Date().toISOString().split('T')[0]}.pdf`,
+              orientation: 'landscape',
+              columns: [
+                { header: 'Vendor', key: 'vendor_name' },
+                { header: 'Completed', key: 'completed', align: 'center' },
+                { header: 'Total Courses', key: 'total', align: 'center' },
+                { header: 'Completion (%)', key: 'completion_rate', align: 'center', format: (v) => `${v}%` },
+                { header: 'Status', key: 'training_status' },
+              ],
+              data: vendorTraining.map(vt => ({
+                vendor_name: vt.vendor.name,
+                completed: vt.progress.filter(p => p.status === 'completed').length,
+                total: courses.length,
+                completion_rate: vt.completionRate,
+                training_status: vt.completionRate === 100 ? 'Fully Trained' : vt.completionRate >= 50 ? 'In Progress' : 'Not Started',
+              })),
+              summaryRows: [
+                { label: 'Total Vendors', value: vendorTraining.length.toString() },
+                { label: 'Fully Trained', value: fullyTrained.toString() },
+                { label: 'Avg Completion', value: `${avgCompletion}%` },
+              ],
+            });
+            toast({ title: 'PDF Downloaded', description: 'Training report exported.' });
+          }}
+        />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

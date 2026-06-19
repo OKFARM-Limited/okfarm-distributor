@@ -53,10 +53,14 @@ export default function BulkImport() {
     const t = TEMPLATES[e];
     const csv = [t.headers.join(','), t.sample.join(',')].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
+    a.href = url;
     a.download = `${e}_template.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
   const handleFile = async (file: File) => {

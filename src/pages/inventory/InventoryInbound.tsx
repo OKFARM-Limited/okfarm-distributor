@@ -21,6 +21,8 @@ import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
 import InvoiceVerificationDialog from '@/components/inventory/InvoiceVerificationDialog';
 import { usePagination } from '@/hooks/usePagination';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
 
 const CHART_COLORS = ['hsl(221, 100%, 50%)', 'hsl(152, 55%, 42%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 55%)', 'hsl(0, 72%, 51%)', 'hsl(210, 15%, 75%)'];
 
@@ -163,7 +165,66 @@ export default function InventoryInbound() {
           <p className="text-muted-foreground text-sm">Track stock levels, monitor inventory value and manage product availability.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export Report</Button>
+          <ExportMenu
+            label="Export Report"
+            onExportCSV={() => {
+              downloadCSV(
+                [
+                  { header: 'Product', key: 'product_name' },
+                  { header: 'Category', key: 'product_category' },
+                  { header: 'Current Stock', key: 'current_stock' },
+                  { header: 'Min Stock', key: 'min_stock' },
+                  { header: 'Unit Price (₦)', key: 'unit_price' },
+                  { header: 'Stock Value (₦)', key: 'stock_value' },
+                  { header: 'Status', key: 'stock_status' },
+                ],
+                stockLevels.map(l => ({
+                  product_name: l.products?.name || '-',
+                  product_category: l.products?.category || '-',
+                  current_stock: l.current_stock,
+                  min_stock: l.min_stock,
+                  unit_price: Number(l.products?.unit_price || 0),
+                  stock_value: l.current_stock * Number(l.products?.unit_price || 0),
+                  stock_status: l.current_stock === 0 ? 'Out of Stock' : l.current_stock <= l.min_stock ? 'Low Stock' : 'In Stock',
+                })),
+                `inventory_${new Date().toISOString().split('T')[0]}.csv`,
+              );
+              toast({ title: 'CSV Downloaded', description: `${stockLevels.length} stock items exported.` });
+            }}
+            onExportPDF={() => {
+              generatePDFReport({
+                title: 'Inventory Stock Report',
+                subtitle: `Generated ${new Date().toLocaleDateString()}`,
+                filename: `inventory_${new Date().toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                columns: [
+                  { header: 'Product', key: 'product_name' },
+                  { header: 'Category', key: 'product_category' },
+                  { header: 'Current Stock', key: 'current_stock', align: 'center' },
+                  { header: 'Min Stock', key: 'min_stock', align: 'center' },
+                  { header: 'Unit Price (NGN)', key: 'unit_price', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Stock Value (NGN)', key: 'stock_value', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Status', key: 'stock_status' },
+                ],
+                data: stockLevels.map(l => ({
+                  product_name: l.products?.name || '-',
+                  product_category: l.products?.category || '-',
+                  current_stock: l.current_stock,
+                  min_stock: l.min_stock,
+                  unit_price: Number(l.products?.unit_price || 0),
+                  stock_value: l.current_stock * Number(l.products?.unit_price || 0),
+                  stock_status: l.current_stock === 0 ? 'Out of Stock' : l.current_stock <= l.min_stock ? 'Low Stock' : 'In Stock',
+                })),
+                summaryRows: [
+                  { label: 'Total Stock Items', value: stockLevels.length.toString() },
+                  { label: 'Total Stock Value (NGN)', value: `NGN ${totalValue.toLocaleString()}` },
+                  { label: 'Low Stock Items', value: lowStockItems.length.toString() },
+                  { label: 'Out of Stock', value: outOfStockItems.length.toString() },
+                ],
+              });
+              toast({ title: 'PDF Downloaded', description: 'Inventory report exported.' });
+            }}
+          />
           {!isViewer && <Button size="sm" onClick={() => setShowNewDelivery(true)}><Plus className="h-4 w-4 mr-1.5" />Adjust Stock</Button>}
         </div>
       </div>

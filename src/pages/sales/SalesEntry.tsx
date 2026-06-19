@@ -17,6 +17,9 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
+import { toast } from '@/hooks/use-toast';
 
 const CHART_COLORS = ['hsl(221, 100%, 50%)', 'hsl(152, 55%, 42%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 55%)', 'hsl(0, 72%, 51%)', 'hsl(210, 15%, 75%)'];
 
@@ -139,7 +142,62 @@ export default function SalesEntry() {
           <h1 className="text-2xl font-bold">Sales</h1>
           <p className="text-muted-foreground text-sm">Track sales performance, analyze trends and monitor targets across your distribution network.</p>
         </div>
-        <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export Report</Button>
+        <ExportMenu
+          label="Export Report"
+          onExportCSV={() => {
+            const rows = outletSalesData.map(o => ({
+              outlet: o.name,
+              territory: o.territory,
+              orders: o.orders,
+              sales: o.sales,
+              target: o.target,
+              achievement_pct: o.target > 0 ? Math.round((o.sales / o.target) * 100) : 0,
+            }));
+            downloadCSV(
+              [
+                { header: 'Outlet', key: 'outlet' },
+                { header: 'Territory', key: 'territory' },
+                { header: 'Orders', key: 'orders' },
+                { header: 'Sales (₦)', key: 'sales' },
+                { header: 'Target (₦)', key: 'target' },
+                { header: 'Achievement (%)', key: 'achievement_pct' },
+              ],
+              rows,
+              `sales_report_${new Date().toISOString().split('T')[0]}.csv`,
+            );
+            toast({ title: 'CSV Downloaded', description: 'Sales report exported successfully.' });
+          }}
+          onExportPDF={() => {
+            generatePDFReport({
+              title: 'Sales Performance Report',
+              subtitle: `Month to Date — Generated ${new Date().toLocaleDateString()}`,
+              filename: `sales_report_${new Date().toISOString().split('T')[0]}.pdf`,
+              orientation: 'landscape',
+              columns: [
+                { header: 'Outlet', key: 'outlet' },
+                { header: 'Territory', key: 'territory' },
+                { header: 'Orders', key: 'orders', align: 'center' },
+                { header: 'Sales (NGN)', key: 'sales', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                { header: 'Target (NGN)', key: 'target', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                { header: 'Achievement (%)', key: 'achievement_pct', align: 'center', format: (v) => `${v}%` },
+              ],
+              data: outletSalesData.map(o => ({
+                outlet: o.name,
+                territory: o.territory,
+                orders: o.orders,
+                sales: o.sales,
+                target: o.target,
+                achievement_pct: o.target > 0 ? Math.round((o.sales / o.target) * 100) : 0,
+              })),
+              summaryRows: [
+                { label: 'Total Sales (MTD)', value: formatCurrency(kpis.totalMTD).replace(/₦/g, 'NGN ') },
+                { label: 'Total Sales (YTD)', value: formatCurrency(kpis.totalYTD).replace(/₦/g, 'NGN ') },
+                { label: 'Total Orders (MTD)', value: kpis.totalOrders.toLocaleString() },
+              ],
+            });
+            toast({ title: 'PDF Downloaded', description: 'Sales report exported successfully.' });
+          }}
+        />
       </div>
 
       {/* KPI Cards */}

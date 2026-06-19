@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import { usePagination } from '@/hooks/usePagination';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { ExportMenu } from '@/components/ExportMenu';
+import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
+import { toast } from '@/hooks/use-toast';
 
 const CHART_COLORS = ['hsl(221, 100%, 50%)', 'hsl(152, 55%, 42%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 55%)', 'hsl(210, 15%, 75%)'];
 
@@ -117,7 +120,63 @@ export default function PaymentTracking() {
           <p className="text-muted-foreground text-sm">Track all payments made to vendors and monitor payment status.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />Export Report</Button>
+          <ExportMenu
+            label="Export Report"
+            onExportCSV={() => {
+              downloadCSV(
+                [
+                  { header: 'Date', key: 'date' },
+                  { header: 'Vendor', key: 'vendor_name' },
+                  { header: 'Outlet', key: 'outlet_name' },
+                  { header: 'Total (₦)', key: 'total_value' },
+                  { header: 'Paid (₦)', key: 'amount_paid' },
+                  { header: 'Outstanding (₦)', key: 'outstanding' },
+                  { header: 'Method', key: 'payment_method' },
+                  { header: 'Status', key: 'paymentStatus' },
+                ],
+                filtered.map(p => ({
+                  ...p,
+                  vendor_name: p.vendors?.name || '-',
+                  outlet_name: p.outlets?.name || getOutletName(p.outlet_id),
+                })),
+                `payments_${new Date().toISOString().split('T')[0]}.csv`,
+              );
+              toast({ title: 'CSV Downloaded', description: `${filtered.length} payment records exported.` });
+            }}
+            onExportPDF={() => {
+              generatePDFReport({
+                title: 'Payment Tracking Report',
+                subtitle: `Generated ${new Date().toLocaleDateString()} — ${filtered.length} records`,
+                filename: `payments_${new Date().toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                columns: [
+                  { header: 'Date', key: 'date' },
+                  { header: 'Vendor', key: 'vendor_name' },
+                  { header: 'Outlet', key: 'outlet_name' },
+                  { header: 'Total (NGN)', key: 'total_value', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Paid (NGN)', key: 'amount_paid', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Outstanding (NGN)', key: 'outstanding', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Method', key: 'payment_method' },
+                  { header: 'Status', key: 'paymentStatus' },
+                ],
+                data: filtered.map(p => ({
+                  date: p.date,
+                  vendor_name: p.vendors?.name || '-',
+                  outlet_name: p.outlets?.name || getOutletName(p.outlet_id),
+                  total_value: p.total_value,
+                  amount_paid: p.amount_paid,
+                  outstanding: p.outstanding,
+                  payment_method: (p.payment_method || 'cash').replace('_', ' '),
+                  paymentStatus: p.paymentStatus,
+                })),
+                summaryRows: [
+                  { label: 'Total Records', value: filtered.length.toString() },
+                  { label: 'Total Outstanding', value: `NGN ${filtered.reduce((s, p) => s + Number(p.outstanding || 0), 0).toLocaleString()}` },
+                ],
+              });
+              toast({ title: 'PDF Downloaded', description: `${filtered.length} payment records exported.` });
+            }}
+          />
           <Button size="sm"><Plus className="h-4 w-4 mr-1.5" />New Payment</Button>
         </div>
       </div>
