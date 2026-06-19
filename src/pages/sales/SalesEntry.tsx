@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useVendors, useProducts, useSales } from '@/hooks/useSupabaseData';
+import { useVendors, useProducts, useSales, useCreateSale } from '@/hooks/useSupabaseData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Download, Loader2, DollarSign, TrendingUp, Target, ShoppingCart, BarChart3,
-  MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight
+  MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Plus, Minus, Trash2
 } from 'lucide-react';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
@@ -20,6 +20,16 @@ import {
 import { ExportMenu } from '@/components/ExportMenu';
 import { downloadCSV, generatePDFReport } from '@/lib/exportUtils';
 import { toast } from '@/hooks/use-toast';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const CHART_COLORS = ['hsl(221, 100%, 50%)', 'hsl(152, 55%, 42%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 55%)', 'hsl(0, 72%, 51%)', 'hsl(210, 15%, 75%)'];
 
@@ -28,9 +38,85 @@ export default function SalesEntry() {
   const { data: sales = [], isLoading: sLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
   const { data: vendors = [] } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [] } = useProducts();
+  const createSale = useCreateSale();
   const { viewerProps } = useViewerGuard();
   const { t } = useLanguage();
   const [period, setPeriod] = useState('daily');
+
+  // Sales Form state
+  const [isOpen, setIsOpen] = useState(false);
+  const [vendorId, setVendorId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [amountPaid, setAmountPaid] = useState<string>('0');
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [isManualAmount, setIsManualAmount] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const totalValue = useMemo(() => {
+    return products.reduce((sum, p) => sum + (quantities[p.id] || 0) * Number(p.unit_price), 0);
+  }, [quantities, products]);
+
+  useEffect(() => {
+    if (!isManualAmount) {
+      setAmountPaid(String(totalValue));
+    }
+  }, [totalValue, isManualAmount]);
+
+  const handleSubmitSale = () => {
+    if (!vendorId) {
+      toast({ title: 'Error', description: 'Please select a vendor.', variant: 'destructive' });
+      return;
+    }
+    const items = products
+      .filter((p) => (quantities[p.id] || 0) > 0)
+      .map((p) => ({
+        product_id: p.id,
+        quantity: quantities[p.id],
+        unit_price: Number(p.unit_price),
+      }));
+
+    if (items.length === 0) {
+      toast({ title: 'Error', description: 'Please add at least one product.', variant: 'destructive' });
+      return;
+    }
+
+    const outstandingVal = Math.max(0, totalValue - Number(amountPaid));
+    const selectedVendor = vendors.find((v) => v.id === vendorId);
+
+    createSale.mutate(
+      {
+        vendor_id: vendorId,
+        outlet_id: selectedVendor?.outlet_id || null,
+        date: todayStr,
+        total_value: totalValue,
+        amount_paid: Number(amountPaid),
+        outstanding: outstandingVal,
+        payment_method: paymentMethod,
+        items,
+      },
+      {
+        onSuccess: () => {
+          toast({ title: 'Success', description: 'Sales entry recorded successfully.' });
+          setVendorId('');
+          setPaymentMethod('cash');
+          setQuantities({});
+          setAmountPaid('0');
+          setIsManualAmount(false);
+          setIsOpen(false);
+        },
+        onError: (error) => {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        },
+      }
+    );
+  };
 
   // Date helpers
   const today = new Date();
@@ -142,62 +228,67 @@ export default function SalesEntry() {
           <h1 className="text-2xl font-bold">Sales</h1>
           <p className="text-muted-foreground text-sm">Track sales performance, analyze trends and monitor targets across your distribution network.</p>
         </div>
-        <ExportMenu
-          label="Export Report"
-          onExportCSV={() => {
-            const rows = outletSalesData.map(o => ({
-              outlet: o.name,
-              territory: o.territory,
-              orders: o.orders,
-              sales: o.sales,
-              target: o.target,
-              achievement_pct: o.target > 0 ? Math.round((o.sales / o.target) * 100) : 0,
-            }));
-            downloadCSV(
-              [
-                { header: 'Outlet', key: 'outlet' },
-                { header: 'Territory', key: 'territory' },
-                { header: 'Orders', key: 'orders' },
-                { header: 'Sales (₦)', key: 'sales' },
-                { header: 'Target (₦)', key: 'target' },
-                { header: 'Achievement (%)', key: 'achievement_pct' },
-              ],
-              rows,
-              `sales_report_${new Date().toISOString().split('T')[0]}.csv`,
-            );
-            toast({ title: 'CSV Downloaded', description: 'Sales report exported successfully.' });
-          }}
-          onExportPDF={() => {
-            generatePDFReport({
-              title: 'Sales Performance Report',
-              subtitle: `Month to Date — Generated ${new Date().toLocaleDateString()}`,
-              filename: `sales_report_${new Date().toISOString().split('T')[0]}.pdf`,
-              orientation: 'landscape',
-              columns: [
-                { header: 'Outlet', key: 'outlet' },
-                { header: 'Territory', key: 'territory' },
-                { header: 'Orders', key: 'orders', align: 'center' },
-                { header: 'Sales (NGN)', key: 'sales', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
-                { header: 'Target (NGN)', key: 'target', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
-                { header: 'Achievement (%)', key: 'achievement_pct', align: 'center', format: (v) => `${v}%` },
-              ],
-              data: outletSalesData.map(o => ({
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            label="Export Report"
+            onExportCSV={() => {
+              const rows = outletSalesData.map(o => ({
                 outlet: o.name,
                 territory: o.territory,
                 orders: o.orders,
                 sales: o.sales,
                 target: o.target,
                 achievement_pct: o.target > 0 ? Math.round((o.sales / o.target) * 100) : 0,
-              })),
-              summaryRows: [
-                { label: 'Total Sales (MTD)', value: formatCurrency(kpis.totalMTD).replace(/₦/g, 'NGN ') },
-                { label: 'Total Sales (YTD)', value: formatCurrency(kpis.totalYTD).replace(/₦/g, 'NGN ') },
-                { label: 'Total Orders (MTD)', value: kpis.totalOrders.toLocaleString() },
-              ],
-            });
-            toast({ title: 'PDF Downloaded', description: 'Sales report exported successfully.' });
-          }}
-        />
+              }));
+              downloadCSV(
+                [
+                  { header: 'Outlet', key: 'outlet' },
+                  { header: 'Territory', key: 'territory' },
+                  { header: 'Orders', key: 'orders' },
+                  { header: 'Sales (₦)', key: 'sales' },
+                  { header: 'Target (₦)', key: 'target' },
+                  { header: 'Achievement (%)', key: 'achievement_pct' },
+                ],
+                rows,
+                `sales_report_${new Date().toISOString().split('T')[0]}.csv`,
+              );
+              toast({ title: 'CSV Downloaded', description: 'Sales report exported successfully.' });
+            }}
+            onExportPDF={() => {
+              generatePDFReport({
+                title: 'Sales Performance Report',
+                subtitle: `Month to Date — Generated ${new Date().toLocaleDateString()}`,
+                filename: `sales_report_${new Date().toISOString().split('T')[0]}.pdf`,
+                orientation: 'landscape',
+                columns: [
+                  { header: 'Outlet', key: 'outlet' },
+                  { header: 'Territory', key: 'territory' },
+                  { header: 'Orders', key: 'orders', align: 'center' },
+                  { header: 'Sales (NGN)', key: 'sales', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Target (NGN)', key: 'target', align: 'right', format: (v) => `NGN ${Number(v).toLocaleString()}` },
+                  { header: 'Achievement (%)', key: 'achievement_pct', align: 'center', format: (v) => `${v}%` },
+                ],
+                data: outletSalesData.map(o => ({
+                  outlet: o.name,
+                  territory: o.territory,
+                  orders: o.orders,
+                  sales: o.sales,
+                  target: o.target,
+                  achievement_pct: o.target > 0 ? Math.round((o.sales / o.target) * 100) : 0,
+                })),
+                summaryRows: [
+                  { label: 'Total Sales (MTD)', value: formatCurrency(kpis.totalMTD).replace(/₦/g, 'NGN ') },
+                  { label: 'Total Sales (YTD)', value: formatCurrency(kpis.totalYTD).replace(/₦/g, 'NGN ') },
+                  { label: 'Total Orders (MTD)', value: kpis.totalOrders.toLocaleString() },
+                ],
+              });
+              toast({ title: 'PDF Downloaded', description: 'Sales report exported successfully.' });
+            }}
+          />
+          <Button size="sm" className="hidden sm:inline-flex gap-1.5" onClick={() => setIsOpen(true)} {...viewerProps}>
+            <Plus className="h-4 w-4" />New Sale
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -442,6 +533,193 @@ export default function SalesEntry() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Sales Entry Sheet / Bottom Sheet Drawer */}
+      <Sheet open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          setVendorId('');
+          setPaymentMethod('cash');
+          setQuantities({});
+          setAmountPaid('0');
+          setIsManualAmount(false);
+        }
+      }}>
+        <SheetContent side={isMobile ? "bottom" : "right"} className={`w-full ${isMobile ? "h-[85vh] rounded-t-2xl px-4 pb-8" : "sm:max-w-md"} flex flex-col gap-0 border-border bg-background p-6 shadow-xl`}>
+          <SheetHeader className="pb-4 border-b">
+            <SheetTitle className="text-xl font-bold flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary">📊</span>
+              New Sales Entry
+            </SheetTitle>
+            <SheetDescription>
+              Record products sold and cash collected from a vendor.
+            </SheetDescription>
+          </SheetHeader>
+
+          {/* Form Content Scrollable Area */}
+          <div className="flex-1 overflow-y-auto py-4 space-y-5 pr-1 scrollbar-thin">
+            {/* Vendor Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="vendor-select" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Select Vendor</Label>
+              <Select value={vendorId} onValueChange={setVendorId}>
+                <SelectTrigger id="vendor-select" className="w-full h-11 bg-muted/30 border-border">
+                  <SelectValue placeholder="Choose vendor..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {vendors.filter(v => v.status === 'active').map((v) => (
+                    <SelectItem key={v.id} value={v.id}>{v.name} ({v.vendor_code})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Product List with finger-friendly selectors */}
+            <div className="space-y-2.5">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Products & Quantities</Label>
+              <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-1 scrollbar-thin">
+                {products.length > 0 ? (
+                  products.map((p) => {
+                    const qty = quantities[p.id] || 0;
+                    return (
+                      <div key={p.id} className="flex items-center justify-between p-3 rounded-xl border border-border/80 bg-card hover:bg-accent/10 transition-colors">
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className="text-sm font-semibold truncate text-foreground">{p.name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">₦{Number(p.unit_price).toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            disabled={qty === 0}
+                            className="h-8 w-8 rounded-lg shrink-0"
+                            onClick={() => setQuantities(q => ({ ...q, [p.id]: Math.max(0, qty - 1) }))}
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </Button>
+                          <span className="w-8 text-center text-sm font-semibold">{qty}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg shrink-0"
+                            onClick={() => setQuantities(q => ({ ...q, [p.id]: qty + 1 }))}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No products found</p>
+                )}
+              </div>
+            </div>
+
+            {/* Payment Details */}
+            <div className="space-y-4 pt-4 border-t">
+              {/* Payment Method */}
+              <div className="space-y-2">
+                <Label htmlFor="payment-method" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger id="payment-method" className="w-full h-11 bg-muted/30 border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">💵 Cash</SelectItem>
+                    <SelectItem value="mobile_money">📱 Mobile Money</SelectItem>
+                    <SelectItem value="mixed">🔄 Mixed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Amount Paid Input */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="amount-paid" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Amount Paid (₦)</Label>
+                  {isManualAmount && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-[10px] text-primary h-auto p-0 hover:bg-transparent"
+                      onClick={() => {
+                        setIsManualAmount(false);
+                        setAmountPaid(String(totalValue));
+                      }}
+                    >
+                      Reset to Total
+                    </Button>
+                  )}
+                </div>
+                <Input
+                  id="amount-paid"
+                  type="number"
+                  min={0}
+                  className="h-11 bg-muted/30 border-border font-mono text-base"
+                  value={amountPaid}
+                  onChange={(e) => {
+                    setIsManualAmount(true);
+                    setAmountPaid(e.target.value);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Summary calculations */}
+            <div className="p-4 rounded-xl bg-muted/50 border space-y-2 font-medium text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Sale Value:</span>
+                <span className="font-semibold">₦{totalValue.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount Paid:</span>
+                <span className="font-semibold">₦{(Number(amountPaid) || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t text-base font-bold">
+                <span className="text-foreground">Outstanding (Debt):</span>
+                <span className={totalValue - (Number(amountPaid) || 0) > 0 ? "text-rose-500" : "text-emerald-500"}>
+                  ₦{Math.max(0, totalValue - (Number(amountPaid) || 0)).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sheet Footer */}
+          <SheetFooter className="pt-4 border-t flex flex-row gap-3 sm:flex-row sm:justify-end animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              className="flex-1 sm:flex-none h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmitSale}
+              disabled={createSale.isPending || totalValue === 0 || !vendorId}
+              className="flex-1 sm:flex-none h-11 gap-1.5"
+              {...viewerProps}
+            >
+              {createSale.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Submit Sale
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Mobile Floating Action Button (FAB) */}
+      <div className="fixed bottom-20 right-4 z-40 sm:hidden">
+        <Button
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/95 flex items-center justify-center"
+          onClick={() => setIsOpen(true)}
+          {...viewerProps}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
     </div>
   );

@@ -156,7 +156,7 @@ export default function VendorList() {
               toast({ title: 'PDF Downloaded', description: `${filtered.length} vendors exported.` });
             }}
           />
-          <Button size="sm" onClick={() => navigate('/vendors/onboard')} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Vendor</Button>
+          <Button size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/vendors/onboard')} {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Vendor</Button>
         </div>
       </div>
 
@@ -451,6 +451,18 @@ export default function VendorList() {
           {editVendor && <QuickEditForm vendor={editVendor} onDone={() => setEditVendor(null)} />}
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Floating Action Button (FAB) */}
+      <div className="fixed bottom-20 right-4 z-40 sm:hidden">
+        <Button
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/95 flex items-center justify-center"
+          onClick={() => navigate('/vendors/onboard')}
+          {...viewerProps}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 }
