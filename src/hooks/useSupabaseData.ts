@@ -39,3 +39,5 @@ export {
   type DbTrainingModule, type DbVendorTrainingProgress, useTrainingModules, useVendorTrainingProgress,
   type DbForecast, useForecasts,
 } from './data/useSystemData';
+export { type HelpCategory, type HelpArticle, useHelpCategories, useHelpArticles } from './data/useHelpData';
+

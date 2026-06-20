@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { Bell, Moon, Sun, LogOut, Calendar, ChevronDown } from 'lucide-react';
+import { Bell, Moon, Sun, LogOut, Calendar, ChevronDown, HelpCircle } from 'lucide-react';
+import { HelpDrawer } from '@/components/HelpDrawer';
+
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,8 +23,10 @@ export function TopBar() {
   const { theme, toggleTheme } = useTheme();
   const { selectedOutletId, setSelectedOutletId, allOutlets } = useOutletContext();
   const navigate = useNavigate();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const handleNotification = () => {
+
     navigate('/notifications');
   };
 
@@ -81,6 +86,18 @@ export function TopBar() {
               3
             </span>
           </Button>
+
+          {/* Help & Training Center */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setHelpOpen(true)}
+            aria-label="Help & Documentation"
+          >
+            <HelpCircle className="h-[18px] w-[18px] text-muted-foreground" />
+          </Button>
+
 
           {/* User Avatar */}
           {user && (
@@ -151,6 +168,12 @@ export function TopBar() {
             </Badge>
           </Button>
 
+          {/* Help & Training Center */}
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setHelpOpen(true)} aria-label="Help & Documentation">
+            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+          </Button>
+
+
           {/* User Avatar */}
           {user && (
             <DropdownMenu>
@@ -179,6 +202,7 @@ export function TopBar() {
         </div>
       </div>
 
+      <HelpDrawer open={helpOpen} onOpenChange={setHelpOpen} />
     </header>
   );
 }
