@@ -5,11 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useVendors, useSales, useOutlets, useStockLevels } from '@/hooks/useSupabaseData';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import {
   TrendingUp, TrendingDown, Users, Package, Loader2, AlertTriangle, Download,
-  DollarSign, Building2, CreditCard, ArrowUpRight, Info
+  DollarSign, Building2, CreditCard, ArrowUpRight, Info, Store, PlusCircle, ClipboardList
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -22,6 +23,7 @@ import { generatePDFReport } from '@/lib/generatePDF';
 export default function Dashboard() {
   const { selectedOutletId, isAllOutlets, selectedOutlet } = useOutletContext();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [chartPeriod, setChartPeriod] = useState('weekly');
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
@@ -190,14 +192,24 @@ export default function Dashboard() {
     },
   ];
 
+  const firstName = user?.name?.split(' ')[0] || 'there';
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('dashboard')}</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            Welcome back, Admin! Here's what's happening today.
+          {/* Mobile: personalised greeting */}
+          <h1 className="text-2xl font-bold text-foreground md:hidden">
+            Hi, {firstName}! <span aria-hidden>👋</span>
+          </h1>
+          <p className="text-muted-foreground text-sm mt-0.5 md:hidden">
+            Here's what's happening today.
+          </p>
+          {/* Desktop: original heading */}
+          <h1 className="hidden md:block text-2xl font-bold text-foreground">{t('dashboard')}</h1>
+          <p className="hidden md:block text-muted-foreground text-sm mt-0.5">
+            Welcome back, {firstName}! Here's what's happening today.
           </p>
         </div>
         <Button
@@ -207,7 +219,8 @@ export default function Dashboard() {
           onClick={handleDownloadReport}
         >
           <Download className="h-4 w-4" />
-          Download Report
+          <span className="hidden sm:inline">Download Report</span>
+          <span className="sm:hidden">Report</span>
         </Button>
       </div>
 
@@ -528,6 +541,37 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Mobile: Quick Action Buttons */}
+      <div className="flex md:hidden gap-3">
+        <button
+          onClick={() => navigate('/outlets')}
+          className="flex-1 flex flex-col items-center gap-1.5 py-4 bg-card dark:bg-card border border-border/60 rounded-2xl active:scale-95 transition-transform duration-100"
+        >
+          <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <Store className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <span className="text-[11px] font-semibold text-foreground text-center leading-tight">Add Outlet</span>
+        </button>
+        <button
+          onClick={() => navigate('/products')}
+          className="flex-1 flex flex-col items-center gap-1.5 py-4 bg-card dark:bg-card border border-border/60 rounded-2xl active:scale-95 transition-transform duration-100"
+        >
+          <div className="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+            <PlusCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <span className="text-[11px] font-semibold text-foreground text-center leading-tight">Add Product</span>
+        </button>
+        <button
+          onClick={() => navigate('/sales')}
+          className="flex-1 flex flex-col items-center gap-1.5 py-4 bg-card dark:bg-card border border-border/60 rounded-2xl active:scale-95 transition-transform duration-100"
+        >
+          <div className="h-10 w-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+            <ClipboardList className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+          </div>
+          <span className="text-[11px] font-semibold text-foreground text-center leading-tight">Record Sale</span>
+        </button>
       </div>
 
       {/* Footer */}

@@ -1,54 +1,69 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Users, Clock, ScanLine, Settings } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Home, Layers, Package, Wallet, BarChart2, Gift, ShieldCheck } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
+const ALL_NAV_ITEMS = [
+  { label: 'Dashboard',   url: '/',                    icon: Home,        exact: true  },
+  { label: 'Operations',  url: '/mobile/operations',   icon: Layers,      exact: false },
+  { label: 'Inventory',   url: '/mobile/inventory',    icon: Package,     exact: false },
+  { label: 'Finance',     url: '/mobile/finance',      icon: Wallet,      exact: false },
+  { label: 'Analytics',   url: '/mobile/analytics',    icon: BarChart2,   exact: false },
+  { label: 'Programs',    url: '/mobile/programs',     icon: Gift,        exact: false },
+  { label: 'Admin',       url: '/mobile/admin',        icon: ShieldCheck, exact: false, adminOnly: true },
+];
 
 export function BottomBar() {
-  const { t } = useLanguage();
   const location = useLocation();
+  const { user } = useAuth();
 
-  const navItems = [
-    { titleKey: 'dashboard', url: '/', icon: Home },
-    { titleKey: 'vendors', url: '/vendors', icon: Users },
-    { titleKey: 'checkIn', url: '/checkin', icon: Clock },
-    { titleKey: 'scanner', url: '/scanner', icon: ScanLine },
-    { titleKey: 'settings', url: '/settings', icon: Settings },
-  ];
+  const navItems = ALL_NAV_ITEMS.filter(
+    (item) => !item.adminOnly || user?.role === 'admin' || user?.role === 'manager'
+  );
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 h-16 bg-background/95 border-t border-border/80 backdrop-blur-md flex items-center justify-around px-2 pb-safe md:hidden shadow-lg">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const isActive =
-          location.pathname === item.url ||
-          (item.url !== '/' && location.pathname.startsWith(item.url));
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 border-t border-border/80 backdrop-blur-md md:hidden shadow-lg safe-bottom">
+      <div
+        className="flex items-stretch justify-around"
+        style={{ height: '60px', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = item.exact
+            ? location.pathname === item.url
+            : location.pathname === item.url || location.pathname.startsWith(item.url + '/');
 
-        return (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            end={item.url === '/'}
-            className={({ isActive: linkActive }) =>
-              `flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition-colors duration-200 ${
-                isActive || linkActive
-                  ? 'text-primary font-semibold'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`
-            }
-          >
-            <div className={`p-1.5 rounded-xl transition-all duration-200 ${
-              isActive
-                ? 'bg-primary/10 text-primary scale-105'
-                : 'text-muted-foreground'
-            }`}>
-              <Icon className="h-5 w-5" />
-            </div>
-            <span className="text-[10px] tracking-tight mt-0.5 max-w-[64px] truncate capitalize">
-              {t(item.titleKey)}
-            </span>
-          </NavLink>
-        );
-      })}
-    </div>
+          return (
+            <NavLink
+              key={item.url}
+              to={item.url}
+              end={item.exact}
+              className="flex flex-col items-center justify-center flex-1 py-1 px-0.5 text-center transition-colors duration-200"
+            >
+              <div
+                className={`flex items-center justify-center rounded-xl transition-all duration-200 mb-0.5 ${
+                  isActive
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                }`}
+                style={{ width: 32, height: 28 }}
+              >
+                <Icon
+                  className={`transition-all duration-200 ${isActive ? 'h-[22px] w-[22px]' : 'h-5 w-5'}`}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                />
+              </div>
+              <span
+                className={`text-[9.5px] leading-tight font-medium tracking-tight truncate w-full text-center transition-colors duration-200 ${
+                  isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
+                }`}
+              >
+                {item.label}
+              </span>
+            </NavLink>
+          );
+        })}
+      </div>
+    </nav>
   );
 }

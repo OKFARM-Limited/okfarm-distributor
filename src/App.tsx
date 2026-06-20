@@ -53,6 +53,13 @@ const StockRecalc = lazy(() => import("./pages/admin/StockRecalc"));
 const BulkImport = lazy(() => import("./pages/admin/BulkImport"));
 const VendorPortal = lazy(() => import("./pages/vendor/VendorPortal"));
 const NotificationPreferences = lazy(() => import("./pages/settings/NotificationPreferences"));
+// Mobile Hub Pages
+const MobileOperations = lazy(() => import("./pages/mobile/MobileOperations"));
+const MobileInventory = lazy(() => import("./pages/mobile/MobileInventory"));
+const MobileFinance = lazy(() => import("./pages/mobile/MobileFinance"));
+const MobileAnalytics = lazy(() => import("./pages/mobile/MobileAnalytics"));
+const MobilePrograms = lazy(() => import("./pages/mobile/MobilePrograms"));
+const MobileAdmin = lazy(() => import("./pages/mobile/MobileAdmin"));
 
 const LazyFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center">
@@ -125,6 +132,13 @@ function AppRoutes() {
         <Route path="my-portal" element={<VendorPortal />} />
         <Route path="settings/notifications" element={<NotificationPreferences />} />
         <Route path="settings" element={<SettingsPage />} />
+        {/* Mobile Hub Pages */}
+        <Route path="mobile/operations" element={<MobileOperations />} />
+        <Route path="mobile/inventory" element={<MobileInventory />} />
+        <Route path="mobile/finance" element={<MobileFinance />} />
+        <Route path="mobile/analytics" element={<MobileAnalytics />} />
+        <Route path="mobile/programs" element={<MobilePrograms />} />
+        <Route path="mobile/admin" element={<AdminRoute><MobileAdmin /></AdminRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
