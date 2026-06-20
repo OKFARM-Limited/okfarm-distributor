@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Search, Loader2, CreditCard, DollarSign, Clock, AlertTriangle, TrendingUp,
+  Search, Loader2, CreditCard, Clock, AlertTriangle, TrendingUp,
   Download, Plus, Filter, MoreHorizontal, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Ban
 } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
 import { usePagination } from '@/hooks/usePagination';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { ExportMenu } from '@/components/ExportMenu';
@@ -97,7 +98,7 @@ export default function PaymentTracking() {
 
   const kpiCards = [
     { label: 'Total Payments (MTD)', value: formatCurrency(kpis.totalMTD), icon: CreditCard, color: 'bg-blue-50 text-blue-600', trend: '14.8%', up: true, trendLabel: 'vs last month' },
-    { label: 'Total Paid (MTD)', value: formatCurrency(kpis.paidMTD), icon: DollarSign, color: 'bg-emerald-50 text-emerald-600', trend: '12.6%', up: true, trendLabel: 'vs last month' },
+    { label: 'Total Paid (MTD)', value: formatCurrency(kpis.paidMTD), icon: NairaIcon, color: 'bg-emerald-50 text-emerald-600', trend: '12.6%', up: true, trendLabel: 'vs last month' },
     { label: 'Pending Payments', value: formatCurrency(kpis.pendingTotal), icon: Clock, color: 'bg-amber-50 text-amber-600', trend: `${kpis.pendingCount}`, up: false, trendLabel: 'Payments' },
     { label: 'Payments This Week', value: formatCurrency(kpis.weekTotal), icon: TrendingUp, color: 'bg-purple-50 text-purple-600', trend: '18.7%', up: true, trendLabel: 'vs last week' },
     { label: 'Overdue Payments', value: formatCurrency(kpis.overdueTotal), icon: AlertTriangle, color: 'bg-red-50 text-red-600', trend: '8.3%', up: false, trendLabel: 'vs last week' },

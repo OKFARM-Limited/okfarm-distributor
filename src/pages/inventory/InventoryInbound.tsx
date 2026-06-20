@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from '@/hooks/use-toast';
 import {
   Truck, Package, AlertTriangle, Eye, CheckCircle, Loader2, Upload, FileText, ExternalLink, Plus,
-  Download, Search, Filter, DollarSign, XCircle, MoreHorizontal, ChevronLeft, ChevronRight
+  Download, Search, Filter, XCircle, MoreHorizontal, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import NewDeliveryDialog from '@/components/inventory/NewDeliveryDialog';
@@ -101,13 +102,36 @@ export default function InventoryInbound() {
     if (!file || !uploadTargetId) return;
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) { toast({ title: 'File too large', description: 'Maximum file size is 10MB.', variant: 'destructive' }); return; }
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) { toast({ title: 'Invalid file type', description: 'Please upload a PDF or image file.', variant: 'destructive' }); return; }
     setUploading(uploadTargetId);
+
+    // Convert images to WebP before upload
+    const convertToWebP = (inputFile: File): Promise<{ blob: Blob; ext: string }> => {
+      if (inputFile.type === 'application/pdf') return Promise.resolve({ blob: inputFile, ext: 'pdf' });
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(inputFile);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.getContext('2d')!.drawImage(img, 0, 0);
+          canvas.toBlob(blob => {
+            if (blob) resolve({ blob, ext: 'webp' });
+            else reject(new Error('WebP conversion failed'));
+          }, 'image/webp', 0.85);
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+        img.src = url;
+      });
+    };
+
     try {
-      const ext = file.name.split('.').pop();
+      const { blob, ext } = await convertToWebP(file);
       const filePath = `${uploadTargetId}/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('invoices').upload(filePath, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage.from('invoices').upload(filePath, blob, { upsert: true, contentType: ext === 'webp' ? 'image/webp' : 'application/pdf' });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from('invoices').getPublicUrl(filePath);
       await updateDelivery.mutateAsync({ id: uploadTargetId, invoice_file_url: urlData.publicUrl });
@@ -140,7 +164,7 @@ export default function InventoryInbound() {
   if (dLoading || sLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const kpiCards = [
-    { label: 'Total Inventory Value', value: formatCurrency(totalValue), icon: DollarSign, color: 'bg-blue-50 text-blue-600', trend: '6.3%', up: true, trendLabel: 'vs last month' },
+    { label: 'Total Inventory Value', value: formatCurrency(totalValue), icon: NairaIcon, color: 'bg-blue-50 text-blue-600', trend: '6.3%', up: true, trendLabel: 'vs last month' },
     { label: 'Total Stock (Units)', value: totalStock.toLocaleString(), icon: Package, color: 'bg-emerald-50 text-emerald-600', trend: '8.7%', up: true, trendLabel: 'vs last month' },
     { label: 'In Stock (Units)', value: (totalStock - outOfStockItems.reduce((s, i) => s + 0, 0)).toLocaleString(), icon: CheckCircle, color: 'bg-purple-50 text-purple-600', trend: `${totalStock > 0 ? '85%' : '0%'}`, up: true, trendLabel: 'of total stock' },
     { label: 'Low Stock Items', value: lowStockItems.length.toString(), icon: AlertTriangle, color: 'bg-amber-50 text-amber-600', trend: lowStockItems.length.toString(), up: false, trendLabel: 'Require attention' },

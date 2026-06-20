@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useNavigate } from 'react-router-dom';
 import { useWebPush } from '@/hooks/useWebPush';
 import {
-  Settings, User, Users, Store, Bell, DollarSign, ShoppingCart, Award,
+  Settings, User, Users, Store, Bell, ShoppingCart, Award,
   FileText, Plug, Shield, Clock, Database, Info, Globe, Calendar, Hash,
   Ruler, HelpCircle, LogOut, Upload, Save
 } from 'lucide-react';

@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, DollarSign, Award, Calendar, TrendingUp } from 'lucide-react';
+import { Loader2, Award, Calendar, TrendingUp } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
 
 interface VendorData {
   vendor: Record<string, unknown>;
@@ -77,7 +78,7 @@ export default function VendorPortal() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="pt-4 pb-3 px-4">
-          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 mb-2"><DollarSign className="h-5 w-5" /></div>
+          <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 mb-2"><NairaIcon className="h-5 w-5" /></div>
           <p className="text-xs text-muted-foreground">Sales (30d)</p>
           <p className="text-xl font-bold">₦{totalSales.toLocaleString()}</p>
         </CardContent></Card>

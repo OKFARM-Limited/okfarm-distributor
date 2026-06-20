@@ -11,8 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import {
   Plus, Pencil, Trash2, Package, Loader2, Search, Filter, Download,
-  DollarSign, BarChart3, Tag, MoreHorizontal, ChevronLeft, ChevronRight
+  BarChart3, Tag, MoreHorizontal, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import { usePagination } from '@/hooks/usePagination';
@@ -97,7 +98,7 @@ export default function ProductManagement() {
   const kpiCards = [
     { label: 'Total Products', value: kpis.total.toString(), icon: Package, color: 'bg-blue-50 text-blue-600' },
     { label: 'Categories', value: kpis.categories.toString(), icon: Tag, color: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Avg. Price', value: `₦${Math.round(kpis.avgPrice).toLocaleString()}`, icon: DollarSign, color: 'bg-amber-50 text-amber-600' },
+    { label: 'Avg. Price', value: `₦${Math.round(kpis.avgPrice).toLocaleString()}`, icon: NairaIcon, color: 'bg-amber-50 text-amber-600' },
     { label: 'Highest Price', value: `₦${kpis.highestPrice.toLocaleString()}`, icon: BarChart3, color: 'bg-purple-50 text-purple-600' },
   ];
 

@@ -19,9 +19,30 @@ export function PhotoCapture({ bucket = 'vendor-photos', folder, value, onChange
   const handleFile = async (file: File) => {
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error } = await supabase.storage.from(bucket).upload(path, file, { contentType: file.type, upsert: false });
+      // Convert image to WebP via Canvas for smaller file size
+      const convertToWebP = (inputFile: File): Promise<Blob> =>
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(inputFile);
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d')!.drawImage(img, 0, 0);
+            canvas.toBlob(
+              blob => (blob ? resolve(blob) : reject(new Error('Conversion failed'))),
+              'image/webp',
+              0.85,
+            );
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+          img.src = url;
+        });
+
+      const webpBlob = await convertToWebP(file);
+      const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+      const { error } = await supabase.storage.from(bucket).upload(path, webpBlob, { contentType: 'image/webp', upsert: false });
       if (error) throw error;
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange(data.publicUrl);

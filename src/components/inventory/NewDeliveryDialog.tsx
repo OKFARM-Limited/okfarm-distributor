@@ -70,6 +70,11 @@ export default function NewDeliveryDialog({ open, onOpenChange }: NewDeliveryDia
 
     const validItems = items.filter(i => i.product_id && i.quantity > 0);
 
+    if (validItems.length === 0) {
+      toast({ title: 'No valid line items', description: 'Please add at least one product with a quantity greater than 0.', variant: 'destructive' });
+      return;
+    }
+
     try {
       await createDelivery.mutateAsync({
         delivery: {

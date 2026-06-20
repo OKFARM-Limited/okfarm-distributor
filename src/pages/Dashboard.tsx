@@ -10,7 +10,7 @@ import { useVendors, useSales, useOutlets, useStockLevels } from '@/hooks/useSup
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import {
   TrendingUp, TrendingDown, Users, Package, Loader2, AlertTriangle, Download,
-  DollarSign, Building2, CreditCard, ArrowUpRight, Info, Store, PlusCircle, ClipboardList
+  Building2, CreditCard, ArrowUpRight, Info, Store, PlusCircle, ClipboardList
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,

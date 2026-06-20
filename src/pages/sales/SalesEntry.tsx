@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Download, Loader2, DollarSign, TrendingUp, Target, ShoppingCart, BarChart3,
+  Download, Loader2, TrendingUp, Target, ShoppingCart, BarChart3,
   MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownRight, Plus, Minus, Trash2
 } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
 import {
@@ -211,7 +212,7 @@ export default function SalesEntry() {
   if (sLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const kpiCards = [
-    { label: 'Total Sales (Today)', value: formatCurrency(kpis.totalToday), icon: DollarSign, color: 'bg-blue-50 text-blue-600', trend: '12.5%', up: true, trendLabel: 'vs yesterday' },
+    { label: 'Total Sales (Today)', value: formatCurrency(kpis.totalToday), icon: NairaIcon, color: 'bg-blue-50 text-blue-600', trend: '12.5%', up: true, trendLabel: 'vs yesterday' },
     { label: 'Total Sales (MTD)', value: formatCurrency(kpis.totalMTD), icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600', trend: '15.3%', up: true, trendLabel: 'vs last month' },
     { label: 'Total Sales (YTD)', value: formatCurrency(kpis.totalYTD), icon: BarChart3, color: 'bg-amber-50 text-amber-600', trend: '18.7%', up: true, trendLabel: 'vs last year' },
     { label: 'Monthly Target', value: formatCurrency(kpis.monthlyTarget), icon: Target, color: 'bg-purple-50 text-purple-600', trend: `${kpis.totalMTD > 0 ? ((kpis.totalMTD / kpis.monthlyTarget) * 100).toFixed(1) : 0}%`, up: true, trendLabel: 'Achieved' },

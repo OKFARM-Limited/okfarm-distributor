@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useOutlets, useUpsertOutlet, useVendors, useAssets, DbOutlet } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -32,6 +34,27 @@ export default function OutletManagement() {
   const [form, setForm] = useState({ name: '', short_code: '', address: '', manager: '', phone: '', description: '' });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Load users with manager or admin role for the Manager dropdown
+  const { data: managerUsers = [] } = useQuery({
+    queryKey: ['manager-users'],
+    queryFn: async () => {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['manager', 'admin']);
+      if (!roles?.length) return [];
+      const ids = roles.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, email')
+        .in('user_id', ids);
+      return (profiles ?? []).map(p => ({
+        id: p.user_id,
+        label: p.display_name || p.email || p.user_id,
+      }));
+    },
+  });
 
   const handleSave = async () => {
     if (!form.name || !form.short_code) { toast({ title: 'Error', description: 'Name and short code required.', variant: 'destructive' }); return; }
@@ -258,7 +281,20 @@ export default function OutletManagement() {
             </div>
             <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Manager</Label><Input value={form.manager} onChange={e => setForm(f => ({ ...f, manager: e.target.value }))} /></div>
+              <div className="space-y-2">
+                <Label>Manager</Label>
+                <Select value={form.manager} onValueChange={v => setForm(f => ({ ...f, manager: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
+                  <SelectContent>
+                    {managerUsers.map(u => (
+                      <SelectItem key={u.id} value={u.label}>{u.label}</SelectItem>
+                    ))}
+                    {managerUsers.length === 0 && (
+                      <SelectItem value="" disabled>No managers created yet</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
             </div>
             <div className="space-y-2"><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} /></div>

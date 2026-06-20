@@ -1,10 +1,11 @@
 import {
-  Users, Package, ClipboardList, BarChart3, DollarSign, Award,
+  Users, Package, ClipboardList, BarChart3, Award,
   Map, ShoppingCart, Shield, Settings, Home, Truck, CreditCard, History,
   Clock, Warehouse, ScanLine, FileText, Smartphone, Bell, TrendingUp,
   Building2, GraduationCap, Gift, Handshake, Store, UserCog, Grid3X3, RefreshCw, Upload, User as UserIcon, BellRing,
   ChevronDown
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,11 +18,19 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 import type { LucideIcon } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
+
+interface NavItem {
+  titleKey: string;
+  url: string;
+  icon: LucideIcon | React.ComponentType<{ className?: string }>;
+  comingSoon?: boolean;
+}
 
 interface NavGroup {
   labelKey: string;
   adminOrManager?: boolean;
-  items: { titleKey: string; url: string; icon: LucideIcon }[];
+  items: NavItem[];
 }
 
 const navGroups: NavGroup[] = [
@@ -54,9 +63,9 @@ const navGroups: NavGroup[] = [
   {
     labelKey: 'finance',
     items: [
-      { titleKey: 'salesEntry', url: '/sales', icon: DollarSign },
+      { titleKey: 'salesEntry', url: '/sales', icon: NairaIcon },
       { titleKey: 'payments', url: '/payments', icon: CreditCard },
-      { titleKey: 'mobileMoney', url: '/mobile-money', icon: Smartphone },
+      { titleKey: 'mobileMoney', url: '/mobile-money', icon: Smartphone, comingSoon: true },
       { titleKey: 'duesStatement', url: '/dues', icon: FileText },
     ],
   },
@@ -139,6 +148,23 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {group.items.map(item => {
                     const isActive = location.pathname === item.url || (item.url !== '/' && location.pathname.startsWith(item.url));
+                    if (item.comingSoon) {
+                      return (
+                        <SidebarMenuItem key={item.url}>
+                          <SidebarMenuButton asChild>
+                            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg opacity-50 cursor-not-allowed select-none">
+                              <item.icon className="h-4 w-4 shrink-0" />
+                              {!collapsed && (
+                                <span className="flex-1 flex items-center justify-between">
+                                  <span>{t(item.titleKey)}</span>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0 ml-1 border-amber-400 text-amber-600">Soon</Badge>
+                                </span>
+                              )}
+                            </div>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    }
                     return (
                       <SidebarMenuItem key={item.url}>
                         <SidebarMenuButton

@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   CheckCircle, ChevronRight, ChevronLeft, MapPin, Loader2, Download, Search,
-  Plus, Package, TrendingUp, Clock, DollarSign, Filter, MoreHorizontal
+  Plus, Package, TrendingUp, Clock, Filter, MoreHorizontal
 } from 'lucide-react';
+import { NairaIcon } from '@/components/NairaIcon';
 import { toast } from '@/hooks/use-toast';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { generatePDFReport } from '@/lib/generatePDF';
@@ -100,7 +101,7 @@ export default function DailyAllocation() {
     { label: "Today's Allocations", value: kpis.todayCount.toString(), icon: Package, color: 'bg-blue-50 text-blue-600', trend: formatCurrency(kpis.totalToday), trendLabel: 'Total value' },
     { label: 'Pending', value: kpis.pending.toString(), icon: Clock, color: 'bg-amber-50 text-amber-600', trend: `${kpis.pending}`, trendLabel: 'awaiting confirmation' },
     { label: 'Confirmed', value: kpis.confirmed.toString(), icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600', trend: '100%', trendLabel: 'delivery rate' },
-    { label: 'Total All Time', value: formatCurrency(kpis.totalAll), icon: DollarSign, color: 'bg-purple-50 text-purple-600', trend: `${allocations.length}`, trendLabel: 'allocations' },
+    { label: 'Total All Time', value: formatCurrency(kpis.totalAll), icon: NairaIcon, color: 'bg-purple-50 text-purple-600', trend: `${allocations.length}`, trendLabel: 'allocations' },
   ];
 
   return (

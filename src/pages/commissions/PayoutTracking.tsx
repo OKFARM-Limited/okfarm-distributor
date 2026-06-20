@@ -89,10 +89,11 @@ export default function PayoutTracking() {
                   <TableCell><Badge variant={c.status === 'disbursed' ? 'default' : 'secondary'}>{c.status}</Badge></TableCell>
                   <TableCell>
                     {c.status !== 'disbursed' && (
-                      <Button size="sm" onClick={() => handleDisburse(c)} disabled={createPayout.isPending} {...viewerProps}>
-                        {createPayout.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                        Disburse
-                      </Button>
+                      <div title="Mobile Money integration coming soon">
+                        <Button size="sm" disabled className="opacity-50 cursor-not-allowed">
+                          Disburse
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>

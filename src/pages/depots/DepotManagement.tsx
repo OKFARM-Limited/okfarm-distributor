@@ -71,7 +71,9 @@ export default function DepotManagement() {
           )}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" {...viewerProps}><Plus className="h-4 w-4 mr-1.5" />Add Depot</Button>
+              <Button size="sm" disabled className="opacity-50 cursor-not-allowed" title="Contact admin to add depots">
+                <Plus className="h-4 w-4 mr-1.5" />Add Depot
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Register New Depot</DialogTitle></DialogHeader>
