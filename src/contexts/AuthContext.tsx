@@ -10,6 +10,7 @@ export interface User {
   name: string;
   role: UserRole;
   avatar: string;
+  mustChangePassword: boolean;
 }
 
 interface AuthState {
@@ -46,12 +47,14 @@ async function buildUser(supabaseUser: SupabaseUser): Promise<User> {
     fetchProfile(supabaseUser.id),
   ]);
   const name = profile.display_name || supabaseUser.email?.split('@')[0] || 'User';
+  const mustChangePassword = supabaseUser.user_metadata?.must_change_password === true;
   return {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
     name,
     role,
     avatar: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+    mustChangePassword,
   };
 }
 

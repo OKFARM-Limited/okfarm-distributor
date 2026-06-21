@@ -53,6 +53,7 @@ const StockRecalc = lazy(() => import("./pages/admin/StockRecalc"));
 const BulkImport = lazy(() => import("./pages/admin/BulkImport"));
 const VendorPortal = lazy(() => import("./pages/vendor/VendorPortal"));
 const NotificationPreferences = lazy(() => import("./pages/settings/NotificationPreferences"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 // Mobile Hub Pages
 const MobileOperations = lazy(() => import("./pages/mobile/MobileOperations"));
 const MobileInventory = lazy(() => import("./pages/mobile/MobileInventory"));
@@ -70,9 +71,18 @@ const LazyFallback = () => (
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.mustChangePassword) return <Navigate to="/change-password" replace />;
+  return <>{children}</>;
+}
+
+function ChangePasswordRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user && !user.mustChangePassword) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -94,6 +104,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/password-recovery" element={<PasswordRecovery />} />
+      <Route path="/change-password" element={<ChangePasswordRoute><ChangePassword /></ChangePasswordRoute>} />
       <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="vendors" element={<VendorList />} />
