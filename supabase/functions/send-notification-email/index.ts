@@ -5,9 +5,9 @@
  * Falls back gracefully when ZeptoMail is not yet configured (returns ok:false with reason).
  *
  * Payload:
- *   { to, subject, title, body, action_url?, action_label? }
+ *   { to, subject, title, body, type?, action_url?, action_label? }
  */
-import { ZeptoMail, buildEmailHtml } from '../_shared/zeptomail.ts';
+import { ZeptoMail, buildTypedEmailHtml } from '../_shared/zeptomail.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +21,8 @@ interface Payload {
   title: string;
   body?: string;
   message?: string;
+  /** Notification type for category-specific email styling */
+  type?: string;
   action_url?: string;
   action_label?: string;
 }
@@ -30,7 +32,7 @@ Deno.serve(async (req) => {
 
   try {
     const json = await req.json() as Payload;
-    const { to, toName, subject, title, action_url, action_label } = json;
+    const { to, toName, subject, title, type, action_url, action_label } = json;
     const body = json.body ?? json.message;
 
     // ── Validate required fields ──────────────────────────────────────────────
@@ -54,7 +56,13 @@ Deno.serve(async (req) => {
     }
 
     // ── Build and send ────────────────────────────────────────────────────────
-    const html = buildEmailHtml({ title, body, actionUrl: action_url, actionLabel: action_label });
+    const html = buildTypedEmailHtml({
+      title,
+      body,
+      type,
+      actionUrl: action_url,
+      actionLabel: action_label,
+    });
     const zm = new ZeptoMail();
     const result = await zm.send({ to, toName, subject, html });
 
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`[send-notification-email] Sent to ${to} — messageId: ${result.messageId}`);
+    console.log(`[send-notification-email] Sent to ${to} (type: ${type ?? 'none'}) — messageId: ${result.messageId}`);
     return new Response(
       JSON.stringify({ ok: true, messageId: result.messageId }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -80,3 +88,4 @@ Deno.serve(async (req) => {
     );
   }
 });
+
