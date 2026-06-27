@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { OutletProvider } from "./contexts/OutletContext";
@@ -74,6 +75,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // If activation has expired, sign out and redirect to login
+  if (user?.activationExpired) {
+    supabase.auth.signOut();
+    return <Navigate to="/login" replace />;
+  }
   if (user?.mustChangePassword) return <Navigate to="/change-password" replace />;
   return <>{children}</>;
 }
@@ -82,6 +88,11 @@ function ChangePasswordRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // If activation has expired, sign out and redirect to login
+  if (user?.activationExpired) {
+    supabase.auth.signOut();
+    return <Navigate to="/login" replace />;
+  }
   if (user && !user.mustChangePassword) return <Navigate to="/" replace />;
   return <>{children}</>;
 }

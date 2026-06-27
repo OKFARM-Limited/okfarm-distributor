@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Lock, Mail, ArrowRight, Shield, Eye, EyeOff, Users, BarChart3, CreditCard, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { getRememberMe } from '@/integrations/supabase/client';
+import { getRememberMe, supabase } from '@/integrations/supabase/client';
 
 export default function Login() {
   const { login, isAuthenticated } = useAuth();
@@ -26,6 +26,41 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // First, do a raw signIn to check activation expiry before AuthContext picks it up
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setLoading(false);
+      toast({ title: t('loginFailed'), description: t('loginFailed'), variant: 'destructive' });
+      return;
+    }
+
+    // Check if activation has expired (must_change_password is still true + expiry passed)
+    const metadata = signInData?.user?.user_metadata;
+    if (
+      metadata?.must_change_password === true &&
+      metadata?.activation_expires_at &&
+      new Date(metadata.activation_expires_at).getTime() < Date.now()
+    ) {
+      // Sign out immediately — activation window has closed
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast({
+        title: 'Activation Expired',
+        description:
+          'Your 48-hour activation window has expired. Please contact your administrator to resend the activation email.',
+        variant: 'destructive',
+        duration: 8000,
+      });
+      return;
+    }
+
+    // If credentials are valid and activation is not expired,
+    // proceed with the normal login flow via AuthContext
     const success = await login(email, password, rememberMe);
     setLoading(false);
     if (!success) {

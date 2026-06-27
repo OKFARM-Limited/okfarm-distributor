@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   avatar: string;
   mustChangePassword: boolean;
+  activationExpired: boolean;
 }
 
 interface AuthState {
@@ -49,6 +50,16 @@ async function buildUser(supabaseUser: SupabaseUser): Promise<User> {
   ]);
   const name = profile.display_name || supabaseUser.email?.split('@')[0] || 'User';
   const mustChangePassword = supabaseUser.user_metadata?.must_change_password === true;
+
+  // Check if the 48-hour activation window has expired
+  let activationExpired = false;
+  if (mustChangePassword) {
+    const expiresAt = supabaseUser.user_metadata?.activation_expires_at;
+    if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+      activationExpired = true;
+    }
+  }
+
   return {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
@@ -56,6 +67,7 @@ async function buildUser(supabaseUser: SupabaseUser): Promise<User> {
     role,
     avatar: profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
     mustChangePassword,
+    activationExpired,
   };
 }
 

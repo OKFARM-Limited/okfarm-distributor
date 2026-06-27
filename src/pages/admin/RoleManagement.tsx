@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, Search, ShieldCheck, UserCog, UserPlus, Users } from 'lucide-react';
+import { Loader2, RefreshCcw, Search, ShieldCheck, UserCog, UserPlus, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/contexts/AuthContext';
 import { ViewerBanner } from '@/components/ViewerGuard';
@@ -103,6 +103,26 @@ export default function RoleManagement() {
     },
     onError: (err: Error) => {
       toast({ title: 'Error Creating User', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const resendActivation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: { resend: true, user_id: userId },
+      });
+      if (error) throw new Error(error.message || 'Failed to resend activation');
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: 'Activation Resent',
+        description: `A new activation email has been sent to ${data.email}. It is valid for 48 hours.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Error Resending Activation', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -230,6 +250,7 @@ export default function RoleManagement() {
                   <TableHead>Email</TableHead>
                   <TableHead>Current Role</TableHead>
                   <TableHead className="w-[160px]">Change Role</TableHead>
+                  <TableHead className="w-[140px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -267,6 +288,23 @@ export default function RoleManagement() {
                           <SelectItem value="viewer">Viewer</SelectItem>
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5 text-xs"
+                        disabled={resendActivation.isPending || viewerProps.disabled}
+                        onClick={() => resendActivation.mutate(user.user_id)}
+                        title="Resend activation email with a new 48-hour window"
+                      >
+                        {resendActivation.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <RefreshCcw className="h-3.5 w-3.5" />
+                        )}
+                        Resend Activation
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
