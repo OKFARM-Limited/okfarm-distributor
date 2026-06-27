@@ -5,12 +5,57 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// ── Remember-Me helpers ──────────────────────────────────────────────
+const REMEMBER_ME_KEY = 'distribo_remember_me';
+
+/**
+ * Returns true if "Remember Me" was selected at last login.
+ * Defaults to true for backward-compatibility (sessions were always persisted before).
+ */
+export function getRememberMe(): boolean {
+  const val = localStorage.getItem(REMEMBER_ME_KEY);
+  return val !== 'false'; // true by default
+}
+
+/** Persist the "Remember Me" preference. Call *before* signIn. */
+export function setRememberMe(value: boolean): void {
+  localStorage.setItem(REMEMBER_ME_KEY, value ? 'true' : 'false');
+}
+
+// ── Dynamic storage adapter ──────────────────────────────────────────
+/**
+ * Custom storage that delegates to localStorage or sessionStorage
+ * based on the "Remember Me" flag.
+ *
+ *  • getItem  – checks both storages (handles mode switching gracefully)
+ *  • setItem  – writes to the active backend, clears the other
+ *  • removeItem – clears from both storages
+ */
+const dynamicStorage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> = {
+  getItem(key: string): string | null {
+    return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+  },
+  setItem(key: string, value: string): void {
+    if (getRememberMe()) {
+      localStorage.setItem(key, value);
+      sessionStorage.removeItem(key);
+    } else {
+      sessionStorage.setItem(key, value);
+      localStorage.removeItem(key);
+    }
+  },
+  removeItem(key: string): void {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  },
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: dynamicStorage,
     persistSession: true,
     autoRefreshToken: true,
   }

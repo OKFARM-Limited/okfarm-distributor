@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Lock, Mail, ArrowRight, Shield, Eye, EyeOff, Users, BarChart3, CreditCard, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { getRememberMe } from '@/integrations/supabase/client';
 
 export default function Login() {
   const { login, isAuthenticated } = useAuth();
@@ -16,7 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => getRememberMe());
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -25,7 +26,7 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const success = await login(email, password);
+    const success = await login(email, password, rememberMe);
     setLoading(false);
     if (!success) {
       toast({ title: t('loginFailed'), description: t('loginFailed'), variant: 'destructive' });

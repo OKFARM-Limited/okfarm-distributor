@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, setRememberMe } from '@/integrations/supabase/client';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 
 export type UserRole = 'admin' | 'manager' | 'assistant' | 'viewer';
 
@@ -17,7 +18,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -99,7 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string, rememberMe: boolean = true): Promise<boolean> => {
+    setRememberMe(rememberMe);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return !error;
   }, []);
@@ -110,6 +112,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setUser(null);
   }, []);
+
+  // Auto-logout after configured period of inactivity
+  const handleSessionTimeout = useCallback(async () => {
+    console.warn('[Session] Timed out due to inactivity');
+    await supabase.auth.signOut();
+    setUser(null);
+  }, []);
+
+  useSessionTimeout(handleSessionTimeout, !!user);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
