@@ -1,23 +1,29 @@
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useVendors, useAssets } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Search, Plus, Phone, MapPin, Edit, Building2, Loader2, Download, Users,
   UserCheck, UserX, Star, TrendingUp, MoreHorizontal, X, Mail, Calendar,
-  Eye, FileText, Ban, ChevronLeft, ChevronRight, Filter
+  Eye, FileText, Ban, ChevronLeft, ChevronRight, Filter, ChevronDown, Upload
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useUpsertVendor } from '@/hooks/useSupabaseData';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePagination } from '@/hooks/usePagination';
 import { ViewerBanner } from '@/components/ViewerGuard';
 import { useViewerGuard } from '@/hooks/useViewerGuard';
@@ -38,11 +44,16 @@ export default function VendorList() {
   const [editVendor, setEditVendor] = useState<typeof vendors[number] | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<typeof vendors[number] | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { viewerProps } = useViewerGuard();
   const { data: settingsTerritories = DEFAULT_TERRITORIES } = useAppSetting<string[]>('territories', DEFAULT_TERRITORIES);
   const territories = ['All', ...settingsTerritories];
   const { selectedOutletId, isAllOutlets, getOutletName, allOutlets } = useOutletContext();
   const { data: vendors = [], isLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
+
+  // Selection state for bulk actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   const filtered = vendors.filter((v) => {
     const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -57,6 +68,71 @@ export default function VendorList() {
   const { paginatedItems, currentPage, totalPages, totalItems, goToPage, hasNextPage, hasPrevPage, resetPage } = usePagination(filtered, 10);
 
   useEffect(() => { resetPage(); }, [search, territory, statusFilter, outletFilter]);
+
+  // Clear selection when filters change
+  useEffect(() => { setSelectedIds(new Set()); }, [search, territory, statusFilter, outletFilter]);
+
+  // Select-all toggles for current page only
+  const allPageSelected = paginatedItems.length > 0 && paginatedItems.every(v => selectedIds.has(v.id));
+  const somePageSelected = paginatedItems.some(v => selectedIds.has(v.id));
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        paginatedItems.forEach(v => next.delete(v.id));
+      } else {
+        paginatedItems.forEach(v => next.add(v.id));
+      }
+      return next;
+    });
+  }, [paginatedItems, allPageSelected]);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Bulk status update
+  const bulkUpdateStatus = useCallback(async (status: 'active' | 'inactive' | 'suspended') => {
+    if (selectedIds.size === 0) return;
+    setBulkUpdating(true);
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase
+      .from('vendors')
+      .update({ status })
+      .in('id', ids);
+    setBulkUpdating(false);
+    if (error) {
+      toast({ title: 'Bulk Update Failed', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Bulk Update Complete', description: `${ids.length} vendor(s) set to "${status}".` });
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+    }
+  }, [selectedIds, queryClient]);
+
+  const exportSelected = useCallback(() => {
+    const selectedVendors = filtered.filter(v => selectedIds.has(v.id));
+    if (selectedVendors.length === 0) return;
+    downloadCSV(
+      [
+        { header: 'Name', key: 'name' },
+        { header: 'Code', key: 'vendor_code' },
+        { header: 'Phone', key: 'phone' },
+        { header: 'Territory', key: 'territory' },
+        { header: 'Outlet', key: 'outlet_name' },
+        { header: 'Status', key: 'status' },
+        { header: 'Total Sales (₦)', key: 'total_sales' },
+      ],
+      selectedVendors.map(v => ({ ...v, outlet_name: v.outlets?.name || getOutletName(v.outlet_id) })),
+      `vendors_selected_${new Date().toISOString().split('T')[0]}.csv`,
+    );
+    toast({ title: 'CSV Downloaded', description: `${selectedVendors.length} selected vendor(s) exported.` });
+  }, [selectedIds, filtered, getOutletName]);
 
   // KPI calculations
   const kpis = useMemo(() => {
@@ -220,8 +296,38 @@ export default function VendorList() {
             {/* Bulk actions bar */}
             <div className="flex items-center justify-between px-4 py-2.5 border-b">
               <div className="flex items-center gap-2">
-                <Button variant="default" size="sm" className="bg-primary text-white">Bulk Actions <ChevronLeft className="h-3 w-3 ml-1 rotate-[270deg]" /></Button>
-                <Button variant="outline" size="sm">Import Vendors</Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="default" size="sm" className="bg-primary text-white" disabled={selectedIds.size === 0 || bulkUpdating}>
+                      {bulkUpdating && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+                      Bulk Actions ({selectedIds.size})
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={() => bulkUpdateStatus('active')}>
+                      <UserCheck className="h-4 w-4 mr-2 text-emerald-600" />
+                      Set Active
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => bulkUpdateStatus('inactive')}>
+                      <UserX className="h-4 w-4 mr-2 text-red-600" />
+                      Set Inactive
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => bulkUpdateStatus('suspended')}>
+                      <Ban className="h-4 w-4 mr-2 text-amber-600" />
+                      Set Suspended
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={exportSelected}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Selected as CSV
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="outline" size="sm" onClick={() => navigate('/bulk-import')} {...viewerProps}>
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />
+                  Import Vendors
+                </Button>
               </div>
               <p className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, totalItems)} of {totalItems}
@@ -231,7 +337,13 @@ export default function VendorList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8"><input type="checkbox" className="rounded" /></TableHead>
+                  <TableHead className="w-8">
+                    <Checkbox
+                      checked={allPageSelected ? true : somePageSelected ? 'indeterminate' : false}
+                      onCheckedChange={toggleSelectAll}
+                      aria-label="Select all vendors on this page"
+                    />
+                  </TableHead>
                   <TableHead>Vendor</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Outlet / Territory</TableHead>
@@ -252,7 +364,13 @@ export default function VendorList() {
                       className={`cursor-pointer hover:bg-muted/50 ${selectedVendor?.id === v.id ? 'bg-primary/5' : ''}`}
                       onClick={() => setSelectedVendor(v)}
                     >
-                      <TableCell onClick={e => e.stopPropagation()}><input type="checkbox" className="rounded" /></TableCell>
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedIds.has(v.id)}
+                          onCheckedChange={() => toggleSelect(v.id)}
+                          aria-label={`Select ${v.name}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="h-8 w-8">
