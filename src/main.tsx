@@ -2,6 +2,25 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
+// ── Global handler for stale-chunk / dynamic-import errors ──
+// These can fire *outside* React's ErrorBoundary (e.g. in the router).
+// On first occurrence we auto-reload once; sessionStorage prevents loops.
+const CHUNK_RELOAD_KEY = 'chunk_error_reload';
+
+window.addEventListener('vite:preloadError', () => {
+  const alreadyReloaded = sessionStorage.getItem(CHUNK_RELOAD_KEY);
+  if (!alreadyReloaded) {
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+    window.location.reload();
+  }
+});
+
+// Clear the flag on successful page loads so future deployments
+// can still benefit from auto-reload.
+window.addEventListener('load', () => {
+  sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+});
+
 // PWA: Guard against service worker in iframes/preview
 const isInIframe = (() => {
   try {
