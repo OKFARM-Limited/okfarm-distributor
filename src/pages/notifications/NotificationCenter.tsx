@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useNotifications, useUpdateNotification, useDeleteNotification } from '@/hooks/useSupabaseData';
+import { useNotifications, useUpdateNotification, useDeleteNotification, useNotificationPreferences, useUpsertNotificationPreferences } from '@/hooks/useSupabaseData';
 import { useRealtimeSubscription } from '@/hooks/useRealtimeSubscription';
 import { useWebPush } from '@/hooks/useWebPush';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,8 +38,10 @@ export default function NotificationCenter() {
   const { data: notifs = [], isLoading } = useNotifications(isAllOutlets ? 'all' : selectedOutletId);
   const updateNotif = useUpdateNotification();
   const deleteNotif = useDeleteNotification();
+  const { data: prefs } = useNotificationPreferences();
+  const upsertPrefs = useUpsertNotificationPreferences();
   const { viewerProps } = useViewerGuard();
-  const { sendLocalNotification, isSubscribed: pushEnabled } = useWebPush();
+  const { sendLocalNotification, isSubscribed: pushEnabled, isSupported, requestPermission, unsubscribe } = useWebPush();
   const prevCountRef = useRef(0);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -217,10 +219,9 @@ export default function NotificationCenter() {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { icon: Bell, label: 'In-App Notifications', desc: 'Receive notifications in the application', defaultOn: true },
-                { icon: Mail, label: 'Email Notifications', desc: 'Receive notifications via email', defaultOn: true },
-                { icon: Smartphone, label: 'SMS Notifications', desc: 'Receive notifications via SMS', defaultOn: false },
-                { icon: BellRing, label: 'Push Notifications', desc: 'Receive push notifications', defaultOn: pushEnabled },
+                { id: 'channel_in_app', icon: Bell, label: 'In-App Notifications', desc: 'Receive notifications in the application' },
+                { id: 'channel_email', icon: Mail, label: 'Email Notifications', desc: 'Receive notifications via email' },
+                { id: 'channel_push', icon: BellRing, label: 'Push Notifications', desc: 'Receive push notifications' },
               ].map(setting => (
                 <div key={setting.label} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -230,7 +231,21 @@ export default function NotificationCenter() {
                       <p className="text-xs text-muted-foreground">{setting.desc}</p>
                     </div>
                   </div>
-                  <Switch defaultChecked={setting.defaultOn} />
+                  <Switch 
+                    checked={prefs ? !!prefs[setting.id as keyof typeof prefs] : false} 
+                    onCheckedChange={async (v) => {
+                      if (!prefs) return;
+                      if (setting.id === 'channel_push') {
+                        if (v && isSupported && !pushEnabled) {
+                          const granted = await requestPermission();
+                          if (!granted) return;
+                        } else if (!v) {
+                          unsubscribe();
+                        }
+                      }
+                      upsertPrefs.mutate({ [setting.id]: v });
+                    }} 
+                  />
                 </div>
               ))}
             </CardContent>

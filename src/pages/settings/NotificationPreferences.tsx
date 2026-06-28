@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useWebPush } from '@/hooks/useWebPush';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,7 @@ const DEFAULTS: Prefs = {
 
 export default function NotificationPreferences() {
   const { user } = useAuth();
+  const { isSupported, isSubscribed, requestPermission, unsubscribe } = useWebPush();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -53,7 +55,22 @@ export default function NotificationPreferences() {
     })();
   }, [user?.id, user?.email]);
 
-  const update = (k: keyof Prefs, v: boolean | string) => setPrefs(p => ({ ...p, [k]: v }));
+  const update = async (k: keyof Prefs, v: boolean | string) => {
+    if (k === 'channel_push' && typeof v === 'boolean') {
+      if (v) {
+        if (isSupported && !isSubscribed) {
+          const granted = await requestPermission();
+          if (!granted) {
+            toast({ title: 'Permission Denied', description: 'Please enable notifications in your browser settings.', variant: 'destructive' });
+            return;
+          }
+        }
+      } else {
+        unsubscribe();
+      }
+    }
+    setPrefs(p => ({ ...p, [k]: v }));
+  };
 
   const save = async () => {
     if (!user?.id) return;

@@ -34,6 +34,7 @@ export {
 } from './data/useInventoryData';
 export {
   type DbNotification, useNotifications, useUpdateNotification, useDeleteNotification,
+  useNotificationPreferences, useUpsertNotificationPreferences,
   type DbAuditLog, useAuditLogs,
   type DbIncentiveProgram, type DbVendorIncentive, useIncentivePrograms,
   type DbTrainingModule, type DbVendorTrainingProgress, useTrainingModules, useVendorTrainingProgress,

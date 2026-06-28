@@ -13,11 +13,37 @@ export function useNotifications(outletId?: string | null) {
   return useQuery({
     queryKey: ['notifications', outletId],
     queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+
       let query = supabase.from('notifications').select('*, outlets(name)').order('created_at', { ascending: false });
       if (outletId && outletId !== 'all') query = query.eq('outlet_id', outletId);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as DbNotification[];
+      
+      const [notifsResult, prefsResult] = await Promise.all([
+        query,
+        userId ? supabase.from('notification_preferences').select('*').eq('user_id', userId).maybeSingle() : Promise.resolve({ data: null, error: null })
+      ]);
+
+      if (notifsResult.error) throw notifsResult.error;
+      if (prefsResult.error) throw prefsResult.error;
+
+      let items = notifsResult.data as DbNotification[];
+      const prefs = prefsResult.data;
+
+      if (prefs) {
+        if (!prefs.channel_in_app) return [];
+        
+        items = items.filter(n => {
+          const t = n.type;
+          if ((t === 'stock' || t === 'low_stock') && prefs.cat_stock === false) return false;
+          if (t === 'payment' && prefs.cat_payment === false) return false;
+          if (t === 'sales' && prefs.cat_sales === false) return false;
+          if ((t === 'maintenance' || t === 'info' || t === 'system') && prefs.cat_system === false) return false;
+          return true;
+        });
+      }
+
+      return items;
     },
   });
 }
@@ -42,6 +68,34 @@ export function useDeleteNotification() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+}
+
+// ===== NOTIFICATION PREFERENCES =====
+export function useNotificationPreferences() {
+  return useQuery({
+    queryKey: ['notification_preferences'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data, error } = await supabase.from('notification_preferences').select('*').eq('user_id', user.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useUpsertNotificationPreferences() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (prefs: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { data, error } = await supabase.from('notification_preferences').upsert({ user_id: user.id, ...prefs }, { onConflict: 'user_id' }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notification_preferences'] }),
   });
 }
 
