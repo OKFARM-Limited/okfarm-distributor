@@ -57,9 +57,8 @@ Deno.serve(async (req) => {
     // ── Recipients ────────────────────────────────────────────────────────────
     const { data: prefs } = await supabase
       .from('notification_preferences')
-      .select('user_id,email_address,channel_email,daily_digest')
-      .eq('daily_digest', true)
-      .eq('channel_email', true);
+      .select('user_id,email_address,daily_digest')
+      .eq('daily_digest', true);
 
     const recipients = (prefs ?? []).filter(p => !!p.email_address);
 
