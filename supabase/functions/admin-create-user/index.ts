@@ -81,6 +81,24 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const origin = req.headers.get("origin") || "http://localhost:8081";
 
+    // ─── Delete User Mode ───────────────────────────────────────────────────────
+    if (body.delete === true && body.user_id) {
+      const { user_id } = body;
+
+      const { error: deleteErr } = await adminClient.auth.admin.deleteUser(user_id);
+      if (deleteErr) {
+        return new Response(JSON.stringify({ error: deleteErr.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, user_id, deleted: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // ─── Resend Activation Mode ─────────────────────────────────────────────────
     if (body.resend === true && body.user_id) {
       const { user_id } = body;
@@ -269,7 +287,9 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    const errorMsg = err instanceof Error ? err.message : typeof err === 'object' && err !== null ? JSON.stringify(err) : String(err);
+    console.error("[admin-create-user] Unhandled error:", err);
+    return new Response(JSON.stringify({ error: errorMsg }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

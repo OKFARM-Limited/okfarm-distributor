@@ -10,7 +10,18 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, RefreshCcw, Search, ShieldCheck, UserCog, UserPlus, Users } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Loader2, RefreshCcw, Search, ShieldCheck, UserCog, UserPlus, Users, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { UserRole } from '@/contexts/AuthContext';
 import { ViewerBanner } from '@/components/ViewerGuard';
@@ -111,7 +122,13 @@ export default function RoleManagement() {
       const { data, error } = await supabase.functions.invoke('admin-create-user', {
         body: { resend: true, user_id: userId },
       });
-      if (error) throw new Error(error.message || 'Failed to resend activation');
+      if (error) {
+        // Supabase functions-js sometimes hardcodes the message to "Edge Function returned a non-2xx status code"
+        // and hides the real error in `context`. Let's try to extract it.
+        const realErrorMsg = (error as any)?.context?.error || (error as any)?.context?.message || error.message;
+        console.error("Full edge function error:", error);
+        throw new Error(realErrorMsg || 'Failed to resend activation');
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     },
@@ -123,6 +140,27 @@ export default function RoleManagement() {
     },
     onError: (err: Error) => {
       toast({ title: 'Error Resending Activation', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+        body: { delete: true, user_id: userId },
+      });
+      if (error) {
+        const realErrorMsg = (error as any)?.context?.error || (error as any)?.context?.message || error.message;
+        throw new Error(realErrorMsg || 'Failed to delete user');
+      }
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-user-roles'] });
+      toast({ title: 'User Deleted', description: 'The user has been successfully removed.' });
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Error Deleting User', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -290,21 +328,57 @@ export default function RoleManagement() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5 text-xs"
-                        disabled={resendActivation.isPending || viewerProps.disabled}
-                        onClick={() => resendActivation.mutate(user.user_id)}
-                        title="Resend activation email with a new 48-hour window"
-                      >
-                        {resendActivation.isPending ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <RefreshCcw className="h-3.5 w-3.5" />
-                        )}
-                        Resend Activation
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          disabled={(resendActivation.isPending && resendActivation.variables === user.user_id) || viewerProps.disabled}
+                          onClick={() => resendActivation.mutate(user.user_id)}
+                          title="Resend activation email with a new 48-hour window"
+                        >
+                          {resendActivation.isPending && resendActivation.variables === user.user_id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCcw className="h-3.5 w-3.5" />
+                          )}
+                          Resend
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+                              disabled={(deleteUser.isPending && deleteUser.variables === user.user_id) || viewerProps.disabled}
+                              title="Delete user"
+                            >
+                              {deleteUser.isPending && deleteUser.variables === user.user_id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete User</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to permanently delete {user.display_name || user.email}? This action cannot be undone and will remove all their data and access.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteUser.mutate(user.user_id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
