@@ -43,7 +43,6 @@ export default function RoleManagement() {
   // Create user dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('assistant');
 
@@ -97,7 +96,7 @@ export default function RoleManagement() {
   const createUser = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke('admin-create-user', {
-        body: { email: newEmail, password: newPassword, display_name: newName, role: newRole },
+        body: { email: newEmail, display_name: newName, role: newRole },
       });
       if (error) throw new Error(error.message || 'Failed to create user');
       if (data?.error) throw new Error(data.error);
@@ -108,7 +107,6 @@ export default function RoleManagement() {
       toast({ title: 'User Created', description: `${newEmail} has been created with role "${newRole}".` });
       setCreateOpen(false);
       setNewEmail('');
-      setNewPassword('');
       setNewName('');
       setNewRole('assistant');
     },
@@ -200,10 +198,6 @@ export default function RoleManagement() {
                 <Input id="new-email" type="email" placeholder="user@example.com" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-password">Password *</Label>
-                <Input id="new-password" type="password" placeholder="Minimum 6 characters" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-              </div>
-              <div className="space-y-2">
                 <Label>Role *</Label>
                 <Select value={newRole} onValueChange={(v) => setNewRole(v as UserRole)}>
                   <SelectTrigger>
@@ -222,7 +216,7 @@ export default function RoleManagement() {
               <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
               <Button
                 onClick={() => createUser.mutate()}
-                disabled={!newEmail || !newPassword || newPassword.length < 6 || createUser.isPending}
+                disabled={!newEmail || createUser.isPending}
               >
                 {createUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create User

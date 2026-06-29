@@ -195,21 +195,22 @@ Deno.serve(async (req) => {
     }
 
     // ─── Create New User Mode ───────────────────────────────────────────────────
-    const { email, password, display_name, role } = body;
+    const { email, display_name, role } = body;
 
-    if (!email || !password || !role) {
-      return new Response(JSON.stringify({ error: "Email, password, and role are required" }), {
+    if (!email || !role) {
+      return new Response(JSON.stringify({ error: "Email and role are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const activationExpiresAt = new Date(Date.now() + ACTIVATION_EXPIRY_HOURS * 60 * 60 * 1000).toISOString();
+    const generatedPassword = generateTempPassword();
 
     // Create user with admin API (auto-confirms email) and must_change_password flag
     const { data: newUser, error: createErr } = await adminClient.auth.admin.createUser({
       email,
-      password,
+      password: generatedPassword,
       email_confirm: true,
       user_metadata: { 
         display_name: display_name || email.split("@")[0],
@@ -247,7 +248,7 @@ Deno.serve(async (req) => {
         const emailHtml = buildActivationEmailHtml({
           displayName: display_name || email.split("@")[0],
           email,
-          password,
+          password: generatedPassword,
           role,
           expiresAt: activationExpiresAt,
           actionUrl,
