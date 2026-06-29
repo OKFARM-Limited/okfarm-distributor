@@ -31,9 +31,13 @@ export default function Login() {
     const { setRememberMe } = await import('@/integrations/supabase/client');
     setRememberMe(rememberMe);
 
+    // Trim email and password to avoid invisible trailing spaces from mobile copy/pasting
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: trimmedEmail,
+      password: trimmedPassword,
     });
 
     if (signInError) {
