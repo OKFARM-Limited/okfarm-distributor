@@ -1,0 +1,30 @@
+name: Deploy Supabase Functions
+
+on:
+  push:
+    branches:
+      - main
+    # Only run this workflow if files in the supabase/functions directory changed
+    paths:
+      - 'supabase/functions/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      # These secrets must be added to your GitHub repository settings
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy Edge Functions
+        # This deploys all edge functions found in supabase/functions/
+        run: supabase functions deploy --project-ref $PROJECT_ID
