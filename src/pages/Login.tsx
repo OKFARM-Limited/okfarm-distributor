@@ -27,7 +27,10 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    // First, do a raw signIn to check activation expiry before AuthContext picks it up
+    // Save remember-me preference before signing in so dynamicStorage uses the right backend
+    const { setRememberMe } = await import('@/integrations/supabase/client');
+    setRememberMe(rememberMe);
+
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -60,12 +63,9 @@ export default function Login() {
     }
 
     // If credentials are valid and activation is not expired,
-    // proceed with the normal login flow via AuthContext
-    const success = await login(email, password, rememberMe);
+    // the AuthContext's onAuthStateChange listener will automatically 
+    // pick up the SIGNED_IN event, set the user state, and redirect.
     setLoading(false);
-    if (!success) {
-      toast({ title: t('loginFailed'), description: t('loginFailed'), variant: 'destructive' });
-    }
   };
 
   const features = [
