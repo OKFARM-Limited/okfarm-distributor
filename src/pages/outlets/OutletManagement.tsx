@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useOutlets, useUpsertOutlet, useVendors, useAssets, DbOutlet } from '@/hooks/useSupabaseData';
+import { useOutlets, useVendors, useAssets, DbOutlet } from '@/hooks/useSupabaseData';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +29,8 @@ export default function OutletManagement() {
   const { data: outlets = [], isLoading } = useOutlets();
   const { data: allVendors = [] } = useVendors('all');
   const { data: allAssets = [] } = useAssets('all');
-  const upsertOutlet = useUpsertOutlet();
+  const { queueOrExecute } = useOfflineQueue();
+  const qc = useQueryClient();
   const { viewerProps } = useViewerGuard();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editOutlet, setEditOutlet] = useState<DbOutlet | null>(null);
@@ -58,17 +61,29 @@ export default function OutletManagement() {
 
   const handleSave = async () => {
     if (!form.name || !form.short_code) { toast({ title: 'Error', description: 'Name and short code required.', variant: 'destructive' }); return; }
-    try {
+    
+    const payload = editOutlet ? { id: editOutlet.id, ...form } : { ...form, status: 'active' };
+    const previous = qc.getQueryData(['outlets']);
+    
+    // Optimistic update
+    qc.setQueryData(['outlets'], (old: any) => {
       if (editOutlet) {
-        await upsertOutlet.mutateAsync({ id: editOutlet.id, ...form });
-        toast({ title: 'Outlet Updated', description: `${form.name} has been updated.` });
-      } else {
-        await upsertOutlet.mutateAsync({ ...form, status: 'active' });
-        toast({ title: 'Outlet Added', description: `${form.name} has been created.` });
+        return (old || []).map((o: any) => o.id === editOutlet.id ? { ...o, ...form } : o);
       }
-      setDialogOpen(false); setEditOutlet(null);
+      return [{ ...payload, id: 'temp-' + Date.now(), created_at: new Date().toISOString() }, ...(old || [])];
+    });
+
+    try {
+      const status = await queueOrExecute({ kind: 'outlet_upsert', payload });
+      toast({ 
+        title: status === 'queued' ? '💾 Queued Outlet Update' : (editOutlet ? 'Outlet Updated' : 'Outlet Added'), 
+        description: `${form.name} has been ${editOutlet ? 'updated' : 'created'}.` 
+      });
+      setDialogOpen(false); 
+      setEditOutlet(null);
       setForm({ name: '', short_code: '', address: '', manager: '', phone: '', description: '' });
     } catch (err: unknown) {
+      qc.setQueryData(['outlets'], previous); // Rollback
       toast({ title: 'Error', description: (err as Error).message, variant: 'destructive' });
     }
   };
@@ -290,7 +305,7 @@ export default function OutletManagement() {
                       <SelectItem key={u.id} value={u.label}>{u.label}</SelectItem>
                     ))}
                     {managerUsers.length === 0 && (
-                      <SelectItem value="" disabled>No managers created yet</SelectItem>
+                      <SelectItem value="none" disabled>No managers created yet</SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -298,8 +313,8 @@ export default function OutletManagement() {
               <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
             </div>
             <div className="space-y-2"><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} /></div>
-            <Button onClick={handleSave} className="w-full" disabled={upsertOutlet.isPending}>
-              {upsertOutlet.isPending ? 'Saving...' : editOutlet ? 'Update Outlet' : 'Create Outlet'}
+            <Button onClick={handleSave} className="w-full">
+              {editOutlet ? 'Update Outlet' : 'Create Outlet'}
             </Button>
           </div>
         </DialogContent>

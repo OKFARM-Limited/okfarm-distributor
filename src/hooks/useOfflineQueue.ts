@@ -11,7 +11,8 @@ export type QueueOp =
   | { kind: 'sale'; payload: TablesInsert<'sales'> & { items: { product_id: string; quantity: number; unit_price: number }[] } }
   | { kind: 'allocation'; payload: TablesInsert<'allocations'> & { items: { product_id: string; quantity: number; unit_price: number }[] } }
   | { kind: 'checkin'; payload: TablesInsert<'check_ins'> }
-  | { kind: 'checkout'; payload: { vendor_id: string; date: string; check_out_time: string } };
+  | { kind: 'checkout'; payload: { vendor_id: string; date: string; check_out_time: string } }
+  | { kind: 'outlet_upsert'; payload: TablesInsert<'outlets'> | Partial<TablesInsert<'outlets'>> };
 
 interface QueueItem {
   id?: number;
@@ -109,6 +110,16 @@ async function executeOp(op: QueueOp): Promise<void> {
         .from('check_ins')
         .update({ check_out_time: op.payload.check_out_time })
         .eq('id', records[0].id);
+      if (error) throw error;
+    }
+  } else if (op.kind === 'outlet_upsert') {
+    const payload = op.payload as any;
+    if (payload.id && !String(payload.id).startsWith('temp-')) {
+      const { error } = await supabase.from('outlets').update(payload).eq('id', payload.id);
+      if (error) throw error;
+    } else {
+      const { id, ...insertPayload } = payload;
+      const { error } = await supabase.from('outlets').insert(insertPayload);
       if (error) throw error;
     }
   }
