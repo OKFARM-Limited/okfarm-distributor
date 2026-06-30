@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { useVendors, useCheckIns, useCreateCheckIn, useUpdateCheckIn } from '@/hooks/useSupabaseData';
+import { useVendors, useCheckIns } from '@/hooks/useSupabaseData';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +18,8 @@ export default function VendorCheckIn() {
   const [search, setSearch] = useState('');
   const { data: allVendors = [], isLoading: vLoading } = useVendors('all');
   const { data: todayCheckIns = [], isLoading: cLoading } = useCheckIns(today);
-  const createCheckIn = useCreateCheckIn();
-  const updateCheckIn = useUpdateCheckIn();
+  const { queueOrExecute } = useOfflineQueue();
+  const qc = useQueryClient();
   const { viewerProps } = useViewerGuard();
 
   const activeVendors = allVendors.filter((v) => v.status === 'active');
@@ -28,28 +30,63 @@ export default function VendorCheckIn() {
     v.name.toLowerCase().includes(search.toLowerCase()) || v.vendor_code.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleCheckIn = (vendorId: string) => {
+  const handleCheckIn = async (vendorId: string) => {
     const vendor = allVendors.find((v) => v.id === vendorId);
-    createCheckIn.mutate(
-      { vendor_id: vendorId, outlet_id: vendor?.outlet_id || null, date: today, check_in_time: new Date().toISOString() },
-      {
-        onSuccess: () => toast({ title: '✅ Checked In', description: `${vendor?.name} checked in` }),
-        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
-      }
-    );
+    const payload = { 
+      vendor_id: vendorId, 
+      outlet_id: vendor?.outlet_id || null, 
+      date: today, 
+      check_in_time: new Date().toISOString() 
+    };
+
+    // Optimistic update
+    const previous = qc.getQueryData(['check_ins', today]);
+    qc.setQueryData(['check_ins', today], (old: any) => [
+      { ...payload, id: 'temp-' + Date.now(), vendors: vendor }, 
+      ...(old || [])
+    ]);
+
+    try {
+      const status = await queueOrExecute({ kind: 'checkin', payload });
+      toast({ 
+        title: status === 'queued' ? '💾 Queued Check-In' : '✅ Checked In', 
+        description: `${vendor?.name} checked in` 
+      });
+    } catch (err: any) {
+      qc.setQueryData(['check_ins', today], previous); // rollback on failure
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
   };
 
-  const handleCheckOut = (vendorId: string) => {
+  const handleCheckOut = async (vendorId: string) => {
     const record = todayCheckIns.find((r) => r.vendor_id === vendorId && !r.check_out_time);
     if (!record) return;
     const vendor = allVendors.find((v) => v.id === vendorId);
-    updateCheckIn.mutate(
-      { id: record.id, check_out_time: new Date().toISOString() },
-      {
-        onSuccess: () => toast({ title: '👋 Checked Out', description: `${vendor?.name} checked out` }),
-        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
-      }
+    const checkoutTime = new Date().toISOString();
+
+    // Optimistic update
+    const previous = qc.getQueryData(['check_ins', today]);
+    qc.setQueryData(['check_ins', today], (old: any) => 
+      (old || []).map((r: any) => 
+        r.vendor_id === vendorId && !r.check_out_time 
+          ? { ...r, check_out_time: checkoutTime } 
+          : r
+      )
     );
+
+    try {
+      const status = await queueOrExecute({ 
+        kind: 'checkout', 
+        payload: { vendor_id: vendorId, date: today, check_out_time: checkoutTime } 
+      });
+      toast({ 
+        title: status === 'queued' ? '💾 Queued Check-Out' : '👋 Checked Out', 
+        description: `${vendor?.name} checked out` 
+      });
+    } catch (err: any) {
+      qc.setQueryData(['check_ins', today], previous); // rollback on failure
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
   };
 
   if (vLoading || cLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;

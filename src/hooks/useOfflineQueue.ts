@@ -9,7 +9,9 @@ const VERSION = 1;
 
 export type QueueOp =
   | { kind: 'sale'; payload: TablesInsert<'sales'> & { items: { product_id: string; quantity: number; unit_price: number }[] } }
-  | { kind: 'allocation'; payload: TablesInsert<'allocations'> & { items: { product_id: string; quantity: number; unit_price: number }[] } };
+  | { kind: 'allocation'; payload: TablesInsert<'allocations'> & { items: { product_id: string; quantity: number; unit_price: number }[] } }
+  | { kind: 'checkin'; payload: TablesInsert<'check_ins'> }
+  | { kind: 'checkout'; payload: { vendor_id: string; date: string; check_out_time: string } };
 
 interface QueueItem {
   id?: number;
@@ -87,6 +89,28 @@ async function executeOp(op: QueueOp): Promise<void> {
       p_items: items || [],
     });
     if (error) throw error;
+  } else if (op.kind === 'checkin') {
+    const { error } = await supabase.from('check_ins').insert(op.payload);
+    if (error) throw error;
+  } else if (op.kind === 'checkout') {
+    // Attempt to find the specific check-in record
+    const { data: records, error: fetchError } = await supabase
+      .from('check_ins')
+      .select('id')
+      .eq('vendor_id', op.payload.vendor_id)
+      .eq('date', op.payload.date)
+      .is('check_out_time', null)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (fetchError) throw fetchError;
+    if (records && records.length > 0) {
+      const { error } = await supabase
+        .from('check_ins')
+        .update({ check_out_time: op.payload.check_out_time })
+        .eq('id', records[0].id);
+      if (error) throw error;
+    }
   }
 }
 

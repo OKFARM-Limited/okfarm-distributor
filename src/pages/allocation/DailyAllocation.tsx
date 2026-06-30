@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
-import { useVendors, useProducts, useAllocations, useCreateAllocation } from '@/hooks/useSupabaseData';
+import { useVendors, useProducts, useAllocations } from '@/hooks/useSupabaseData';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +30,8 @@ export default function DailyAllocation() {
   const { data: vendors = [], isLoading: vLoading } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [], isLoading: pLoading } = useProducts();
   const { data: allocations = [] } = useAllocations(isAllOutlets ? 'all' : selectedOutletId);
-  const createAllocation = useCreateAllocation();
+  const { queueOrExecute } = useOfflineQueue();
+  const qc = useQueryClient();
   const { viewerProps } = useViewerGuard();
 
   const vendor = vendors.find((v) => v.id === vendorId);
@@ -66,13 +69,37 @@ export default function DailyAllocation() {
     const items = products.filter(p => quantities[p.id] > 0).map(p => ({
       product_id: p.id, quantity: quantities[p.id], unit_price: Number(p.unit_price),
     }));
-    createAllocation.mutate(
-      { vendor_id: vendorId, outlet_id: vendor?.outlet_id || null, date: new Date().toISOString().split('T')[0], total_value: totalValue, status: 'confirmed', items },
+
+    const allocPayload = { vendor_id: vendorId, outlet_id: vendor?.outlet_id || null, date: new Date().toISOString().split('T')[0], total_value: totalValue, status: 'confirmed', items };
+    
+    const queryKey = ['allocations', isAllOutlets ? 'all' : selectedOutletId];
+    const previous = qc.getQueryData(queryKey);
+    
+    qc.setQueryData(queryKey, (old: any) => [
       {
-        onSuccess: () => { toast({ title: 'Allocation Confirmed', description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` }); setStep(0); setVendorId(''); setQuantities({}); },
-        onError: (err: Error) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
-      }
-    );
+        ...allocPayload,
+        id: 'temp-' + Date.now(),
+        vendors: vendor,
+        outlets: { name: getOutletName(vendor?.outlet_id || null), short_code: '' },
+        allocation_items: items.map(i => ({ ...i, products: products.find(p => p.id === i.product_id) }))
+      },
+      ...(old || [])
+    ]);
+
+    queueOrExecute({ kind: 'allocation', payload: allocPayload })
+      .then((status) => {
+        toast({ 
+          title: status === 'queued' ? '💾 Queued Allocation' : '✅ Allocation Confirmed', 
+          description: `₦${totalValue.toLocaleString()} allocated to ${vendor?.name}` 
+        }); 
+        setStep(0); 
+        setVendorId(''); 
+        setQuantities({});
+      })
+      .catch((err) => {
+        qc.setQueryData(queryKey, previous);
+        toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      });
   };
 
   const handleExportPDF = () => {
@@ -196,8 +223,8 @@ export default function DailyAllocation() {
                 <div className="border-t pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>₦{totalValue.toLocaleString()}</span></div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-                  <Button onClick={handleConfirm} disabled={createAllocation.isPending}>
-                    {createAllocation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}Confirm Allocation
+                  <Button onClick={handleConfirm}>
+                    Confirm Allocation
                   </Button>
                 </div>
               </div>

@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from '@/contexts/OutletContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useVendors, useProducts, useSales, useCreateSale } from '@/hooks/useSupabaseData';
+import { useVendors, useProducts, useSales } from '@/hooks/useSupabaseData';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -39,7 +41,8 @@ export default function SalesEntry() {
   const { data: sales = [], isLoading: sLoading } = useSales(isAllOutlets ? 'all' : selectedOutletId);
   const { data: vendors = [] } = useVendors(isAllOutlets ? 'all' : selectedOutletId);
   const { data: products = [] } = useProducts();
-  const createSale = useCreateSale();
+  const { queueOrExecute } = useOfflineQueue();
+  const qc = useQueryClient();
   const { viewerProps } = useViewerGuard();
   const { t } = useLanguage();
   const [period, setPeriod] = useState('daily');
@@ -91,32 +94,47 @@ export default function SalesEntry() {
     const outstandingVal = Math.max(0, totalValue - Number(amountPaid));
     const selectedVendor = vendors.find((v) => v.id === vendorId);
 
-    createSale.mutate(
-      {
-        vendor_id: vendorId,
-        outlet_id: selectedVendor?.outlet_id || null,
-        date: todayStr,
-        total_value: totalValue,
-        amount_paid: Number(amountPaid),
-        outstanding: outstandingVal,
-        payment_method: paymentMethod,
-        items,
-      },
-      {
-        onSuccess: () => {
-          toast({ title: 'Success', description: 'Sales entry recorded successfully.' });
-          setVendorId('');
-          setPaymentMethod('cash');
-          setQuantities({});
-          setAmountPaid('0');
-          setIsManualAmount(false);
-          setIsOpen(false);
-        },
-        onError: (error) => {
-          toast({ title: 'Error', description: error.message, variant: 'destructive' });
-        },
-      }
-    );
+    const salePayload = {
+      vendor_id: vendorId,
+      outlet_id: selectedVendor?.outlet_id || null,
+      date: todayStr,
+      total_value: totalValue,
+      amount_paid: Number(amountPaid),
+      outstanding: outstandingVal,
+      payment_method: paymentMethod,
+      items,
+    };
+
+    const queryKey = ['sales', isAllOutlets ? 'all' : selectedOutletId];
+    const previous = qc.getQueryData(queryKey);
+    qc.setQueryData(queryKey, (old: any) => [
+      { 
+        ...salePayload, 
+        id: 'temp-' + Date.now(), 
+        vendors: selectedVendor, 
+        outlets: allOutlets.find(o => o.id === selectedVendor?.outlet_id), 
+        sale_items: items.map(i => ({ ...i, products: products.find(p => p.id === i.product_id) }))
+      }, 
+      ...(old || [])
+    ]);
+
+    queueOrExecute({ kind: 'sale', payload: salePayload })
+      .then((status) => {
+        toast({ 
+          title: status === 'queued' ? '💾 Queued Sale' : '✅ Success', 
+          description: 'Sales entry recorded successfully.' 
+        });
+        setVendorId('');
+        setPaymentMethod('cash');
+        setQuantities({});
+        setAmountPaid('0');
+        setIsManualAmount(false);
+        setIsOpen(false);
+      })
+      .catch((error) => {
+        qc.setQueryData(queryKey, previous);
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      });
   };
 
   // Date helpers
@@ -700,11 +718,10 @@ export default function SalesEntry() {
             <Button
               type="button"
               onClick={handleSubmitSale}
-              disabled={createSale.isPending || totalValue === 0 || !vendorId}
+              disabled={totalValue === 0 || !vendorId}
               className="flex-1 sm:flex-none h-11 gap-1.5"
               {...viewerProps}
             >
-              {createSale.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Submit Sale
             </Button>
           </SheetFooter>
